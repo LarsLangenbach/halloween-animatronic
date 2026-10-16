@@ -1,0 +1,86 @@
+# cad.yaml -- what cad/check.py builds, checks and grades. One per project, at its root.
+# The design numbers themselves live in params.py; this file says how to run
+# and judge the model. Paths are relative to this file.
+#
+# level:  hard = check.py exits 1 when it fails;  soft = warning only.
+# status: IN_FLUX = the human is still tuning it, a change is not a regression.
+#         ASSUMPTION = nobody has confirmed it yet (same tag as params.py).
+
+project: halloween animatronic
+stl_dir: output/stl      # where builders write STLs (the print files)
+out: output/check        # check results -- gitignore it
+params: cad/params.py    # `param:` targets and components_check read this
+inputs: inputs           # components/ (manufacturer STEP models) lives here
+# copy_also: [inputs/reference]   # extra files the builders read during a check
+
+printer:
+  bed: [256, 256, 256]   # DATASHEET: 2x Bambu Lab P2S (PLAN Q2)
+  nozzle: 0.4
+  min_wall: 0.8          # thinnest wall: two extrusion widths
+  overhang_deg: 45       # from vertical
+  ledge_w: 3.0           # one-sided overhangs this narrow print without support
+  bridge_span: 10.0      # roofs held by walls all round print this far
+
+# Run order. Everything runs in check.py's private copy of the source folder,
+# so builders never touch the real stl_dir during a check. Consecutive `check`
+# steps run in parallel; a failed build stops the run. `pass`: regex that must
+# match one output line (for scripts whose exit code alone isn't trustworthy).
+# `fail`: regex for the lines quoted in the report (default: lines starting
+# with FAIL or WARN).
+pipeline:
+  - {script: components_check, kind: check, level: soft, pass: "^COMPONENTS MATCH PARAMS$"}
+  - {script: modules, kind: build}       # Cogley modules placed in the head frame -> output/ref (not print files)
+  - {script: head, kind: build}          # proxy head envelopes -> output/ref (not print files)
+  - {script: reserve, kind: build}       # reserved space: brow bays, cable channel -> output/ref
+  - {script: brow, kind: build}          # M2 eyebrow mechanism v1: carriers, brackets (+ servo refs)
+  - {script: brow_rig, kind: build}      # M2 bench rig for the left brow (a forehead fragment)
+  - {script: skull, kind: build}         # M3 skull v0: shell pieces with openings, shelf, brow mount plates
+  - {script: test_coupon, kind: build}
+  - {script: assembly_check, kind: check, level: hard, pass: "^NO OVERLAPS$"}
+  - {script: print_check, kind: check, level: soft, pass: "^PRINT CHECK OK$"}
+  - {script: layout_check, kind: check, level: soft, pass: "^LAYOUT OK$"}   # M1: modules vs each other and the head
+  - {script: pose_sweep, kind: check, level: soft, pass: "^SWEEP OK$"}      # M1: jaw, eyes, lids moving; reserved space
+  - {script: brow_check, kind: check, level: soft, pass: "^BROW OK$"}       # M2: brows through their travel
+  - {script: skull_check, kind: check, level: soft, pass: "^SKULL OK$"}     # M3: skull vs everything, at rest and moving
+
+# Scripts in the source folder that check.py knows about but doesn't run
+# (the toolkit's own scripts are known already). Any other script gets a
+# warning, so a new builder or check can't be silently left out.
+not_in_pipeline: [params, geom, snapshot, browgeom, export_print, make_plates]
+
+# Every print file, by STL name: the one place to update when a part is added,
+# renamed or printed differently. check.py warns about a built STL that isn't
+# listed here and about a listed part that wasn't built.
+#   colour        RGB 0..1, for the views and the STEP
+#   supports      what the print guide says; print_check warns about overhangs
+#                 only on parts printed without supports
+#   print_rotate  degrees about x, y, z from the assembled pose to the print pose
+#                 (default: prints as modelled, base down)
+#   assembly      false = not in its assembled place (calibration prints, parts
+#                 exported at their print origin): left out of the overall size,
+#                 the views, the overlap check and the STEP
+#   inspect_from  camera direction for print_check's low view (default 0.6, 1, -0.6)
+parts:
+  test_coupon: {colour: [0.70, 0.70, 0.70], supports: false, assembly: false}
+  # M2 eyebrows. Carriers print with the hub axis vertical, hub at the bottom (round bore
+  # and ball-stud hole), on tree supports (no flat face); brackets print upside down on
+  # their top flange.
+  brow_carrier_L: {colour: [0.85, 0.35, 0.40], supports: true, print_rotate: [90, -78, 0]}
+  brow_carrier_R: {colour: [0.85, 0.35, 0.40], supports: true, print_rotate: [90, 78, 0]}
+  brow_bracket_L: {colour: [0.62, 0.62, 0.66], supports: false, print_rotate: [180, 0, 0]}
+  brow_bracket_R: {colour: [0.62, 0.62, 0.66], supports: false, print_rotate: [180, 0, 0]}
+  # bench fixture, not part of the head: prints lying on its inner wall (open outer side), with
+  # supports under the inside of the shell where it curves round the temple
+  brow_rig: {colour: [0.80, 0.78, 0.70], supports: true, assembly: false, print_rotate: [0, -90, 0]}   # supports under the shell's curve
+  # M3 skull v0. Print poses are a first guess (split face on the bed); M3 optimises them.
+  skull_front_upper: {colour: [0.93, 0.89, 0.78], supports: true}
+  skull_front_lower: {colour: [0.88, 0.84, 0.72], supports: true, print_rotate: [180, 0, 0]}
+  skull_back_upper: {colour: [0.80, 0.76, 0.66], supports: true}
+  skull_back_lower: {colour: [0.75, 0.71, 0.62], supports: true, print_rotate: [180, 0, 0]}
+  skull_shelf: {colour: [0.55, 0.75, 0.75], supports: false}
+
+every_part: {watertight: hard, single_body: hard, fits_bed: soft}
+
+# Metrics: assembly.x / .y / .z / .z_min (the assembled model, mm) and
+# part.<name>.x / .y / .z / .volume. `param:` reads the target from params.py.
+targets: []   # skull parts add size and param targets here (M3)

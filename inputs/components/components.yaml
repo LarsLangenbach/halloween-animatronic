@@ -1,0 +1,35 @@
+# Manufacturer 3D models of the parts that go inside, compared against the
+# sizes in params.py by components_check.py. Record where every file came from
+# and its licence; models are "for guidance only", so caliper before trusting.
+#
+# match:    exact     = the same product you bought; differences are warnings.
+#           reference = a different board of the same kind (you have a clone);
+#                       differences are printed for information only.
+# board:    params names for the board's length and width (any order) and, if
+#           the envelope has one, the overall thickness including components.
+# clear:    params name of the per-side pocket clearance, if it sits in a pocket.
+# holes:    params name of a mounting-hole spacing to compare.
+# overhang: {edge: params name} -- room params leaves for a connector that sticks
+#           out past that board edge (+L / -L / +W / -W, as the check prints them).
+#
+# Good sources: the manufacturer's site (Raspberry Pi, Arduino, Espressif,
+# Pololu), github.com/adafruit/Adafruit_CAD_Parts (MIT), SparkFun's GitHub,
+# the KiCad 3D library (switches, connectors, headers), GrabCAD (check licence).
+
+# Bought parts for this head (PLAN section 3). Uncomment an entry once its
+# model is in this folder and its sizes are in params.py.
+#
+mg90s:
+  file: adafruit_1143_micro_servo.step   # MG90D, same body as the MG90S; downloaded 2026-10-15
+  part: TowerPro MG90S micro servo (x17)
+  match: reference                       # Adafruit's MG90D model; caliper the real ones
+  source: https://github.com/adafruit/Adafruit_CAD_Parts (1143 Micro Servo - High Torque Metal Gear)
+  license: MIT (Adafruit Industries)
+  # no board/holes comparison: the check is built for PCBs and picks a 4 x 3.4 label
+  # inside the model as the "board". The MG90_* params were measured from this model
+  # directly (2026-10-15): case 22.6 x 12.0, tabs 31.3 x 2.0, holes 29.7 apart.
+#
+# mg996r:
+#   file: mg996r.step                      # no trusted model yet: model it from calipers
+#   part: TowerPro MG996R servo (x2, jaw)
+#   match: reference

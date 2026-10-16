@@ -1,0 +1,6 @@
+output/check/
+output/step/
+output/**/*.step
+__pycache__/
+.venv/
+output/ref/
