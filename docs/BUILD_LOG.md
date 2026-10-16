@@ -29,6 +29,22 @@ Rules:
 
 ---
 
+## 2026-10-16 — Re-base — Cogley's whole head as designed (D17)
+
+**Done:**
+- The team found our placeholder face (the proxy head in the fit study) nothing like a human. The face is now based on Cogley's own head (D17).
+- Rendered his complete head with his outer shell ([process_images](../process_images/README.md) snapshot 18, `studies_cogley_complete.png`). His shell is a helmet over the top and back of the head. The face below it is open mechanics, with the cheek-bone band under the eyes.
+- **Q16 answered: keep his mouth where it is.** It only looked 13.4 mm too high against our placeholder face.
+- The `CheekBone` conflict is gone with it: it only poked 0.8 mm through the placeholder face.
+- Printed so far: the eyes (ε3.2 MG90s-A), the mouth, the teeth and tongue, and his "Brows - Main" plate. **Cleared to print, as he designed them:** "Frame - Main", "Frame - Extras" and "Outer Shell". The brow bars wait for TPU.
+- Retired: our skull pieces, shelf, EyeMech cradle and strap, and the sculpt base v1. The methods (service check, sculpt check, the importer) carry over.
+
+**Decisions:** D17 (Cogley's head is the face's base), Q16 (keep his mouth).
+
+**Next:** sculpt base v2, a smooth wrap of his complete head raised by the thinnest skin; then the neck mount (Q17) and skin attachment points.
+
+---
+
 ## 2026-10-16 — Re-base — Cogley's Robot Head α2.0.33 as the base (D14); SG90 vs MG90S
 
 **Done:**
