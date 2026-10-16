@@ -19,3 +19,4 @@ The build log ([docs/BUILD_LOG.md](../docs/BUILD_LOG.md)) links here.
 - **2026-10-16_14_M3-neck-and-access-panel**: M3-neck-and-access-panel ([skull.png](2026-10-16_14_M3-neck-and-access-panel/skull.png), 38 file(s))
 - **2026-10-16_15_M5-sculpt-base-and-service**: Sculpt base v1 (whole head, skull + 3 mm, eye sockets, grooves, base plate); service paths for the back, EyeMech and brows ([sculpt.png](2026-10-16_15_M5-sculpt-base-and-service/sculpt.png), 49 file(s))
 - **2026-10-16_16_D14-cogley-head-fit**: Cogley's Robot Head a2.0.33 imported and fitted inside our head, eyes on ours ([studies_cogley_fit.png](2026-10-16_16_D14-cogley-head-fit/studies_cogley_fit.png), 57 file(s))
+- **2026-10-16_17_cogley-brow-bar**: Cogley's flexible brow bar (Part 11): a pleated TPU strip, why PLA won't do ([studies_cogley_brow_bar.png](2026-10-16_17_cogley-brow-bar/studies_cogley_brow_bar.png), 58 file(s))
