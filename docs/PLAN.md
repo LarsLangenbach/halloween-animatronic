@@ -4,18 +4,18 @@ Living plan for the mechanical skull, eyebrows and skin interfaces described in
 [BRIEF.md](BRIEF.md). It is updated whenever a milestone moves, a decision is
 made or an input arrives. The day-to-day record is [BUILD_LOG.md](BUILD_LOG.md).
 
-Plan version: v1, 2026-10-14. Last updated 2026-10-16.
+Plan version: v2, 2026-10-16 (re-based on Cogley's Robot Head α2.0.33, D14). Last updated 2026-10-16.
 
 ## 1. Status
 
 | Milestone | Brief ref | Status | Exit criterion |
 |---|---|---|---|
 | M0 Inputs and foundations | — | **in progress**: Cogley STEP files in; printer known; coupon STL built, not yet printed | Both Cogley mechanisms in the repo and measured; servo models in; printer known; calibration coupon printed |
-| M1 Mechanical layout | §12 M1 | **done 2026-10-15**: layout and motion pass at 1.2× (D4); brow bays and cable channel reserved. One bench number outstanding: the real jaw opening | Both modules and the brow space fit a life-size head at every pose; proportions signed off |
-| M2 Eyebrow prototype | §12 M2 | **CAD ready to print (v1.1)**: mechanism, hard stops and bench rig all pass their checks. Waiting on the print and bench test | Both brows bench-tested on MG90S servos; travel, neutral adjustment and hard stops measured |
-| M3 Integrated skull | §12 M3 | **in progress**: skull pieces with screwed joints, the EyeMech cradle and strap, the neck base plate and the rear access panel pass every check; the mouth mount (Q14), fan room, skin attachments and service check next | Skull printed; all 19 servos move through their full range with no skin fitted; each servo can be swapped |
+| M1 Mechanical layout | §12 M1 | **re-opening for D14**: v1 done 2026-10-15 at 1.2× (D4). Cogley's head α2.0.33 is imported and fit-checked against our head; the layout moves onto his frame (§6, Re-base) | Both modules and the brows placed on his frame; every motion clear; the proportions decided (Q16) |
+| M2 Eyebrow prototype | §12 M2 | **switching to Cogley's brows (D15)**: our v1.1 is printed and becomes the bench backup. His 4-servo brows with flexible (TPU) brow bars come with his frame | Both brows bench-tested on MG90S servos through their full range; pull and travel measured under a silicone sample |
+| M3 Integrated skull | §12 M3 | **re-planned for D14**: the skull v0 work (joints, panel, neck plate, service check) carries over as the method; the shell is redrawn as a skin-support shell bolted to his frame | Skull printed; all servos move through their full range with no skin fitted; each servo can be swapped |
 | M4 Snap attachment prototype | §12 M4 | not started | Snap size, adapter and pad chosen from measured pull-off and cycle tests on cast samples |
-| M5 Sculpting integration | §12 M5 | **started early**: sculpt base v1 (whole head, the skull's outside + 3 mm) passes its checks and is ready to print | Registered armature printed; datums and attachment coordinates handed to the sculptor |
+| M5 Sculpting integration | §12 M5 | **sculpt base v1 on hold: don't print it.** Its lower face follows our old mouth position; it is regenerated once the proportions are decided (Q16) | Registered armature printed; datums and attachment coordinates handed to the sculptor |
 | M6 Silicone skin integration | §12 M6 | not started | First skin fitted and connected; attachment positions revised where needed |
 | M7 Final mechanical validation | §12 M7 | not started | Every motion with the skin on, no collisions or overstretch; skin removable for service |
 
@@ -53,6 +53,27 @@ Everything the skull touches is the same, so the ε3.1 STEP is a valid layout re
 - **The module is wide:** the EyeMech base is 145.4 wide, close to the full outer width of an average adult head (about 155) before any skull wall or skin is added.
 
 A true life-size head will not hold the EyeMech unchanged. Scaling the whole head by about 1.2 brings the eye spacing back to human proportion: 75 / 63 = 1.19. A heavy, oversized head also suits the character. This is the first input to decision D4.
+
+### Cogley's Robot Head α2.0.33 (received 2026-10-16)
+
+The team's Patreon download of his whole head, now in `inputs/reference/head_a2.0.33/`: his reference assembly (Onshape OBJ, 191 parts), every printed part (Bambu 3MF, 8 plates), his control code and both PCBs. **No STEP:** only meshes. `cad/cogley_head.py` imports the assembly into our frame, eyes on ours; the study `cad/studies/cogley_fit.py` fits it inside our head.
+
+What's in it:
+- **Frame:** `SkullFrame`, a cage: a band round the front at eye level and ribs over the crown. Everything bolts to it. "Frame - Extras" adds a `CheekBone` band under the eyes and a `FanBracket` for a 50 mm fan.
+- **Robot outer shell:** `FrontPlate`, `FrontVent`, `RearPlate`, `RearVent`. It is screwed to the frame's sides (M3 × 10); our skin-support shell replaces it.
+- **Eyes:** the EyeMech. The base plate, side plates, bases and one pivot holder are identical to the ε3.2 MG90s-A set the team printed (to 0.3 mm). The moving parts are slimmer: levers 4.0 mm instead of 7.1, lids 1.4 mm thinner, a thinner lateral frame, a longer second pivot holder, different horns and eye adaptors. It is fitted with SG90 servos.
+- **Mouth:** the same module as our `MouthAssembly.step`. Its `TopBase` bolts into the frame and the EyeMech's base plate sits 0.2 mm above it, so **the mouth's top plate is the eye shelf** (this answers Q14).
+- **Brows:** 4 MG90S servos, an inner and an outer one per brow (`Brows.py`: ±20° around centre, with up, down, angry and happy poses). Each brow bar (`Part 11` / `Part 14`) prints in TPU ("Brows - Flexible"), so it bends when its two servos differ. The OBJ is missing 2 of the 4 brow servos; the 3MF has all the brow parts.
+- **Electronics:** a Mouth board and an Eyes/Brow/Neck board (EasyEDA Pro), and MicroPython control code for the eyes, the brows and the mouth.
+- **No neck:** the assembly ends at the jaw.
+
+**Fit in our head (eyes on ours, 1.2×):**
+- His EyeMech lands within 1.7 mm of ours. His mouth sits **13.4 mm higher** than ours.
+- 26 of 191 parts poke past our skull's inside:
+  - the brow bars (7.6 mm) and the lips (3.5 mm), which work through openings anyway
+  - the `CheekBone` (8.2 mm, 0.8 through our face at the nose bridge)
+  - the frame's side screw heads (up to 5.1 mm) and the frame itself (3.2 mm at the temples, z 180)
+- Our printed EyeMech set on his base plate clears all his other parts: lids swept ≥ 5.7 mm, eyes swept ≥ 8.2 mm, and at rest it touches only the frame (its mount).
 
 ### Public downloads (researched 2026-10-14/15)
 Items marked **unconfirmed** could not be checked.
@@ -148,6 +169,25 @@ Each module comes off on its own, so a servo can be reached without taking the h
 **Electronics:** both Cogley PCBs sit in the base (brief §10). Assuming the α2.0.33 mouth board (12 channels), a second one covers the eyes (6) and brows (2) with channels to spare. That puts 18 three-wire leads through the neck. The neck channel starts as a 25 mm clear bore (ASSUMPTION) until the real bundle is measured.
 
 ## 6. Milestones
+
+### Re-base on Cogley's head (D14, started 2026-10-16)
+
+The mechanical base is now his head. His frame, mouth position, eye mount, brows and fan bracket are kept. We build what goes on top: the skin-support shell, the neck, the skin attachments and the sculpt base. Our own parts that his head replaces (shelf, cradle, strap, brow mounts) retire with the skull v0.
+
+- [x] Import: `cad/cogley_head.py` (in the pipeline), 191 parts in our frame, grouped frame / extras / shell / eyes / mouth / brows / hardware.
+- [x] Fit study `cad/studies/cogley_fit.py`: his head inside our current head (above).
+- [x] Eyes: the printed ε3.2 set fits his head (D16).
+- [ ] **Proportions (Q16):** keep his mouth where he put it, or lower it 13.4 mm.
+- [ ] Our module placements moved onto his (mouth, EyeMech), his brows added as a module with their motion, and the sweeps re-run inside his frame.
+- [ ] The proxy face re-fitted round his head:
+  - the lower face to the mouth (Q16)
+  - the temples to his frame and screw heads
+  - the nose bridge to his `CheekBone`, or leave the `CheekBone` out if it is only cosmetic
+- [ ] Skin-support shell (the skull v0 pieces redrawn): bolted to his frame where his robot shell was, with openings for the eyes, brows and mouth, and the service paths re-run.
+- [ ] Neck and stand: his assembly has none (Q17).
+- [ ] Fan and venting under the skin (R6): his vents are in the robot shell we drop.
+- [ ] Sculpt base regenerated from the re-fitted face.
+
 
 ### M0 — Inputs and foundations (now)
 - Answer the open questions in §7. Q1 (deadline) and Q3 (which mouth mechanism) come first.
@@ -315,7 +355,10 @@ Run every motion and the combined extremes with the skin on. Confirm no collisio
 | Q11 | Who sculpts, and what skin thickness are they aiming for? Separate moving eyelid skins (brief §3B)? | Sets the skin zones and decision D7. | |
 | Q12 | Where did the two Onshape models come from (Cogley's own Onshape document, or rebuilt or converted by the team)? | Provenance and licence record; whether they match the parts that will be printed. | **Will Cogley's own Onshape documents, through the team's paid Patreon membership.** These are member-only files, so the repo stays private and the STEP files are never redistributed. (2026-10-15) |
 | Q15 | Who sculpts, with which clay, and what is the thinnest skin they want? The sculpt base assumes 3 mm (`SCULPT_MIN_SKIN`). The clay must be sulfur-free if the skin is platinum-cure silicone. | Sets the armature offset; sulfur in the clay stops platinum silicone from curing. | |
-| Q14 | How does Cogley fix the mouth module's top plate (TopBase) into his Robot Head α2.0 frame? An Onshape STEP export of the full α2.0 head would show it, and the α2.0 brow mechanism too. | The mouth mount in M3; the top plate has pockets and shallow holes but no obvious mounting points. | |
+| Q14 | How does Cogley fix the mouth module's top plate (TopBase) into his Robot Head α2.0 frame? An Onshape STEP export of the full α2.0 head would show it, and the α2.0 brow mechanism too. | The mouth mount in M3; the top plate has pockets and shallow holes but no obvious mounting points. | **Answered 2026-10-16 by his head files (§3):** the TopBase is held in his `SkullFrame`, and the EyeMech's base plate sits on it (0.2 mm gap): the mouth's top plate is the eye shelf. |
+| Q16 | Proportions on his head: his mechanism puts the lips 71 mm below the eyes, with the eyes 75 mm apart. A normal face with eyes that far apart has its lips about 85 mm below them. Keep his mouth where it is (a short mid-face, a little cartoonish, no mechanical change), or lower it 13.4 mm (normal proportions, but his frame's mouth mounts must be cut and redrawn, and the EyeMech needs a shelf again)? | Sets the face, the shell and the sculpt base. | |
+| Q17 | Does Cogley have a neck or mount for the α2.0 head (his Eyes/Brow/Neck board suggests one)? If not, we design the neck from his frame down to the stand. | The neck/base interface and the cable route. | |
+| Q18 | Is there TPU filament (about 95A) for his flexible brow bars? | His brows need it (D15). | |
 | Q13 | The EyeMech STEP is ε3.1, and the brief says ε3.2: which one will be printed? The mouth STEP has 9 MG90S servos, and the brief says 8: is the ninth the tongue, and is it kept? | The printed parts must match the CAD the skull is built around. | **Eyes:** ε3.1 and ε3.2 have the same outer geometry (see the comparison in §3). Print ε3.2-PIP MG90s and lay out with the ε3.1 STEP (D11). **Tongue:** keep it if it is no hassle (D10). (2026-10-15) |
 
 ## 8. Decisions
@@ -333,6 +376,9 @@ Run every motion and the combined extremes with the skin on. Confirm no collisio
 | D9 | Skull modules | backbone with bolt-on upper and lower modules (§5) | as §5 | proposed |
 | D10 | Tongue servo | keep / leave out | keep: it sits inside the mouth module and the α2.0 mouth board has a channel for it. It costs one more lead through the neck. If it fights the jaw sweep or the skin, raise it again | **decided 2026-10-15**: keep if no hassle |
 | D13 | Art style and the sculpt base | campy flat-top Frankenstein built into the skull / a normally proportioned head / sculpt it all in clay | — | **decided 2026-10-16:** a normally proportioned head, not the traditional campy look. The style may change later. The sculpt base covers the whole head (face, cranium, nape, neck). |
+| D14 | The mechanical base | our own skull frame around Cogley's modules / Cogley's whole Robot Head α2.0.33 as the base, with ours built on top | — | **decided 2026-10-16 (team):** his head is the base. We keep his frame, mouth, eye mount, brows and fan; our skin-support shell replaces his robot outer shell. The face stays normally proportioned (D13). |
+| D15 | Brows | our v1.1 (1 servo per brow, already printed) / Cogley's (2 servos per brow, flexible TPU bars) | Cogley's: they are designed and proven in his frame (ours would need new mounts there), and an inner and outer servo per brow gives angry and happy shapes. They cost 2 more MG90S and a TPU print | **decided 2026-10-16:** Cogley's (the team would print his if it is the safer option, and it is). Ours stays as the bench backup. |
+| D16 | Eyes | reprint his head's EyeMech variant / keep the printed ε3.2 MG90s-A set | Keep: the structural parts are identical, and the printed set's motion clears his frame (§3). If a part doesn't mount on the bench, reprint only that one from his Eyes plate (the long pivot holder and the eye adaptors are the likely ones) | **decided 2026-10-16:** keep the printed set |
 | D12 | Tongue clash with a mouth servo when the jaw opens (M1 sweep) | A: trim ~3 mm off the tongue's back corner. B: leave it; the team's built mouth is the evidence. C: drop the tongue (18 servos) | A, then confirm on the bench | **decided 2026-10-15: B.** "Leave in the tongue, no need to modify it; I've printed this before and it's fine" |
 | D11 | Which EyeMech to print and model | ε3.1 / ε3.2 snap-fit / ε3.2-PIP | ε3.2-PIP MG90s (A or B, chosen with Cogley's test plate) for both the print and the CAD. Source, in order of preference: a ε3.2 STEP exported from Cogley's Onshape; otherwise the public ε3.2 print parts, each snapped onto the matching ε3.1 part's position | **decided 2026-10-15**: use ε3.2 |
 
@@ -345,10 +391,11 @@ Run every motion and the combined extremes with the skin on. Confirm no collisio
 | R3 | Clone servos differ from the datasheet by about 1 mm. | Caliper real servos; slotted mounts. |
 | R4 | Soft silicone tears at the snaps. | Fabric pads, shear loading, and the M4 cycle tests before the full skin. |
 | R5 | The module's jaw pivot may not sit where a human jaw hinges, which stretches the cheeks oddly. | Compare in M1; adjust skin fixing points or add slack zones. |
-| R6 | 19 servos inside a closed skin inside a jar build up heat, and the MG996R jaw servos draw high current. Cogley's α2.0 head uses a 50 mm fan and a 5 V 10 A supply. | Room for a 50 mm fan and a vent path in the rear panel; flag current to the electronics plan. |
+| R6 | 19 servos inside a closed skin inside a jar build up heat, and the MG996R jaw servos draw high current. Cogley's α2.0 head uses a 50 mm fan and a 5 V 10 A supply. | Room for a 50 mm fan and a vent path in the rear panel; flag current to the electronics plan. **D14:** his head has a fan bracket, but its vents are in the robot shell we drop, so under the skin the air path has to go out through the neck. |
 | R7 | Schedule (Q1). | A reduced-scope plan if the date is fixed. |
 | R8 | Licence terms on the Cogley designs (Q10). | Confirm before any commercial use. |
 | R10 | The brow concept's working window is narrow: 3 of 2,431 pivots meet every limit, and it rests on the proxy forehead shape and assumed skin limits. | The sculpt replaces the proxy in M5. The study re-runs from `params.py` in about a minute; the bench test with a real skin sample sets the limits. |
+| R12 | Cogley's head comes as meshes only (no STEP), so changing his parts means mesh booleans, and the OBJ is incomplete (2 brow servos missing). | Change his parts only where we must; check every mesh edit for watertightness; take missing parts from his 3MF. |
 | R11 | MG90S torque against the unknown skin forces. | The 2:1 four-bar halves the load; measure the brow force on the bench rig (M2/M4). |
 | R9 | Cogley's mouth may have other near-contacts that only show up under motion. The tongue clash had a 0.49 mm gap at rest. | `pose_sweep` treats only touching pairs as designed contacts and flags any designed overlap that grows; it is re-run whenever a range or a placement changes. |
 

@@ -30,6 +30,7 @@ printer:
 pipeline:
   - {script: components_check, kind: check, level: soft, pass: "^COMPONENTS MATCH PARAMS$"}
   - {script: modules, kind: build}       # Cogley modules placed in the head frame -> output/ref (not print files)
+  - {script: cogley_head, kind: build}   # D14: Cogley's whole head a2.0.33 in our frame -> output/ref/head_a2 (not print files)
   - {script: head, kind: build}          # proxy head envelopes -> output/ref (not print files)
   - {script: reserve, kind: build}       # reserved space: brow bays, cable channel -> output/ref
   - {script: brow, kind: build}          # M2 eyebrow mechanism v1: carriers, brackets (+ servo refs)
@@ -49,7 +50,7 @@ pipeline:
 # Scripts in the source folder that check.py knows about but doesn't run
 # (the toolkit's own scripts are known already). Any other script gets a
 # warning, so a new builder or check can't be silently left out.
-not_in_pipeline: [params, geom, snapshot, browgeom, export_print, make_plates]
+not_in_pipeline: [params, geom, snapshot, browgeom, export_print, make_plates, read3mf]
 
 # Every print file, by STL name: the one place to update when a part is added,
 # renamed or printed differently. check.py warns about a built STL that isn't
