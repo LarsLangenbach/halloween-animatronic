@@ -8,6 +8,7 @@ Bought parts and hardware for what is designed so far. Status: `[have]` on hand,
 |---|---|---|---|---|
 | MG90S micro servo (metal gear), with its horns | 19 + 2 spare | mouth 9 (incl. tongue), EyeMech 6, Cogley's brows 4 (D15) | [buy] | Genuine TowerPro: see *SG90 or MG90S* below for spotting fakes. Caliper one when they arrive (`MG90_*` in params.py came from Adafruit's MG90D model, 31.3 tab span; TowerPro says 32.1). |
 | SG90 micro servo (plastic gear) | 3 | bench tests only | [have] | Not for the head: see below. |
+| M3 heat-set insert (M3 × 4) + M3 × 8 socket head screw | 4 + 4 | the eye mechanism's base plate to Cogley's skull frame, 2 per side (ASSEMBLY.md) | [confirm] | The plate's end holes are Ø4–4.5 × 6 deep. Check the insert against them first. |
 | TPU filament, about 95A | 1 spool (the bars take a few grams) | Cogley's flexible brow bars (Part 11, Part 14) | [buy] | Not PLA (PLAN Q18). On the P2S, feed it from the external spool, not the AMS, and use Bambu's TPU 95A preset. |
 | MG996R servo | 2 | jaw | [confirm] | |
 | Will Cogley mouth PCB | 2 | mouth; eyes and brows | [confirm] | Brief §10 |

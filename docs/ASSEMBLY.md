@@ -2,6 +2,20 @@
 
 Steps for the parts designed so far, in order. Hardware is in [BOM.md](BOM.md) and print settings in [PRINT_GUIDE.md](PRINT_GUIDE.md).
 
+## Eye mechanism into Cogley's skull frame
+
+The printed EyeMech (ε3.2 MG90s-A) fits his head the way his own does: its base plate is the same part, with the same mounting holes. It isn't screwed from inside; it sits on three supports and two screws per side hold it.
+
+1. **Inserts.** Each end of the base plate has 3 holes, Ø4–4.5 × 6 deep, at 22.9, 39.6 and 56.5 mm from the plate's front long edge. Heat-set an M3 insert into the front two at each end (22.9 and 39.6). The hole size suits an M3 × 4 insert: check yours against it. His frame uses those two.
+2. **Mouth first.** The mouth's top plate (`TopBase`) sits in the frame. The eye mechanism rests on it, with its two inner feet in the top plate's pockets.
+3. **Drop the eye mechanism in** between the frame's side walls. Its base plate's ends sit against the walls, lined up with the frame's side holes.
+4. **Screw it in** from outside: one M3 × 8 socket screw through each frame side hole into the inserts. That's 2 per side.
+5. **Cheek bone** (from "Frame - Extras"): bolt it to the frame. It sits just under the base plate's side edges (0.4 mm) and supports them.
+
+It uses MG90S servos (the printed set's pockets are for MG90S). The nearest part to any eye servo is the mouth's top plate, 2.7 mm away, so the MG90S's extra 1.5 mm of depth fits.
+
+Renders: process_images snapshot 19 (`studies_cogley_eye_mount.png`, `studies_cogley_eye_slot.png`).
+
 ## Eyebrow unit (one per side), on the bench rig or in the skull
 
 **Assembly order in the head:** build each brow unit completely on the bench first (steps 1–6): in the head, the EyeMech's centre post blocks a straight hex key to the pivot screw. On the bench rig, the round hole in the inner wall gives the key a straight line. The brows and the EyeMech interlock, so neither can pass the other. They go into the head **together**, from the back, with the back upper piece off. Hold the brows in place over the EyeMech, slide the three in, set the EyeMech down on its pads, then bolt the brows up to their plates (step 7). Removal is the reverse: unbolt the brows, slide the three back 50 mm, lift 4 mm, and take them out.
