@@ -271,7 +271,7 @@ MOUTH_OPEN_X = 46.0            # ASSUMPTION: half-width of the mouth opening (mo
 MOUTH_OPEN_Z = (88.0, 168.0)   # ASSUMPTION: mouth opening from above the chin's curve (an edge on it left slivers) to above the upper lip plates (top 165.8)
 SHELF_T = 2.4                  # the shelf between the EyeMech (above) and the mouth (below)
 SHELF_GAP_BELOW = 1.0          # shelf underside above the mouth's top plate
-SHELF_Y = (-118.0, -12.0)      # shelf from behind the EyeMech base to in front of the mouth's top plate
+SHELF_Y = (-118.0, 8.0)       # shelf from behind the EyeMech base to under the front of its side plates
 BROW_MOUNT_T = 4.0             # plates the brow brackets bolt up into (like the bench rig's ceiling)
 # Joints between the skull pieces: screwed tabs (code-cad shapes.md). A tab is a patch of
 # thickened inner wall on one piece, reaching across the seam behind the other piece's wall;
@@ -283,3 +283,16 @@ SEAM_TAB_OVER = (6.0, 10.0)    # tab reach on its own side, and across the seam 
 SEAM_TAB_SPACING = 40.0        # mm along a seam between tabs (fewer where the wall is open or crowded)
 SEAM_TAB_CLEAR = 1.5           # tabs keep this far from every module and brow part (1.0 + sample spacing)
 M3_CSK = (6.3, 1.75)           # ISO 10642 M3 countersunk head: diameter, depth (90 deg)
+# EyeMech cradle on the shelf (ASSUMPTION until the printed EyeMech is on the bench): pads
+# under its feet, a stop behind its rear foot (shims there set the eye depth); the skull's
+# temple walls (about 1 mm off its side plates) locate it sideways, and a printed strap 0.2
+# over the back of its base plate keeps it down. The shelf bolts down onto four ledges on the
+# side walls; the strap onto two ledges on the back upper piece.
+CRADLE_PAD_MARGIN = 1.0        # pads overhang the feet by this all round
+CRADLE_STOP = (2.4, 4.0)       # rear stop: thickness, height above the feet's underside
+CRADLE_CLEAR = 0.4             # the stop to the EyeMech's rear foot (the 'clear' fit class)
+STRAP_Y = (-113.0, -104.0)     # the strap's band across the back of the base plate (clear of its servos)
+STRAP_GAP = 0.4                # above the base plate's top: it keeps it down (0.4 lift at most), without clamping
+STRAP_T = 4.0
+SHELF_LEDGES_Y = (-40.0, -95.0)   # ledges under the shelf on each side wall, one per skull piece
+SHELF_LEDGE = (12.0, 24.0, 6.0)   # reach from the wall, length, depth under the shelf

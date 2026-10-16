@@ -29,6 +29,35 @@ Rules:
 
 ---
 
+## 2026-10-16 — M3 — EyeMech cradle and strap; print plates; first commit
+
+**Done:**
+- **Print plates for the team** (`output/plates/`, preview `plates_preview.png`):
+  - `eyebrows_plate.stl`: both carriers and both brackets in their print poses, laid out by the new tool `cad/make_plates.py`.
+  - `eyemech_e3.2_MG90s_A_plate.stl`: Cogley's public ε3.2 MG90s size-A file. All 34 parts are kept exactly in his Bambu layout (some print in place and interlock), centred on the bed: 244 × 247.
+- **First commit** `ed2d371` on branch `dev`. Git LFS tracks *.step, *.stl, *.3mf and the process images. The team's own `Halloween_Animatronic_Budget.xlsx` is left out.
+- **EyeMech cradle:** pads under its four feet, a rear stop, the shelf extended to y +8 under its side plates, and four shelf ledges on the side walls.
+- **Retaining strap:** `skull_eye_strap`, 161.6 × 9 × 4, 0.4 over the back of the base plate, bolted to two ledges on the back upper piece.
+- `skull_check` treats the feet on the pads as a designed contact. The front horizontal seam may have 2 tabs (it's crowded; that piece is held mainly by its 9-tab back seam).
+
+**Numbers:**
+- `SHELF_Y` (−118, 8).
+- `CRADLE_PAD_MARGIN` 1, `CRADLE_STOP` (2.4, 4), `CRADLE_CLEAR` 0.4.
+- `STRAP_Y` (−113, −104), `STRAP_GAP` 0.4, `STRAP_T` 4.
+- `SHELF_LEDGES_Y` (−40, −95), `SHELF_LEDGE` (12, 24, 6).
+- Joints: 23 screws (2 / 4 / 9 / 8).
+
+**Check:** `check: PASS (0 hard failure(s), 0 warning(s), 172 s)`.
+
+**Renders:** [process_images](../process_images/README.md) snapshot 13.
+
+**Problems and fixes along the way:**
+- The first cradle had rails beside the side plates and zip-tie slots. The inner rails hit the bottom-lid levers, and the outer plates are only ~1 mm from the temple walls. Replaced by the stop, the wall location and the strap.
+- Pads reaching the shelf's curved front edge left slivers. They now stop 2 short of it.
+- The designed 0.4 strap gap measured 0.399. The check now allows 0.02 for rounding.
+
+**Next:** Neck base and the rear access panel. The mouth mount waits on Q14.
+
 ## 2026-10-15 — M3 — Skull joints
 
 **Done:**

@@ -236,7 +236,12 @@ Goal: a brow that deforms the skin convincingly, built and tested on the bench b
 - [x] Joints: 24 screwed tabs along the 4 seams (3 / 4 / 9 / 8).
   - Each tab is a 5.5 mm patch of thickened inner wall on one piece, reaching behind the other piece's wall. It holds an M3 insert; an M3 countersunk screw comes from outside, its head flush under the skin.
   - Tabs are placed automatically: wall on both sides, ≥ 1.5 from every module, brow part, motion sweep, the shelf and the brow plates, countersinks ≥ 2 from any opening, and no tabs where the wall lies nearly in the seam plane.
-- [ ] EyeMech cradle and clamps on the shelf (it has no mounting holes).
+- [x] EyeMech cradle. The EyeMech stands on feet (three plates and a rear block, all at z 185.2), not on its base plate, so:
+  - The shelf carries pads under the feet and a stop behind the rear foot, where shims set the eye depth.
+  - The temple walls (about 1 mm off its side plates) locate it sideways.
+  - A printed strap 0.4 over the back of its base plate keeps it down. It bolts to two ledges on the back upper piece.
+  - The shelf bolts down onto four ledges on the side walls (M3 inserts).
+  - ASSUMPTION until the printed EyeMech is on the bench. A first try with rails and zip ties hit the bottom-lid levers.
 - [ ] Mouth mount. **Waiting on Q14:** how Cogley fixes the mouth's top plate into his own head frame.
 - [ ] Neck/base interface: a base plate, the bolt pattern to the enclosure, the cable exit.
 - [ ] Rear access panel, cable channel features, fan room (R6), and fixed skin attachments (with M4).

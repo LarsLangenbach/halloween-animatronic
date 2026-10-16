@@ -36,7 +36,8 @@ sys.stdout.reconfigure(encoding="utf-8")
 P = K.params()
 S = P.HEAD_SCALE
 NOISE = 1.0
-PIECES = ("skull_front_upper", "skull_front_lower", "skull_back_upper", "skull_back_lower", "skull_shelf")
+PIECES = ("skull_front_upper", "skull_front_lower", "skull_back_upper", "skull_back_lower", "skull_shelf",
+          "skull_eye_strap")
 STATIC_MIN = 0.4          # mm: fixed parts against the skull (a print fit class)
 
 
@@ -88,6 +89,8 @@ def main():
         return float(trimesh.proximity.closest_point(skull[name], cand)[1].min())
 
     static = [p for p in parts]                                   # every module part at rest
+    eye_min = min(p["m"].bounds[0][2] for p in parts if p["module"] == "eyemech")
+    on_pads = {id(p) for p in parts if p["module"] == "eyemech" and p["m"].bounds[0][2] < eye_min + 0.1}
     brow_static = {k: v for k, v in brow.items() if v is not None and not k.startswith("rig")}
     for name, sm in skull.items():
         ov_list = []
@@ -97,9 +100,11 @@ def main():
             if L.gap(p["m"].bounds, (lo, hi)) > 3.0:
                 continue
             g = closest(p["p"], name)
+            if name == "skull_shelf" and id(p) in on_pads:          # the EyeMech's feet stand on
+                g = np.inf                                            # the cradle's pads: overlap only
             if g < best_mod[0]:
                 best_mod = (g, f"{p['module']} {p['label']}")
-            if g < 0.05 and p["watertight"] and not p["shell"]:
+            if (g < 0.05 or name == "skull_shelf") and p["watertight"] and not p["shell"]:
                 v = (R.to_mf(p["m"]) ^ R.to_mf(sm)).volume()
                 if v > NOISE:
                     ov_list.append(f"{p['label']} {v:.0f}")
@@ -119,9 +124,9 @@ def main():
                   f"{', '.join(ov_list) or 'none'} |")
         for o in ov_list:
             issues.append(f"{name} overlaps {o} mm3")
-        if best_mod[0] < STATIC_MIN and not ov_list:
+        if best_mod[0] < STATIC_MIN - 0.02 and not ov_list:              # 0.02: designed 0.4 gaps measure 0.399
             issues.append(f"{name} only {best_mod[0]:.2f} from {best_mod[1]}")
-        if best_brow[0] < STATIC_MIN:
+        if best_brow[0] < STATIC_MIN - 0.02:
             issues.append(f"{name} only {best_brow[0]:.2f} from {best_brow[1]}")
         print(f"{name}: module {best_mod[0]:.1f} ({best_mod[1]}), brow {best_brow[0]:.1f} ({best_brow[1]}), "
               f"overlaps {', '.join(ov_list) or 'none'}")
@@ -171,9 +176,9 @@ def main():
 
 BONE = {"skull_front_upper": (0.93, 0.89, 0.78), "skull_front_lower": (0.88, 0.84, 0.72),
         "skull_back_upper": (0.80, 0.76, 0.66), "skull_back_lower": (0.75, 0.71, 0.62),
-        "skull_shelf": (0.55, 0.75, 0.75)}
+        "skull_shelf": (0.55, 0.75, 0.75), "skull_eye_strap": (0.45, 0.70, 0.70)}
 EXPLODE = {"skull_front_upper": (0, 40, 40), "skull_front_lower": (0, 40, -40), "skull_back_upper": (0, -40, 40),
-           "skull_back_lower": (0, -40, -40), "skull_shelf": (0, 0, 0)}
+           "skull_back_lower": (0, -40, -40), "skull_shelf": (0, 0, 0), "skull_eye_strap": (0, -20, 25)}
 
 
 def render(skull, parts, brow, out_dir):

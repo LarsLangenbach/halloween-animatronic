@@ -33,8 +33,9 @@ Bought parts and hardware for what is designed so far. Status: `[have]` on hand,
 
 | Item | Qty | Notes |
 |---|---|---|
-| M3 × 8 countersunk screw (ISO 10642) | 24 | seam joints, from outside; heads flush under the skin |
-| M3 heat-set insert (M3 × 4) | 24 | in the seam tabs, installed from the tab's outer face before assembly |
+| M3 × 8 countersunk screw (ISO 10642) | 23 | seam joints, from outside; heads flush under the skin |
+| M3 heat-set insert (M3 × 4) | 23 + 6 | seam tabs (installed from the tab's outer face before assembly), 4 shelf ledges, 2 strap ledges |
+| M3 × 8 socket head screw | 6 | shelf to its 4 ledges, strap to its 2 ledges |
 
 ## Skin attachment (M4, not designed yet)
 

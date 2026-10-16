@@ -21,8 +21,12 @@ and split into printable pieces at SKULL_SPLIT_Z and SKULL_SPLIT_Y:
   skull_front_lower   cheeks, upper lip, chin and the front of the neck
   skull_back_upper    the back of the cranium
   skull_back_lower    the nape and the back of the neck
+  skull_eye_strap     a printed strap 0.4 over the back of the EyeMech's base
+                      plate, bolted to two ledges on the back upper piece
   skull_shelf         a separate plate between the EyeMech (on top) and the
-                      mouth module (underneath), clear of the wall by 0.4
+                      mouth module (underneath), clear of the wall by 0.4: the
+                      EyeMech's cradle, screwed down onto four ledges on the
+                      side walls
 
 v0 has no joints, fasteners, access panel or module mounts yet: it is the
 layout to check them against (PLAN M3).
@@ -158,24 +162,133 @@ def brow_mounts(skull_in_bite):
     return plates
 
 
-def shelf(skull_in_clear):
+def eyemech_feet(tol=0.1):
+    """The EyeMech stands on feet (its side plates, an inner plate and a rear block), not on
+    its base plate: [(x0, y0, x1, y1)] footprints of the parts within tol of its lowest point,
+    and that height."""
+    import layout_check as L
+    base_scale, parts = L.load_parts()
+    L.place(parts, base_scale, S)
+    eye = [p for p in parts if p["module"] == "eyemech"]
+    zmin = min(p["m"].bounds[0][2] for p in eye)
+    feet = [(b[0][0], b[0][1], b[1][0], b[1][1]) for b in (p["m"].bounds for p in eye) if b[0][2] < zmin + tol]
+    return feet, zmin
+
+
+def shelf_z():
     z0 = mouth_top() + P.SHELF_GAP_BELOW
-    plate = box((-BIG, P.SHELF_Y[0], z0), (BIG, P.SHELF_Y[1], z0 + P.SHELF_T)) ^ skull_in_clear
+    return z0, z0 + P.SHELF_T
+
+
+def shelf_ledge_points(skull_in_clear_mesh):
+    """(x, y) of the shelf's screws over the four ledges: SHELF_LEDGE[0] / 2 in from the side
+    wall at each SHELF_LEDGES_Y."""
+    z0, _ = shelf_z()
+    out = []
+    for sx in (+1, -1):
+        for y in P.SHELF_LEDGES_Y:
+            x = 40.0
+            while x < 120 and G.envelope_margin(np.array([[sx * x, y, z0 - 1.0]]), S,
+                                                 P.SKIN_T + P.SKULL_WALL)[0] > 0:
+                x += 0.5
+            out.append((sx * (x - P.SHELF_LEDGE[0] / 2), y, sx))
+    return out
+
+
+def shelf(skull_in_clear):
+    """The shelf: a plate between the mouth (under it) and the EyeMech (on it), clear of the
+    wall by 0.4, with the EyeMech cradle on top (pads under its feet, a stop behind its rear
+    foot) and clearance holes for the screws into the ledges on the side walls."""
+    z0, z1 = shelf_z()
+    plate = box((-BIG, P.SHELF_Y[0], z0), (BIG, P.SHELF_Y[1], z1)) ^ skull_in_clear
+    feet, zf = eyemech_feet()
+    m, c = P.CRADLE_PAD_MARGIN, P.CRADLE_CLEAR
+    st, sh = P.CRADLE_STOP
+    adds, cuts = [], []
+    for x0, y0, x1, y1 in feet:
+        # pads overhang the foot except toward a side wall (the outer side plates sit ~1 mm from it)
+        px0 = x0 if x0 < -40 else x0 - m
+        px1 = x1 if x1 > 40 else x1 + m
+        py1 = min(y1 + m, P.SHELF_Y[1] - 2.0)                                     # off the shelf's curved front
+        adds.append(box((px0, y0 - m, z1 - 0.01), (px1, py1, zf)))                # feet rest on it
+        if y1 - y0 < 30:                                                         # the rear foot: a stop
+            adds.append(box((x0, y0 - c - st, z1 - 0.01), (x1, y0 - c, zf + sh)))
+    plate = mf.Manifold.batch_boolean([plate] + adds, mf.OpType.Add) ^ skull_in_clear
+    for x, y, _ in shelf_ledge_points(None):
+        cuts.append(cyl(P.M3_CLEAR / 2, (x, y, z0 - 1), (x, y, z1 + 1)))
     cable = trimesh.load(os.path.join(G.ref_dir(), "reserve", "cable.stl"), force="mesh")
-    return plate - R.to_mf(cable)
+    cuts.append(R.to_mf(cable))
+    return plate - mf.Manifold.batch_boolean(cuts, mf.OpType.Add)
+
+
+def eyemech_top():
+    """Highest point of the EyeMech's base plate inside the strap's band (STRAP_Y)."""
+    import layout_check as L
+    base_scale, parts = L.load_parts()
+    L.place(parts, base_scale, S)
+    top = -np.inf
+    for p in parts:
+        if p["module"] != "eyemech":
+            continue
+        v = p["m"].vertices
+        band = v[(v[:, 1] >= P.STRAP_Y[0] - 1) & (v[:, 1] <= P.STRAP_Y[1] + 1)]
+        if len(band):
+            top = max(top, float(band[:, 2].max()))
+    return top
+
+
+def strap_parts(skull_in_clear, bite):
+    """The retaining strap across the back of the EyeMech's base plate (STRAP_GAP above it),
+    clear of the wall by 0.4, and its two ledges on the back upper piece: (strap, [(piece,
+    ledge, insert hole)])."""
+    z0 = eyemech_top() + P.STRAP_GAP
+    y0, y1 = P.STRAP_Y
+    strap = box((-BIG, y0, z0), (BIG, y1, z0 + P.STRAP_T)) ^ skull_in_clear
+    ledges = []
+    ym = (y0 + y1) / 2
+    for sx in (+1, -1):
+        x = 40.0
+        while x < 120 and G.envelope_margin(np.array([[sx * x, ym, z0 - 1.0]]), S, P.SKIN_T + P.SKULL_WALL)[0] > 0:
+            x += 0.5
+        xc = sx * (x - 6.0)
+        xa, xb = sorted((xc - sx * 6.0, xc + sx * 12.0))
+        ledge = box((xa, y0 - 3.0, z0 - 6.0), (xb, y1 + 3.0, z0 - 0.01)) ^ bite
+        hole = cyl(P.M3_INSERT_HOLE / 2, (xc, ym, z0 + 0.5), (xc, ym, z0 - 5.0))
+        strap -= cyl(P.M3_CLEAR / 2, (xc, ym, z0 - 1.0), (xc, ym, z0 + P.STRAP_T + 1.0))
+        piece = "skull_back_upper" if z0 >= P.SKULL_SPLIT_Z else "skull_back_lower"
+        ledges.append((piece, ledge, hole))
+    return strap, ledges
+
+
+def shelf_ledges(bite):
+    """Ledges under the shelf on the side walls, biting into the wall, each with an M3 insert
+    from the top: [(piece, ledge, insert hole)]."""
+    z0, _ = shelf_z()
+    reach, length, depth = P.SHELF_LEDGE
+    out = []
+    for x, y, sx in shelf_ledge_points(None):
+        xa, xb = sorted((x - sx * reach / 2, x + sx * (reach / 2 + 6.0)))
+        ledge = box((xa, y - length / 2, z0 - depth), (xb, y + length / 2, z0 - 0.01)) ^ bite
+        hole = cyl(P.M3_INSERT_HOLE / 2, (x, y, z0 + 0.5), (x, y, z0 - depth + 1.0))
+        piece = "skull_front_lower" if y >= P.SKULL_SPLIT_Y else "skull_back_lower"
+        out.append((piece, ledge, hole))
+    return out
 
 
 # ---------------------------------------------------------------------------
 # joints: screwed tabs along the four seams
 # ---------------------------------------------------------------------------
-# (name, axis, value, piece with the tab (A), piece with the screw (B), A's side of the seam)
+# (name, axis, value, piece with the tab (A), piece with the screw (B), A's side of the seam,
+#  fewest tabs accepted)
 SEAMS = (
     # tabs on the upper piece, screws into the lower one: there is room for countersinks
     # between the mouth opening and the seam, but not under the eye openings
-    ("front, upper | lower", 2, P.SKULL_SPLIT_Z, "skull_front_upper", "skull_front_lower", +1),
-    ("back, upper | lower", 2, P.SKULL_SPLIT_Z, "skull_back_lower", "skull_back_upper", -1),
-    ("upper, front | back", 1, P.SKULL_SPLIT_Y, "skull_back_upper", "skull_front_upper", -1),
-    ("lower, front | back", 1, P.SKULL_SPLIT_Y, "skull_back_lower", "skull_front_lower", -1),
+    # the front seam is short and crowded (eye openings above, the shelf's cradle behind); the
+    # front upper piece is held mainly by its back seam
+    ("front, upper | lower", 2, P.SKULL_SPLIT_Z, "skull_front_upper", "skull_front_lower", +1, 2),
+    ("back, upper | lower", 2, P.SKULL_SPLIT_Z, "skull_back_lower", "skull_back_upper", -1, 3),
+    ("upper, front | back", 1, P.SKULL_SPLIT_Y, "skull_back_upper", "skull_front_upper", -1, 3),
+    ("lower, front | back", 1, P.SKULL_SPLIT_Y, "skull_back_lower", "skull_front_lower", -1, 3),
 )
 
 
@@ -312,7 +425,7 @@ def joints(wall_mesh, keepout):
               R.to_mf(H.envelope(S, inset + 0.1)) - R.to_mf(H.envelope(S, inset + P.SEAM_TAB_T)))
     tree = cKDTree(keepout)
     adds, cuts, report, placed = {}, {}, [], []
-    for name, axis, value, piece_a, piece_b, side in SEAMS:
+    for name, axis, value, piece_a, piece_b, side, fewest in SEAMS:
         if axis == 2:
             front = "front" in piece_a
 
@@ -353,7 +466,7 @@ def joints(wall_mesh, keepout):
                 placed.append(q)
                 last = q
                 count += 1
-        report.append((name, count))
+        report.append((name, count, fewest))
     return adds, cuts, report
 
 
@@ -388,6 +501,8 @@ def pieces(with_joints=True):
     plates = brow_mounts(bite)
     wall = mf.Manifold.batch_boolean([wall] + plates, mf.OpType.Add)
     shelf_part = shelf(clear)
+    strap_part, strap_ledges = strap_parts(clear, bite)
+    ledges = shelf_ledges(bite) + strap_ledges
     zs, ys = P.SKULL_SPLIT_Z, P.SKULL_SPLIT_Y
     out = {
         "skull_front_upper": wall ^ box((-BIG, ys, zs), (BIG, BIG, BIG)),
@@ -395,17 +510,21 @@ def pieces(with_joints=True):
         "skull_back_upper": wall ^ box((-BIG, -BIG, zs), (BIG, ys, BIG)),
         "skull_back_lower": wall ^ box((-BIG, -BIG, -BIG), (BIG, ys, zs)),
     }
+    for piece, ledge, hole in ledges:
+        out[piece] = (out[piece] + ledge) - hole
     if with_joints:
-        extra = [R.from_mf(shelf_part)] + [R.from_mf(pl) for pl in plates]
+        extra = ([R.from_mf(shelf_part), R.from_mf(strap_part)] + [R.from_mf(pl) for pl in plates]
+                 + [R.from_mf(l) for _, l, _ in ledges])
         adds, cuts, report = joints(wall_mesh, keepout_points(extra))
         for name in out:
             out[name] = mf.Manifold.batch_boolean([out[name]] + adds.get(name, []), mf.OpType.Add)
             if cuts.get(name):
                 out[name] -= mf.Manifold.batch_boolean(cuts[name], mf.OpType.Add)
-        for seam, count in report:
-            print(f"{'' if count >= 3 else 'WARN  '}seam {seam}: {count} screwed tab(s)")
-        print(f"joints: {sum(c for _, c in report)} M3 countersunk screws + inserts")
+        for seam, count, fewest in report:
+            print(f"{'' if count >= fewest else 'WARN  '}seam {seam}: {count} screwed tab(s)")
+        print(f"joints: {sum(c for _, c, _ in report)} M3 countersunk screws + inserts")
     out["skull_shelf"] = shelf_part
+    out["skull_eye_strap"] = strap_part
     return out
 
 
