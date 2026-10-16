@@ -11,7 +11,7 @@ Bought parts and hardware for what is designed so far. Status: `[have]` on hand,
 | M3 heat-set insert (M3 × 4) + M3 × 8 socket head screw | 4 + 4 | the eye mechanism's base plate to Cogley's skull frame, 2 per side (ASSEMBLY.md) | [confirm] | The plate's end holes are Ø4–4.5 × 6 deep. Check the insert against them first. |
 | TPU filament, about 95A | 1 spool (the bars take a few grams) | Cogley's flexible brow bars (Part 11, Part 14) | [buy] | Not PLA (PLAN Q18). On the P2S, feed it from the external spool, not the AMS, and use Bambu's TPU 95A preset. |
 | MG996R servo | 2 | jaw | [confirm] | |
-| Will Cogley mouth PCB | 2 | mouth; eyes and brows | [confirm] | Brief §10 |
+| Will Cogley mouth PCB (Raspberry Pi Pico, 12 servo outputs GP4–GP15, XT60 power in) | 2 | #1: the mouth (jaw 2, lips 8, tongue; 11 of 12 outputs). #2: the eyes (6) and the brows (4) (10 of 12) | [confirm: 2 on hand?] | Cogley runs the eyes and the brows on two separate Eyes/Brow/Neck boards. One mouth board can do both, with one combined program (PLAN D18). |
 
 ### SG90 or MG90S
 
