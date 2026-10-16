@@ -37,7 +37,7 @@ P = K.params()
 S = P.HEAD_SCALE
 NOISE = 1.0
 PIECES = ("skull_front_upper", "skull_front_lower", "skull_back_upper", "skull_back_lower", "skull_shelf",
-          "skull_eye_strap")
+          "skull_eye_strap", "skull_neck_plate", "skull_access_panel")
 STATIC_MIN = 0.4          # mm: fixed parts against the skull (a print fit class)
 
 
@@ -176,9 +176,11 @@ def main():
 
 BONE = {"skull_front_upper": (0.93, 0.89, 0.78), "skull_front_lower": (0.88, 0.84, 0.72),
         "skull_back_upper": (0.80, 0.76, 0.66), "skull_back_lower": (0.75, 0.71, 0.62),
-        "skull_shelf": (0.55, 0.75, 0.75), "skull_eye_strap": (0.45, 0.70, 0.70)}
+        "skull_shelf": (0.55, 0.75, 0.75), "skull_eye_strap": (0.45, 0.70, 0.70),
+        "skull_neck_plate": (0.45, 0.60, 0.70), "skull_access_panel": (0.70, 0.66, 0.56)}
 EXPLODE = {"skull_front_upper": (0, 40, 40), "skull_front_lower": (0, 40, -40), "skull_back_upper": (0, -40, 40),
-           "skull_back_lower": (0, -40, -40), "skull_shelf": (0, 0, 0), "skull_eye_strap": (0, -20, 25)}
+           "skull_back_lower": (0, -40, -40), "skull_shelf": (0, 0, 0), "skull_eye_strap": (0, -20, 25),
+           "skull_neck_plate": (0, 0, -70), "skull_access_panel": (0, -90, 50)}
 
 
 def render(skull, parts, brow, out_dir):
@@ -197,9 +199,13 @@ def render(skull, parts, brow, out_dir):
     c = (b[0] + b[1]) / 2
     sc = 0.55 * float(max(b[1] - b[0]))
     tiles = []
-    for title, d in (("front", (0, 1, 0)), ("3/4 from the front left", (0.8, 1.0, 0.4))):
+    for title, d in (("front", (0, 1, 0)), ("3/4 from the front left", (0.8, 1.0, 0.4)),
+                     ("3/4 from the back right", (-0.8, -1.0, 0.3))):
         tiles.append((title, RV.render([RV.surface_actor(pp, rgb) for pp, rgb in skp + mods + brows],
                                        c, d, (0, 0, 1), sc)))
+    off = [(pp, rgb) for (pp, rgb), n in zip(skp, skull) if n != "skull_access_panel"]
+    tiles.append(("back, access panel off", RV.render([RV.surface_actor(pp, rgb) for pp, rgb in off + mods + brows],
+                                                      c, (0, -1, 0.15), (0, 0, 1), sc)))
     for title, o, n in (("side section x = 0", (0, 0, 0), (1, 0, 0)),
                         (f"side section x = {P.EYE_SPACING / 2:.1f} (left eye)", (P.EYE_SPACING / 2, 0, 0), (1, 0, 0)),
                         ("front section y = 0 (eye centres)", (0, 0, 0), (0, 1, 0))):
@@ -219,7 +225,7 @@ def render(skull, parts, brow, out_dir):
         mm.apply_translation(EXPLODE[name])
         acts.append(RV.surface_actor(L.poly(mm), BONE[name]))
     tiles.append(("exploded: the printed skull pieces", RV.render(acts, c, (1.0, 0.6, 0.4), (0, 0, 1), sc * 1.25)))
-    return L.sheet(tiles, out_dir, "skull", [
+    return L.sheet(tiles, out_dir, "skull", cols=4, header_lines=[
         f"M3 skull at head scale {S}: bone = printed skull pieces (shelf teal), with the Cogley modules and the brows inside",
         "sections show a 10 mm slab | black line = outer skin"])
 

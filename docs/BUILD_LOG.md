@@ -29,6 +29,41 @@ Rules:
 
 ---
 
+## 2026-10-16 — M3 — Neck base plate and rear access panel
+
+**Done:**
+- **Neck base:** `skull_neck_plate`, 128.4 × 112.8 × 18.
+  - A 6 mm plate closes the bottom of the neck, 0.4 inside the wall, with an 18 mm collar up the wall's inside.
+  - Six countersunk M3 screws go through the wall at z 10 into inserts in the collar, so the plate also ties both lower pieces together at the bottom.
+  - 4 × M4 clearance holes on a 50 mm square for the stand (ASSUMPTION), and an exit for the cable channel (its Ø25 plus 1.5 all round).
+- **Rear access panel:** `skull_access_panel`, a 96 × 74 opening (corner radius 12) centred at z 268 on the back of the head.
+  - It is cut from the back upper piece with a 0.3 gap all round.
+  - It rests on a 4 mm lip inside the opening. A 13 mm pad behind each side's midpoint holds an M3 insert.
+  - 4 countersunk M3 × 6 screws from outside, heads flush under the skin.
+  - With it off, the brows and the back of the EyeMech are in view.
+- **Screw lengths:** the neck and panel screws are M3 × 6. An M3 × 8 would bottom out in the neck's insert holes and poke through the back of the panel's lip.
+- **Renders:** `skull_check` now adds a 3/4 view from the back and a back view with the panel off (4 columns).
+
+**Numbers (all new):**
+- `NECK_PLATE_T` 6, `NECK_COLLAR` (6, 18), `NECK_SCREW_Z` 10, `NECK_SCREWS` 6.
+- `NECK_BOLT_SQUARE` 50, `M4_CLEAR` 4.5, `CABLE_EXIT_CLEAR` 1.5.
+- `PANEL_CENTRE_Z` 268, `PANEL_SIZE` (96, 74, 12), `PANEL_GAP` 0.3.
+- `PANEL_LIP` (4, 5.5), `PANEL_SCREW_IN` 5.5, `PANEL_PAD` 13.
+
+**Check:** `check: PASS (0 hard failure(s), 0 warning(s), 158 s)`.
+
+**Renders:** [process_images](../process_images/README.md) snapshot 14 (`skull.png`).
+
+**Problems and fixes along the way:**
+- The first lip was built in two halves, one behind the wall and one behind the panel, that only met along a face. The back upper piece came out as 4 bodies and not watertight, and the overlap check's boolean failed. The panel half now reaches 1 mm under the wall half.
+- The first lip was 7 mm wide with the screws midway across it. Each insert was left with 0.67 mm of wall, and each countersink broke through the panel's edge. Now there is a narrow lip plus a pad at each screw, with the screw 5.5 in from the edge: the countersink stays 2 inside the panel, and 4.5 of wall stands beside each insert.
+
+**Next:**
+- Fan room and vent (R6), probably in the access panel.
+- Fixed skin attachments (with M4).
+- `service_check`.
+- The mouth mount waits on Q14.
+
 ## 2026-10-16 — M3 — EyeMech cradle and strap; print plates; first commit
 
 **Done:**

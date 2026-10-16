@@ -21,6 +21,10 @@ and split into printable pieces at SKULL_SPLIT_Z and SKULL_SPLIT_Y:
   skull_front_lower   cheeks, upper lip, chin and the front of the neck
   skull_back_upper    the back of the cranium
   skull_back_lower    the nape and the back of the neck
+  skull_access_panel  the rear access panel: cut from the back upper piece,
+                      resting on a lip inside the opening, 4 countersunk screws
+  skull_neck_plate    the neck base: closes the bottom of the neck, screwed to
+                      both lower pieces, bolts to the jar's stand (4 x M4)
   skull_eye_strap     a printed strap 0.4 over the back of the EyeMech's base
                       plate, bolted to two ledges on the back upper piece
   skull_shelf         a separate plate between the EyeMech (on top) and the
@@ -258,6 +262,104 @@ def strap_parts(skull_in_clear, bite):
         piece = "skull_back_upper" if z0 >= P.SKULL_SPLIT_Z else "skull_back_lower"
         ledges.append((piece, ledge, hole))
     return strap, ledges
+
+
+def back_points(outline, mid):
+    """Points on the wall's mid-surface behind (x, z) outline points (rays toward -y from
+    inside the head), and the outward normals there."""
+    xz = np.asarray(outline, float)
+    origins = np.column_stack([xz[:, 0], np.full(len(xz), P.SKULL_SPLIT_Y), xz[:, 1]])
+    dirs = np.tile([0.0, -1.0, 0.0], (len(xz), 1))
+    loc, ray, tri = mid.ray.intersects_location(origins, dirs, multiple_hits=False)
+    order = np.argsort(ray)
+    return loc[order], mid.face_normals[tri[order]]
+
+
+def back_cutter(outline, mid, outside=15.0, inside=P.SKULL_WALL + 6.0):
+    """normal_cutter() for the back of the head: the convex hull of the outline's rims,
+    outside and inside the wall along its normals."""
+    pts, n = back_points(outline, mid)
+    half = P.SKULL_WALL / 2
+    return R.to_mf(trimesh.convex.convex_hull(np.vstack([pts + (half + outside) * n, pts - (inside - half) * n])))
+
+
+def access_panel(bite, clear_layer_in):
+    """The rear access panel: (panel, opening cutter, lip, panel screw holes, lip insert holes).
+    The panel is the wall inside the outline, PANEL_GAP smaller all round; it rests on a narrow
+    lip behind the opening's edge (biting into the back upper piece's wall around it), held by
+    4 countersunk M3 screws into inserts in pads on the lip, one at each side's midpoint."""
+    inset = P.SKIN_T + P.SKULL_WALL
+    mid = H.envelope(S, P.SKIN_T + P.SKULL_WALL / 2)
+    w, h, r = P.PANEL_SIZE
+    zc = P.PANEL_CENTRE_Z
+    g = P.PANEL_GAP
+    reach, lt = P.PANEL_LIP
+
+    def outline(grow):
+        return rounded_rectangle(-w / 2 - grow, w / 2 + grow, zc - h / 2 - grow, zc + h / 2 + grow, max(r + grow, 1.0))
+
+    opening = back_cutter(outline(0.0), mid)
+    panel_cut = back_cutter(outline(-g), mid)
+    lip_out = back_cutter(outline(reach), mid, inside=P.SKULL_WALL + lt + 2.0)
+    lip_in = back_cutter(outline(-reach), mid, inside=P.SKULL_WALL + lt + 2.0)
+    deep = R.to_mf(H.envelope(S, inset + lt))
+    behind_wall = (bite - deep) ^ (lip_out - opening)                   # bites into the wall round the opening
+    grown = back_cutter(outline(1.0), mid)                              # overlaps the wall part by 1 mm
+    si, pad = P.PANEL_SCREW_IN, P.PANEL_PAD / 2
+    points = ((0.0, zc + h / 2 - si), (0.0, zc - h / 2 + si), (w / 2 - si, zc), (-w / 2 + si, zc))
+    pads = [back_cutter(rounded_rectangle(x - pad, x + pad, z - pad, z + pad, 3.0), mid) for x, z in points]
+    pads = mf.Manifold.batch_boolean(pads, mf.OpType.Add) ^ grown
+    behind_panel = (clear_layer_in - deep) ^ ((grown - lip_in) + pads)  # 0.1 behind the panel
+    lip = behind_wall + behind_panel
+    screws, inserts = [], []
+    for x, z in points:
+        (q,), (n,) = back_points([(x, z)], mid)
+        o, i = q + n * P.SKULL_WALL / 2, q - n * P.SKULL_WALL / 2
+        inserts.append(cyl(P.M3_INSERT_HOLE / 2, i + 0.3 * n, i - (lt - 1.0) * n, 32))
+        rr = P.M3_CSK[0] / 2 + 0.6
+        cone = trimesh.creation.cone(rr, rr, sections=32)
+        cone.apply_transform(trimesh.geometry.align_vectors([0.0, 0.0, 1.0], -n))
+        cone.apply_translation(o + 0.6 * n)
+        screws.append(cyl(P.M3_CLEAR / 2, i - 1.0 * n, o + 1.0 * n, 32) + R.to_mf(cone))
+    return panel_cut, opening, lip, screws, inserts
+
+
+def neck_plate(clear):
+    """The neck base: a plate closing the bottom of the neck (inside the wall by 0.4) with a
+    collar up the wall's inside; NECK_SCREWS countersunk M3 screws through the wall into
+    inserts in the collar; 4 x M4 holes on NECK_BOLT_SQUARE for the jar's stand; an exit for
+    the cable channel. Returns (plate, {piece: [screw holes]})."""
+    inset = P.SKIN_T + P.SKULL_WALL
+    t, (ct, ch) = P.NECK_PLATE_T, P.NECK_COLLAR
+    inner = R.to_mf(H.envelope(S, inset + 0.4 + ct))
+    plate = (clear ^ box((-BIG, -BIG, 0.0), (BIG, BIG, t))) + ((clear - inner) ^ box((-BIG, -BIG, 0.0), (BIG, BIG, ch)))
+    lo, hi = R.from_mf(plate).bounds
+    cx, cy = (lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2
+    cuts, screws = [], {}
+    h = P.NECK_BOLT_SQUARE / 2
+    for dx in (-h, h):
+        for dy in (-h, h):
+            cuts.append(cyl(P.M4_CLEAR / 2, (cx + dx, cy + dy, -1.0), (cx + dx, cy + dy, t + 1.0)))
+    a, b = np.array(P.CABLE_PATH[-2]), np.array(P.CABLE_PATH[-1])
+    cuts.append(cyl(P.CABLE_D / 2 + P.CABLE_EXIT_CLEAR, (b[0], b[1], -1.0), (b[0], b[1], ch + 1.0)))
+    mid = H.envelope(S, P.SKIN_T + P.SKULL_WALL / 2)
+    for k in range(P.NECK_SCREWS):
+        ang = 2 * np.pi * (k + 0.5) / P.NECK_SCREWS
+        d = np.array([np.cos(ang), np.sin(ang), 0.0])
+        # where a ray from the neck's centre at the screw height meets the wall's mid-surface
+        loc, _, tri = mid.ray.intersects_location([(cx, cy, P.NECK_SCREW_Z)], [d], multiple_hits=False)
+        if not len(loc):
+            continue
+        q, n = loc[0], mid.face_normals[tri[0]]
+        o, i = q + n * P.SKULL_WALL / 2, q - n * P.SKULL_WALL / 2
+        cuts.append(cyl(P.M3_INSERT_HOLE / 2, i + 0.1 * n, i - (0.4 + ct - 1.0) * n, 32))   # insert
+        r = P.M3_CSK[0] / 2 + 0.6
+        cone = trimesh.creation.cone(r, r, sections=32)
+        cone.apply_transform(trimesh.geometry.align_vectors([0.0, 0.0, 1.0], -n))
+        cone.apply_translation(o + 0.6 * n)
+        piece = "skull_front_lower" if q[1] >= P.SKULL_SPLIT_Y else "skull_back_lower"
+        screws.setdefault(piece, []).append(cyl(P.M3_CLEAR / 2, i - 1.0 * n, o + 1.0 * n, 32) + R.to_mf(cone))
+    return plate - mf.Manifold.batch_boolean(cuts, mf.OpType.Add), screws
 
 
 def shelf_ledges(bite):
@@ -512,8 +614,17 @@ def pieces(with_joints=True):
     }
     for piece, ledge, hole in ledges:
         out[piece] = (out[piece] + ledge) - hole
+    neck, neck_screws = neck_plate(clear)
+    for piece, holes in neck_screws.items():
+        out[piece] -= mf.Manifold.batch_boolean(holes, mf.OpType.Add)
+    clear_in = R.to_mf(H.envelope(S, P.SKIN_T + P.SKULL_WALL + 0.1))
+    panel_cut, opening, lip, panel_screws, lip_inserts = access_panel(bite, clear_in)
+    panel = (out["skull_back_upper"] ^ panel_cut) - mf.Manifold.batch_boolean(panel_screws, mf.OpType.Add)
+    out["skull_back_upper"] = ((out["skull_back_upper"] - opening) + lip) - mf.Manifold.batch_boolean(
+        lip_inserts, mf.OpType.Add)
     if with_joints:
-        extra = ([R.from_mf(shelf_part), R.from_mf(strap_part)] + [R.from_mf(pl) for pl in plates]
+        extra = ([R.from_mf(shelf_part), R.from_mf(strap_part), R.from_mf(neck), R.from_mf(lip)]
+                 + [R.from_mf(pl) for pl in plates]
                  + [R.from_mf(l) for _, l, _ in ledges])
         adds, cuts, report = joints(wall_mesh, keepout_points(extra))
         for name in out:
@@ -525,6 +636,8 @@ def pieces(with_joints=True):
         print(f"joints: {sum(c for _, c, _ in report)} M3 countersunk screws + inserts")
     out["skull_shelf"] = shelf_part
     out["skull_eye_strap"] = strap_part
+    out["skull_neck_plate"] = neck
+    out["skull_access_panel"] = panel
     return out
 
 

@@ -296,3 +296,21 @@ STRAP_GAP = 0.4                # above the base plate's top: it keeps it down (0
 STRAP_T = 4.0
 SHELF_LEDGES_Y = (-40.0, -95.0)   # ledges under the shelf on each side wall, one per skull piece
 SHELF_LEDGE = (12.0, 24.0, 6.0)   # reach from the wall, length, depth under the shelf
+# Neck base (M3): a plate closing the bottom of the neck, with a collar 0.4 inside the neck
+# wall; countersunk M3 screws through the wall into inserts in the collar; M4 bolts down
+# into the jar's stand (the stand isn't designed: the pattern is an ASSUMPTION to match).
+NECK_PLATE_T = 6.0
+NECK_COLLAR = (6.0, 18.0)      # collar thickness inside the wall, height above the base
+NECK_SCREW_Z = 10.0            # height of the radial screws into the collar
+NECK_SCREWS = 6                # around the neck, evenly by angle
+NECK_BOLT_SQUARE = 50.0        # ASSUMPTION: 4 x M4 on this square, centred on the neck
+M4_CLEAR = 4.5
+CABLE_EXIT_CLEAR = 1.5         # around the cable channel where it leaves through the plate
+# Rear access panel (brief §5): cut from the back of the head, resting on a narrow lip inside
+# the opening, held by 4 countersunk M3 screws into inserts in pads on the lip.
+PANEL_CENTRE_Z = 268.0         # ASSUMPTION: above the cable channel's top (205) and the EyeMech
+PANEL_SIZE = (96.0, 74.0, 12.0)  # width (x), height (z), corner radius
+PANEL_GAP = 0.3                # all round, between the panel and its opening
+PANEL_LIP = (4.0, 5.5)         # the lip's reach behind the panel's edge, thickness
+PANEL_SCREW_IN = 5.5           # screw axis in from the opening's edge: countersink 2 inside the panel
+PANEL_PAD = 13.0               # square pad on the lip round each screw: 4.5 wall beside the insert

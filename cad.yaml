@@ -79,6 +79,8 @@ parts:
   skull_back_lower: {colour: [0.75, 0.71, 0.62], supports: true, print_rotate: [180, 0, 0]}
   skull_shelf: {colour: [0.55, 0.75, 0.75], supports: false}
   skull_eye_strap: {colour: [0.55, 0.75, 0.75], supports: false}
+  skull_neck_plate: {colour: [0.45, 0.60, 0.70], supports: false}
+  skull_access_panel: {colour: [0.70, 0.66, 0.56], supports: true}
 
 every_part: {watertight: hard, single_body: hard, fits_bed: soft}
 

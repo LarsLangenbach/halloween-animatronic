@@ -24,7 +24,7 @@ Printer: Bambu Lab P2S, 0.4 nozzle, 256 × 256 × 256 bed. Every part fits the b
 
 ## M3: skull (not ready to print)
 
-`skull_front_upper`, `skull_front_lower`, `skull_back_upper`, `skull_back_lower` and `skull_shelf` are v0. They have no joints or mounts yet, so don't print them except as a fit or look test. Each piece fits the bed (186 mm tallest).
+`skull_front_upper`, `skull_front_lower`, `skull_back_upper`, `skull_back_lower`, `skull_shelf`, `skull_eye_strap`, `skull_neck_plate` and `skull_access_panel` have their joints, the EyeMech cradle, the neck base and the access panel. The mouth mount isn't in yet (Q14), so print them only as a fit or look test. Each piece fits the bed (199 mm tallest).
 
 ## Suggested slicer settings
 

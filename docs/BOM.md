@@ -34,8 +34,10 @@ Bought parts and hardware for what is designed so far. Status: `[have]` on hand,
 | Item | Qty | Notes |
 |---|---|---|
 | M3 × 8 countersunk screw (ISO 10642) | 23 | seam joints, from outside; heads flush under the skin |
-| M3 heat-set insert (M3 × 4) | 23 + 6 | seam tabs (installed from the tab's outer face before assembly), 4 shelf ledges, 2 strap ledges |
+| M3 heat-set insert (M3 × 4) | 23 + 6 + 6 + 4 | seam tabs (installed from the tab's outer face before assembly), 4 shelf ledges, 2 strap ledges, 6 in the neck plate's collar, 4 in the access panel's lip |
 | M3 × 8 socket head screw | 6 | shelf to its 4 ledges, strap to its 2 ledges |
+| M3 × 6 countersunk screw (ISO 10642) | 6 + 4 | neck plate (6, through the wall into its collar) and access panel (4); an M3 × 8 would bottom out in their insert holes |
+| M4 bolt | 4 | neck plate to the stand, on a 50 mm square. Length set by the stand (ASSUMPTION) |
 
 ## Skin attachment (M4, not designed yet)
 

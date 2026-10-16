@@ -13,7 +13,7 @@ Plan version: v1, 2026-10-14. Last updated 2026-10-15.
 | M0 Inputs and foundations | — | **in progress**: Cogley STEP files in; printer known; coupon STL built, not yet printed | Both Cogley mechanisms in the repo and measured; servo models in; printer known; calibration coupon printed |
 | M1 Mechanical layout | §12 M1 | **done 2026-10-15**: layout and motion pass at 1.2× (D4); brow bays and cable channel reserved. One bench number outstanding: the real jaw opening | Both modules and the brow space fit a life-size head at every pose; proportions signed off |
 | M2 Eyebrow prototype | §12 M2 | **CAD ready to print (v1.1)**: mechanism, hard stops and bench rig all pass their checks. Waiting on the print and bench test | Both brows bench-tested on MG90S servos; travel, neutral adjustment and hard stops measured |
-| M3 Integrated skull | §12 M3 | **in progress**: skull v0 (wall, openings, 4 pieces + shelf, brow mounts) passes every check; joints, module mounts, access panel and neck next | Skull printed; all 19 servos move through their full range with no skin fitted; each servo can be swapped |
+| M3 Integrated skull | §12 M3 | **in progress**: skull pieces with screwed joints, the EyeMech cradle and strap, the neck base plate and the rear access panel pass every check; the mouth mount (Q14), fan room, skin attachments and service check next | Skull printed; all 19 servos move through their full range with no skin fitted; each servo can be swapped |
 | M4 Snap attachment prototype | §12 M4 | not started | Snap size, adapter and pad chosen from measured pull-off and cycle tests on cast samples |
 | M5 Sculpting integration | §12 M5 | not started | Registered armature printed; datums and attachment coordinates handed to the sculptor |
 | M6 Silicone skin integration | §12 M6 | not started | First skin fitted and connected; attachment positions revised where needed |
@@ -233,7 +233,7 @@ Goal: a brow that deforms the skin convincingly, built and tested on the bench b
   - Split at z 186 / y −60 into 4 pieces that fit the bed, plus a shelf between the EyeMech and the mouth.
   - The brow brackets' mount plates.
 - [x] `skull_check.py`: every module and brow part at rest, and the jaw, lid, eye and brow sweeps, against every skull piece. All clear: ≥ 1.0 at rest (the shelf to the mouth's top plate), ≥ 1.4 in motion.
-- [x] Joints: 24 screwed tabs along the 4 seams (3 / 4 / 9 / 8).
+- [x] Joints: 23 screwed tabs along the 4 seams (2 / 4 / 9 / 8).
   - Each tab is a 5.5 mm patch of thickened inner wall on one piece, reaching behind the other piece's wall. It holds an M3 insert; an M3 countersunk screw comes from outside, its head flush under the skin.
   - Tabs are placed automatically: wall on both sides, ≥ 1.5 from every module, brow part, motion sweep, the shelf and the brow plates, countersinks ≥ 2 from any opening, and no tabs where the wall lies nearly in the seam plane.
 - [x] EyeMech cradle. The EyeMech stands on feet (three plates and a rear block, all at z 185.2), not on its base plate, so:
@@ -243,8 +243,14 @@ Goal: a brow that deforms the skin convincingly, built and tested on the bench b
   - The shelf bolts down onto four ledges on the side walls (M3 inserts).
   - ASSUMPTION until the printed EyeMech is on the bench. A first try with rails and zip ties hit the bottom-lid levers.
 - [ ] Mouth mount. **Waiting on Q14:** how Cogley fixes the mouth's top plate into his own head frame.
-- [ ] Neck/base interface: a base plate, the bolt pattern to the enclosure, the cable exit.
-- [ ] Rear access panel, cable channel features, fan room (R6), and fixed skin attachments (with M4).
+- [x] Neck/base interface: `skull_neck_plate`, a 6 mm plate 0.4 inside the wall with an 18 mm collar up its inside.
+  - Six countersunk M3 screws through the wall into inserts in the collar; it also ties the two lower pieces together at the bottom.
+  - 4 × M4 on a 50 mm square for the stand (ASSUMPTION until the jar and its stand are chosen), and the cable channel's exit.
+- [x] Rear access panel: `skull_access_panel`, a 96 × 74 opening centred at z 268 on the back of the head.
+  - It rests on a 4 mm lip inside the opening, with a pad behind each side's midpoint for an M3 insert.
+  - 4 countersunk M3 × 6 screws from outside, heads flush under the skin.
+  - With it off, the brows and the back of the EyeMech are in view.
+- [ ] Cable channel features, fan room and vent (R6), and fixed skin attachments (with M4).
 - [ ] `service_check`: tool paths and removal for every servo and module. Print poses optimised; the v0 poses are a first guess.
 
 ### M4 — Snap attachment prototype
