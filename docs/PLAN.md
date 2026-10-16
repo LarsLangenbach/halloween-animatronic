@@ -237,7 +237,7 @@ Goal: a brow that deforms the skin convincingly, built and tested on the bench b
   - Each tab is a 5.5 mm patch of thickened inner wall on one piece, reaching behind the other piece's wall. It holds an M3 insert; an M3 countersunk screw comes from outside, its head flush under the skin.
   - Tabs are placed automatically: wall on both sides, ≥ 1.5 from every module, brow part, motion sweep, the shelf and the brow plates, countersinks ≥ 2 from any opening, and no tabs where the wall lies nearly in the seam plane.
 - [x] EyeMech cradle. The EyeMech stands on feet (three plates and a rear block, all at z 185.2), not on its base plate, so:
-  - The shelf carries pads under the feet and a stop behind the rear foot, where shims set the eye depth.
+  - The shelf carries pads under the feet. A stop hanging from the strap, behind the base plate's rear lip, sets the eye depth with shims (it moved off the shelf so the EyeMech's way out is clear).
   - The temple walls (about 1 mm off its side plates) locate it sideways.
   - A printed strap 0.4 over the back of its base plate keeps it down. It bolts to two ledges on the back upper piece.
   - The shelf bolts down onto four ledges on the side walls (M3 inserts).

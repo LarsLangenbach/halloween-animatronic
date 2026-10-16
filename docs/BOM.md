@@ -45,7 +45,7 @@ Bought parts and hardware for what is designed so far. Status: `[have]` on hand,
 |---|---|---|
 | Ø6 × 24 dowel (wood or steel) | 4 | joins the two head pieces at the split, glued |
 | M4 heat-set insert (M4 × 8) | 4 | in the neck's underside. Hole Ø5.6 is an ASSUMPTION: check it against the inserts you have |
-| M4 × 16 socket head screw | 4 | plate to the neck, from below (heads in counterbores) |
+| M4 × 12 socket head screw | 4 | plate to the neck, from below (heads in counterbores). Not longer: an M4 × 16 bottoms out in the insert holes before the plate is clamped |
 | Wood screw, Ø4–4.5 | 4 | plate to a board or turntable |
 | Sulfur-free oil-based clay | as needed | e.g. Monster Clay. Sulfur stops platinum-cure silicone from curing (Q15) |
 | PLA | about 0.8 kg | upper ~410 g, lower ~310 g, plate ~95 g (estimate) |

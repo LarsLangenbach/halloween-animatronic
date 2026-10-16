@@ -341,10 +341,12 @@ SCULPT_EYE_SOCKET = 10.0       # eye sockets: depth under the skull's outside (t
 SCULPT_PUPIL = 3.0             # dimple at the front pole of each eye
 SCULPT_SOCKET_CEILING_DEG = 55.0  # the sockets' ceilings, above horizontal: prints upright without supports
 SCULPT_PLATE = (8.0, 25.0)     # base plate: thickness, margin round the neck
-SCULPT_PLATE_CBORE = (8.5, 4.5)  # M4 socket head counterbore under the plate
+SCULPT_PLATE_CBORE = (8.5, 4.5)  # M4 socket head counterbore under the plate: the head seats at z -3.5,
+                               # so an M4 x 12 ends at z 8.5, inside the 10 deep insert hole
 SCULPT_KEY = (12.0, 6.0)       # mold registration cones in the plate's top: diameter, depth
 SCULPT_BOARD_SCREW = 5.0       # holes to screw the plate to a board or turntable
-SCULPT_DOWEL = (6.3, 12.0)     # dowel holes across the split: diameter (6 mm dowels), depth each side
+SCULPT_DOWEL = (6.3, 13.0)     # dowel holes across the split: diameter (6 x 24 dowels), depth each side
+                               # (1 spare at each end: the printed hole ends sag, glue collects)
 SCULPT_DOWELS_XY = ((40.0, -30.0), (-40.0, -30.0), (40.0, -120.0), (-40.0, -120.0))
 M4_INSERT_HOLE = 5.6           # ASSUMPTION: M4 x 8 heat-set insert (check with the coupon's maker)
 M4_INSERT_DEPTH = 10.0

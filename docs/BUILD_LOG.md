@@ -52,7 +52,7 @@ Rules:
 **Numbers:**
 - New: `BACK_UPPER_OUT_DEG` 52, `CRADLE_STOP` (2.4, 60) (thickness, width; was (2.4, 4.0): thickness, height).
 - New: `SCULPT_MIN_SKIN` 3, `SCULPT_GROOVE` 1.2, `SCULPT_GROOVE_GAP` 2, `SCULPT_EYE_SOCKET` 10, `SCULPT_PUPIL` 3, `SCULPT_SOCKET_CEILING_DEG` 55.
-- New: `SCULPT_PLATE` (8, 25), `SCULPT_PLATE_CBORE` (8.5, 4.5), `SCULPT_KEY` (12, 6), `SCULPT_BOARD_SCREW` 5, `SCULPT_DOWEL` (6.3, 12), `M4_INSERT_HOLE` 5.6 (ASSUMPTION), `M4_INSERT_DEPTH` 10.
+- New: `SCULPT_PLATE` (8, 25), `SCULPT_PLATE_CBORE` (8.5, 4.5), `SCULPT_KEY` (12, 6), `SCULPT_BOARD_SCREW` 5, `SCULPT_DOWEL` (6.3, 13), `M4_INSERT_HOLE` 5.6 (ASSUMPTION), `M4_INSERT_DEPTH` 10.
 - New: `EYEMECH_EYE_R` (16.5, 18.1) (MEASURED).
 - New: `SERVICE_EYE_OUT`, `SERVICE_SHELF_OUT`, `SERVICE_TOL` 0.3, `SERVICE_KEY` (20, 65, 2), `SERVICE_STUBBY_KEY` (12, 65, 2), `SERVICE_KEY_SWING` 60, `SERVICE_HEAD_H` 3.
 - Sculpt base estimate (not sliced yet): upper ~8 h, lower ~6 h, plate ~2 h; about 0.8 kg of PLA.
@@ -70,6 +70,7 @@ Rules:
 - The socket ceilings were overhangs (7.4 mm along the normal; the 45° corners still too). A hull of the rims flattened them to 11° until each rim line was tilted.
 - One socket reached 0.7 mm into the skull's wall under the eye. Sockets are now clipped to the skull's own opening.
 - The plate's round offset left near-duplicate points that opened the mesh on reload (and crashed `check.py`'s measure step). It is simplified before extruding.
+- The reviewer found the plate screws too long: an M4 × 16 would bottom out in the insert holes before clamping. Now M4 × 12. The dowel holes were exactly the dowel's length (12 + 12 for a 24 mm dowel); they are now 13 deep a side.
 - `print_check` ran out of memory on the solid head pieces: every inward ray crosses the whole part. It now casts its rays in batches of 2000 faces (the skill's toolkit has the same code).
 
 **Next:**

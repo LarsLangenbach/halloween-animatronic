@@ -24,7 +24,7 @@ The head the clay face is sculpted on (print guide: M5). Its surface is the skul
 
 1. **Inserts.** Heat-set four M4 inserts into the holes in the neck's underside (`sculpt_lower`).
 2. **Join the head.** Glue four Ø6 × 24 dowels into the lower piece's top face. Then glue the upper piece on (epoxy, or thick CA), lining up the midline groove across the joint. Fill the seam flush.
-3. **Plate.** Bolt the plate under the neck with four M4 × 16 socket head screws from below, heads in the counterbores, the cone keys facing up. Screw the plate to a board or turntable through its four corner holes.
+3. **Plate.** Bolt the plate under the neck with four M4 × 12 socket head screws from below (not longer: they would bottom out in the insert holes), heads in the counterbores, the cone keys facing up. Screw the plate to a board or turntable through its four corner holes.
 4. **Seal.** Seal the print (shellac or a primer), so the clay's oils don't soak into it and the clay grips evenly.
 5. **Sculpt** in sulfur-free oil-based clay (Q15). On the base:
    - **Eyes:** each sphere is the EyeMech's lids at their true position. The dimple is the gaze, straight ahead. Sculpt the eyelids round them; the socket is the skull's own eye opening.
