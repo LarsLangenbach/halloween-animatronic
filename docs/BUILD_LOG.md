@@ -29,6 +29,57 @@ Rules:
 
 ---
 
+## 2026-10-16 — Re-base — Cogley's Robot Head α2.0.33 as the base (D14); SG90 vs MG90S
+
+**Done:**
+- **His head's files** (the team's Patreon download) moved to `inputs/reference/head_a2.0.33/` with ASCII names. Contents: his reference assembly (Onshape OBJ, 191 parts), every printed part (Bambu 3MF, 8 plates), his code and both PCBs. No STEP.
+- **`cad/cogley_head.py`** (in the pipeline) imports the assembly into our frame, his eye centres on ours, in 7 groups: frame, extras, robot shell, eyes, mouth, brows, hardware.
+- **`cad/read3mf.py`** reads Bambu 3MFs without lxml. networkx 3.7 is now in the venv, after a uv dry run: trimesh needs it for sections, hole filling and 3MF loading.
+- **Fit study** `cad/studies/cogley_fit.py`:
+  - His EyeMech lands within 1.7 mm of ours. His mouth sits 13.4 mm higher.
+  - His mouth's top plate is the eye shelf (Q14 answered).
+  - 26 parts poke past our skull's inside: the brow bars, the lips, the `CheekBone`, the frame's side screws and the frame at the temples.
+- **Eyes (D16):** the printed ε3.2 MG90s-A set's structural parts are identical to his head's eye parts. With our EyeMech on his base plate, the lids clear his other parts by ≥ 5.7 mm swept, and the eyes by ≥ 8.2. No reprint.
+- **Brows (D15):** his brows: 4 servos, an inner and outer per brow, and flexible TPU bars. Ours stay as the bench backup.
+- **Proportions (Q16, open):** his lips are 71 mm below the eyes, with the eyes 75 mm apart; a normal face would be about 85 mm.
+  - Lowering his mouth 13.4 mm pushes it into his frame (580 sample points inside), so it would mean redrawing his mouth mounts.
+  - The sculpt base v1 is on hold until this is decided.
+- **SG90 vs MG90S:** datasheets and 3D models compared (BOM, *SG90 or MG90S*).
+  - Same footprint and spline size. The MG90S has metal gears, a ball bearing and a tapped metal shaft; it sits about 1.5 mm deeper below its tabs and weighs 13.4 g against 9 g.
+  - The head needs 19 × MG90S. The team's 3 plastic-gear SG90s are for bench tests.
+- Plan v2: D14–D16, Q16–Q18, R12, and the re-base work list (§6).
+
+**Numbers:** his head in our frame: R = diag(−1, −1, 1), t = (0, −67.04, 212.4).
+
+**Check:** `check: PASS (0 hard failure(s), 0 warning(s), 226 s)`.
+
+**Renders:** [process_images](../process_images/README.md) snapshot 16 (`studies_cogley_fit.png`).
+
+**Decisions:** D14 (his head is the base), D15 (his brows), D16 (keep the printed eye set).
+
+**Sources for the servo comparison:**
+- TowerPro: https://www.towerpro.com.tw/product/sg90-7/ and https://www.towerpro.com.tw/product/mg90s-3/
+- Aus Electronics' measured SG90 drawing: https://www.auselectronicsdirect.com.au/assets/brochures/TA0132.pdf
+- servodatabase.com: https://servodatabase.com/servo/towerpro/sg90 and https://servodatabase.com/servo/towerpro/mg90s
+- Electronicos Caldas MG90S sheet: https://www.electronicoscaldas.com/datasheet/MG90S_Tower-Pro.pdf
+- ProtoSupplies (measured currents): https://protosupplies.com/product/servo-motor-micro-sg90/ and https://protosupplies.com/product/servo-motor-micro-mg90s/
+- Horn fit: https://newscrewdriver.com/2020/12/27/notes-on-micro-servo-output-shaft/
+- Spotting clones: https://vorpalrobotics.com/wiki/index.php/Tower_Pro_MG90S_Vs._Clones
+
+**Models checked:**
+- SG90: FreeCAD library (Gafeju, CC-BY-3.0) and Printables 1404346 (CC0)
+- MG90S: Printables 569094 (GPL-3.0) and Printables 1836987 (CC0)
+- MG90D: Adafruit 1143 (MIT)
+- Cogley's own SG90 and MG90S meshes
+
+Their overall heights including the spline: SG90 29.9–30.0, MG90S 31.1–32.4.
+
+**Problems:** the OBJ is missing 2 of his 4 brow servos (R12).
+
+**Next:**
+- The team answers Q16 (proportions), Q17 (neck) and Q18 (TPU), and buys the MG90S servos.
+- Then: move the module placements onto his head, add his brows with their motion, and re-fit the face and the shell.
+
 ## 2026-10-16 — M3 / M5 — Sculpt base; service paths for the back, the EyeMech and the brows
 
 **Done:**

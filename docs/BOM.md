@@ -6,9 +6,46 @@ Bought parts and hardware for what is designed so far. Status: `[have]` on hand,
 
 | Item | Qty | For | Status | Notes |
 |---|---|---|---|---|
-| MG90S micro servo, with its double-arm horn | 17 | mouth 9 (incl. tongue), EyeMech 6, brows 2 | [confirm] | Genuine TowerPro or clone (Q4)? Clones differ by up to 1 mm; caliper one. **Brows: cut the horn's front arm to 9.5 mm from the shaft.** |
+| MG90S micro servo (metal gear), with its horns | 19 + 2 spare | mouth 9 (incl. tongue), EyeMech 6, Cogley's brows 4 (D15) | [buy] | Genuine TowerPro: see *SG90 or MG90S* below for spotting fakes. Caliper one when they arrive (`MG90_*` in params.py came from Adafruit's MG90D model, 31.3 tab span; TowerPro says 32.1). |
+| SG90 micro servo (plastic gear) | 3 | bench tests only | [have] | Not for the head: see below. |
 | MG996R servo | 2 | jaw | [confirm] | |
 | Will Cogley mouth PCB | 2 | mouth; eyes and brows | [confirm] | Brief §10 |
+
+### SG90 or MG90S
+
+They are not the same servo with a different shaft. Both have the same footprint and about the same spline (Ø4.9). The differences are inside and below the tabs:
+
+| | SG90 | MG90S |
+|---|---|---|
+| Gears | plastic (POM) | metal (aluminium) |
+| Output shaft | plastic, the horn screw self-taps into it | metal, tapped for a machine screw |
+| Bearing | bushing | ball bearing |
+| Body (L × W) | 22.7 × 12.2 | 22.8 × 12.2–12.4 |
+| Tab to tab | 32.3 | 32.1–32.5 |
+| Bottom to tab underside | 15.9–17 | 18.5 (about 1.5 deeper) |
+| Bottom to spline top | 30.3–30.7 | 32.5 |
+| Stall torque, 4.8 V | 1.8 kg·cm | 1.8 kg·cm (2.2 at 6 V) |
+| Speed, 4.8 V | 0.10–0.12 s/60° | 0.10 s/60° |
+| Stall current (measured) | 360 mA | 700 mA |
+| Weight | 9 g | 13.4 g |
+
+**What this means for the head:**
+- The rated torque is the same. The difference is durability: the skin loads the gears all the time, and the mouth and brows run into hard stops. Plastic gears strip under that; metal gears don't. Use MG90S everywhere in the head.
+- The 3 SG90s are fine for bench tests, but 3 is far short of the 19 the head needs.
+- **Horns don't swap reliably.** Sources split between 20 and 21 teeth for both servos, and the horn screws differ. The printed ε3.2 eye set has horns for the MG90S.
+- **Pockets:** an MG90S pocket takes an SG90 in plan, but the SG90 sits about 1.5 mm higher. An SG90 pocket is too shallow for an MG90S unless its bottom is open. Cogley's own head runs its eyes on SG90s with its own eye parts. Our printed set is the MG90S version.
+- **Power:** an MG90S stalls at about twice the current of an SG90. Size the supply for it; Cogley uses 5 V 10 A.
+
+**Fakes.** "MG90S" units with plastic gears are sold openly. Warning signs:
+- a price under about US$4.50
+- photos that hide the label
+- a weight near 9 g instead of 13.4 g
+- no tapped metal shaft
+- a copper-coloured washer under the shaft
+
+Weigh one and check the shaft before installing a batch.
+
+Sources: TowerPro's SG90 and MG90S pages, Aus Electronics' measured SG90 drawing (TA0132), servodatabase.com, Electronicos Caldas' MG90S sheet, ProtoSupplies (measured currents), newscrewdriver.com (horn fit), vorpalrobotics.com (spotting clones). Collected 2026-10-16; the URLs are in the build log.
 
 ## Eyebrow mechanism (M2), both brows
 
