@@ -4,6 +4,8 @@ The parts that are ready to print, how to orient them, and the slicer settings.
 
 **Ready-made plates:** `output/plates/eyebrows_plate.stl` (both brows) and `output/plates/eyemech_e3.2_MG90s_A_plate.stl` (Cogley's ε3.2 eye mechanism, size A, in his own layout; don't rearrange the parts, some print in place). In Bambu Studio: Split > To objects, then supports per the table below (tree supports on the brow carriers and on the whole EyeMech plate). Rebuild the brow plate after a change with `cad/make_plates.py`.
 
+**EyeMech supports: on.** Cogley's own project file has supports enabled for every part: tree (auto), threshold angle 30°, not limited to the build plate, 0.2 mm layers, 15 % infill, auto brim. It has no per-part overrides or painted supports. Bambu Studio warns when they are off. Easiest: open his original `output/plates/eyemech_e3.2_MG90s_A_cogley.3mf` (from his EyeMech_Epsilon GitHub, CC BY-NC-SA 4.0), which carries those settings. It was set up for the P1S: pick the P2S when asked and keep the project's process settings.
+
 **Slice the files in `output/print/`.** They are already rotated into their print pose and sitting on the bed. Run `.venv\Scripts\python.exe cad\export_print.py` after any change to refresh them. The files in `output/stl/` are in the assembled pose; they are used for the checks.
 
 Printer: Bambu Lab P2S, 0.4 nozzle, 256 × 256 × 256 bed. Every part fits the bed.
