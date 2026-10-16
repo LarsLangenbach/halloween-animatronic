@@ -39,6 +39,17 @@ Bought parts and hardware for what is designed so far. Status: `[have]` on hand,
 | M3 × 6 countersunk screw (ISO 10642) | 6 + 4 | neck plate (6, through the wall into its collar) and access panel (4); an M3 × 8 would bottom out in their insert holes |
 | M4 bolt | 4 | neck plate to the stand, on a 50 mm square. Length set by the stand (ASSUMPTION) |
 
+## Sculpt base (M5)
+
+| Item | Qty | Notes |
+|---|---|---|
+| Ø6 × 24 dowel (wood or steel) | 4 | joins the two head pieces at the split, glued |
+| M4 heat-set insert (M4 × 8) | 4 | in the neck's underside. Hole Ø5.6 is an ASSUMPTION: check it against the inserts you have |
+| M4 × 16 socket head screw | 4 | plate to the neck, from below (heads in counterbores) |
+| Wood screw, Ø4–4.5 | 4 | plate to a board or turntable |
+| Sulfur-free oil-based clay | as needed | e.g. Monster Clay. Sulfur stops platinum-cure silicone from curing (Q15) |
+| PLA | about 0.8 kg | upper ~410 g, lower ~310 g, plate ~95 g (estimate) |
+
 ## Skin attachment (M4, not designed yet)
 
 | Item | Qty | Notes |

@@ -26,14 +26,18 @@ and split into printable pieces at SKULL_SPLIT_Z and SKULL_SPLIT_Y:
   skull_neck_plate    the neck base: closes the bottom of the neck, screwed to
                       both lower pieces, bolts to the jar's stand (4 x M4)
   skull_eye_strap     a printed strap 0.4 over the back of the EyeMech's base
-                      plate, bolted to two ledges on the back upper piece
+                      plate, with the cradle's stop hanging from it behind the
+                      plate's rear lip, bolted to two ledges on the back upper
+                      piece (it comes off with it)
   skull_shelf         a separate plate between the EyeMech (on top) and the
                       mouth module (underneath), clear of the wall by 0.4: the
                       EyeMech's cradle, screwed down onto four ledges on the
                       side walls
 
-v0 has no joints, fasteners, access panel or module mounts yet: it is the
-layout to check them against (PLAN M3).
+For service the back upper piece comes off up and back (BACK_UPPER_OUT_DEG),
+then the EyeMech and both brows slide out together, straight back: the tabs
+on that piece's seams are placed so none of them hooks it (SEAMS). The mouth
+module's mount is still to come (Q14).
 
 Built as meshes with manifold booleans; written to output/stl/ in the
 assembled pose.
@@ -201,13 +205,13 @@ def shelf_ledge_points(skull_in_clear_mesh):
 
 def shelf(skull_in_clear):
     """The shelf: a plate between the mouth (under it) and the EyeMech (on it), clear of the
-    wall by 0.4, with the EyeMech cradle on top (pads under its feet, a stop behind its rear
-    foot) and clearance holes for the screws into the ledges on the side walls."""
+    wall by 0.4, with the EyeMech cradle on top (pads under its feet; the stop behind its rear
+    foot hangs from the strap, so nothing on the shelf stands in its way out) and clearance
+    holes for the screws into the ledges on the side walls."""
     z0, z1 = shelf_z()
     plate = box((-BIG, P.SHELF_Y[0], z0), (BIG, P.SHELF_Y[1], z1)) ^ skull_in_clear
     feet, zf = eyemech_feet()
-    m, c = P.CRADLE_PAD_MARGIN, P.CRADLE_CLEAR
-    st, sh = P.CRADLE_STOP
+    m = P.CRADLE_PAD_MARGIN
     adds, cuts = [], []
     for x0, y0, x1, y1 in feet:
         # pads overhang the foot except toward a side wall (the outer side plates sit ~1 mm from it)
@@ -215,8 +219,6 @@ def shelf(skull_in_clear):
         px1 = x1 if x1 > 40 else x1 + m
         py1 = min(y1 + m, P.SHELF_Y[1] - 2.0)                                     # off the shelf's curved front
         adds.append(box((px0, y0 - m, z1 - 0.01), (px1, py1, zf)))                # feet rest on it
-        if y1 - y0 < 30:                                                         # the rear foot: a stop
-            adds.append(box((x0, y0 - c - st, z1 - 0.01), (x1, y0 - c, zf + sh)))
     plate = mf.Manifold.batch_boolean([plate] + adds, mf.OpType.Add) ^ skull_in_clear
     for x, y, _ in shelf_ledge_points(None):
         cuts.append(cyl(P.M3_CLEAR / 2, (x, y, z0 - 1), (x, y, z1 + 1)))
@@ -241,13 +243,32 @@ def eyemech_top():
     return top
 
 
+def eyemech_back():
+    """The EyeMech's back face (its base plate's rear lip): y, and the lip's lowest z."""
+    import layout_check as L
+    base_scale, parts = L.load_parts()
+    L.place(parts, base_scale, S)
+    v = np.vstack([p["m"].vertices for p in parts if p["module"] == "eyemech"])
+    back = float(v[:, 1].min())
+    return back, float(v[v[:, 1] < back + 1.0, 2].min())
+
+
 def strap_parts(skull_in_clear, bite):
     """The retaining strap across the back of the EyeMech's base plate (STRAP_GAP above it),
-    clear of the wall by 0.4, and its two ledges on the back upper piece: (strap, [(piece,
-    ledge, insert hole)])."""
+    clear of the wall by 0.4, with the cradle's stop hanging from it behind the base plate's
+    back edge (shims there set the eye depth), and its two ledges on the back upper piece: (strap,
+    [(piece, ledge, insert hole)]). The strap comes off with the back upper piece, stop and
+    all, leaving the EyeMech's way out straight back clear."""
     z0 = eyemech_top() + P.STRAP_GAP
     y0, y1 = P.STRAP_Y
     strap = box((-BIG, y0, z0), (BIG, y1, z0 + P.STRAP_T)) ^ skull_in_clear
+    back, lip = eyemech_back()
+    c, (st, sw) = P.CRADLE_CLEAR, P.CRADLE_STOP
+    strap = mf.Manifold.batch_boolean([
+        strap,
+        box((-sw / 2, back - c - st, z0), (sw / 2, y0 + 0.01, z0 + P.STRAP_T)),   # back from the band
+        box((-sw / 2, back - c - st, lip), (sw / 2, back - c, z0 + 0.01)),       # down behind the base
+    ], mf.OpType.Add)
     ledges = []
     ym = (y0 + y1) / 2
     for sx in (+1, -1):
@@ -382,15 +403,26 @@ def shelf_ledges(bite):
 # ---------------------------------------------------------------------------
 # (name, axis, value, piece with the tab (A), piece with the screw (B), A's side of the seam,
 #  fewest tabs accepted)
+# the way each piece comes off (service_check)
+_a = np.radians(P.BACK_UPPER_OUT_DEG)
+OUT = {"back_upper": np.array([0.0, -np.cos(_a), np.sin(_a)])}
+
 SEAMS = (
+    # (name, axis, value, piece A (owns the tabs), piece B (screwed through), A's side, fewest
+    # accepted, A's way out): with a way out, each tab goes on whichever piece it can't hook
+    # as A leaves: on A where A's wall moves inward along it (the tab, behind B's wall, drops
+    # away from it), on B where A's wall moves outward (A's wall lifts off B's tab).
     # tabs on the upper piece, screws into the lower one: there is room for countersinks
     # between the mouth opening and the seam, but not under the eye openings
     # the front seam is short and crowded (eye openings above, the shelf's cradle behind); the
     # front upper piece is held mainly by its back seam
-    ("front, upper | lower", 2, P.SKULL_SPLIT_Z, "skull_front_upper", "skull_front_lower", +1, 2),
-    ("back, upper | lower", 2, P.SKULL_SPLIT_Z, "skull_back_lower", "skull_back_upper", -1, 3),
-    ("upper, front | back", 1, P.SKULL_SPLIT_Y, "skull_back_upper", "skull_front_upper", -1, 3),
-    ("lower, front | back", 1, P.SKULL_SPLIT_Y, "skull_back_lower", "skull_front_lower", -1, 3),
+    ("front, upper | lower", 2, P.SKULL_SPLIT_Z, "skull_front_upper", "skull_front_lower", +1, 2, None),
+    # the back upper piece comes off up and back (BACK_UPPER_OUT_DEG, service_check). Leaning
+    # that steeply, it takes the back seam's tabs with it, so the EyeMech and brows can then
+    # leave straight back, low, where those tabs would otherwise stand
+    ("back, upper | lower", 2, P.SKULL_SPLIT_Z, "skull_back_upper", "skull_back_lower", +1, 3, "back_upper"),
+    ("upper, front | back", 1, P.SKULL_SPLIT_Y, "skull_back_upper", "skull_front_upper", -1, 3, "back_upper"),
+    ("lower, front | back", 1, P.SKULL_SPLIT_Y, "skull_back_lower", "skull_front_lower", -1, 3, None),
 )
 
 
@@ -527,14 +559,14 @@ def joints(wall_mesh, keepout):
               R.to_mf(H.envelope(S, inset + 0.1)) - R.to_mf(H.envelope(S, inset + P.SEAM_TAB_T)))
     tree = cKDTree(keepout)
     adds, cuts, report, placed = {}, {}, [], []
-    for name, axis, value, piece_a, piece_b, side, fewest in SEAMS:
+    for name, axis, value, piece_a0, piece_b0, side0, fewest, out in SEAMS:
         if axis == 2:
-            front = "front" in piece_a
+            front = "front" in piece_a0
 
             def keep(p, f=front):
                 return (p[:, 1] >= P.SKULL_SPLIT_Y + 8) if f else (p[:, 1] <= P.SKULL_SPLIT_Y - 8)
         else:
-            upper = piece_a.endswith("upper")
+            upper = piece_a0.endswith("upper")
 
             def keep(p, u=upper):
                 if u:
@@ -551,6 +583,9 @@ def joints(wall_mesh, keepout):
                 n = mid.face_normals[mid.nearest.on_surface([q])[2][0]]
                 if abs(n[axis]) > 0.6:                                   # wall nearly in the seam plane:
                     continue                                             # the tab edges would be slivers
+                piece_a, piece_b, side = piece_a0, piece_b0, side0
+                if out is not None and n @ OUT[out] > 0:
+                    piece_a, piece_b, side = piece_b0, piece_a0, -side0
                 qa = q.copy()
                 qa[axis] = value + side * (P.SEAM_TAB_OVER[0] / 2)
                 qa = mid.nearest.on_surface([qa])[0][0]

@@ -118,6 +118,7 @@ SKULL_WALL = 2.4               # skull shell: 6 perimeters at 0.4
 EYEMECH_FILE = "reference/eyemech/EyeMech_e3.1.step"
 EYEMECH_ROT_Z = 180.0          # the file faces -y; ours faces +y
 EYEMECH_EYE_SRC = (37.5, 0.0, 0.0)   # MEASURED: lid sphere centres (+-37.5, 0, 0), R 16.5 / 18.1
+EYEMECH_EYE_R = (16.5, 18.1)   # MEASURED: the lids' inner and outer sphere radii
 EYE_SPACING = 2 * EYEMECH_EYE_SRC[0]  # 75.0: centre to centre (adult ~63)
 EYE_R = 16.0                   # MEASURED: eyeball part 32.0 across
 
@@ -282,15 +283,29 @@ SEAM_TAB_W = 12.0              # tab size along the seam
 SEAM_TAB_OVER = (6.0, 10.0)    # tab reach on its own side, and across the seam behind the other wall
 SEAM_TAB_SPACING = 40.0        # mm along a seam between tabs (fewer where the wall is open or crowded)
 SEAM_TAB_CLEAR = 1.5           # tabs keep this far from every module and brow part (1.0 + sample spacing)
+BACK_UPPER_OUT_DEG = 52.0      # the back upper piece comes off this far up from straight back; the tabs
+                               # on its seams go on whichever piece they can't hook that way
+# Service (service_check.py): the teardown's moves, after the back upper piece is off
+SERVICE_EYE_OUT = ((0.0, -50.0, 0.0), (0.0, -50.0, 4.0), (0.0, -220.0, 4.0))   # EyeMech + both brows:
+                               # back 50 (the brows' flanges slide off their plates), up 4 (over the
+                               # back lower piece's rim), out
+SERVICE_SHELF_OUT = ((0.0, 0.0, 8.0), (0.0, -250.0, 8.0))   # off its ledges, then out the back
+SERVICE_TOL = 0.3              # mm a move may pass into a part (sampling noise; real contact slides)
+SERVICE_KEY = (20.0, 65.0, 2.0)  # L hex key 2.5 (M3 socket heads): short arm, long arm, clearance radius
+SERVICE_STUBBY_KEY = (12.0, 65.0, 2.0)  # the same key with its short arm cut to 12: the front brow
+                               # flange screws have 16.3 mm under the crown
+SERVICE_KEY_SWING = 60.0       # deg of clear swing a hex key needs per bite
+SERVICE_HEAD_H = 3.0           # M3 socket head height: the key starts on its top
 M3_CSK = (6.3, 1.75)           # ISO 10642 M3 countersunk head: diameter, depth (90 deg)
-# EyeMech cradle on the shelf (ASSUMPTION until the printed EyeMech is on the bench): pads
-# under its feet, a stop behind its rear foot (shims there set the eye depth); the skull's
-# temple walls (about 1 mm off its side plates) locate it sideways, and a printed strap 0.2
-# over the back of its base plate keeps it down. The shelf bolts down onto four ledges on the
-# side walls; the strap onto two ledges on the back upper piece.
+# EyeMech cradle (ASSUMPTION until the printed EyeMech is on the bench): pads on the shelf
+# under its feet; the skull's temple walls (about 1 mm off its side plates) locate it
+# sideways; a printed strap 0.4 over the back of its base plate keeps it down, and a stop
+# hanging from the strap behind the base plate's rear lip sets the eye depth (with shims).
+# The shelf bolts down onto four ledges on the side walls; the strap onto two ledges on the
+# back upper piece, and comes off with it, so the EyeMech's way out straight back is clear.
 CRADLE_PAD_MARGIN = 1.0        # pads overhang the feet by this all round
-CRADLE_STOP = (2.4, 4.0)       # rear stop: thickness, height above the feet's underside
-CRADLE_CLEAR = 0.4             # the stop to the EyeMech's rear foot (the 'clear' fit class)
+CRADLE_STOP = (2.4, 60.0)      # the strap's stop behind the base plate's rear lip (x +-38.7): thickness, width
+CRADLE_CLEAR = 0.4             # the stop to the EyeMech's base plate (the 'clear' fit class)
 STRAP_Y = (-113.0, -104.0)     # the strap's band across the back of the base plate (clear of its servos)
 STRAP_GAP = 0.4                # above the base plate's top: it keeps it down (0.4 lift at most), without clamping
 STRAP_T = 4.0
@@ -314,3 +329,22 @@ PANEL_GAP = 0.3                # all round, between the panel and its opening
 PANEL_LIP = (4.0, 5.5)         # the lip's reach behind the panel's edge, thickness
 PANEL_SCREW_IN = 5.5           # screw axis in from the opening's edge: countersink 2 inside the panel
 PANEL_PAD = 13.0               # square pad on the lip round each screw: 4.5 wall beside the insert
+
+# ---------------------------------------------------------------------------
+# Sculpt base (M5, early: sculpt_base.py). The skull's outside as a solid head the clay
+# face is sculpted on, standing on a base plate. Decided 2026-10-16: whole head, normally
+# proportioned (the art style may change later).
+SCULPT_MIN_SKIN = 3.0          # ASSUMPTION: thinnest skin; the base is the skull's outside raised by this
+SCULPT_GROOVE = 1.2            # width of the marking grooves (half as deep)
+SCULPT_GROOVE_GAP = 2.0        # grooves stop this far short of the eye sockets
+SCULPT_EYE_SOCKET = 10.0       # eye sockets: depth under the skull's outside (the lids' sphere front is 3.4 under it)
+SCULPT_PUPIL = 3.0             # dimple at the front pole of each eye
+SCULPT_SOCKET_CEILING_DEG = 55.0  # the sockets' ceilings, above horizontal: prints upright without supports
+SCULPT_PLATE = (8.0, 25.0)     # base plate: thickness, margin round the neck
+SCULPT_PLATE_CBORE = (8.5, 4.5)  # M4 socket head counterbore under the plate
+SCULPT_KEY = (12.0, 6.0)       # mold registration cones in the plate's top: diameter, depth
+SCULPT_BOARD_SCREW = 5.0       # holes to screw the plate to a board or turntable
+SCULPT_DOWEL = (6.3, 12.0)     # dowel holes across the split: diameter (6 mm dowels), depth each side
+SCULPT_DOWELS_XY = ((40.0, -30.0), (-40.0, -30.0), (40.0, -120.0), (-40.0, -120.0))
+M4_INSERT_HOLE = 5.6           # ASSUMPTION: M4 x 8 heat-set insert (check with the coupon's maker)
+M4_INSERT_DEPTH = 10.0

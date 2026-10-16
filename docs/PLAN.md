@@ -4,7 +4,7 @@ Living plan for the mechanical skull, eyebrows and skin interfaces described in
 [BRIEF.md](BRIEF.md). It is updated whenever a milestone moves, a decision is
 made or an input arrives. The day-to-day record is [BUILD_LOG.md](BUILD_LOG.md).
 
-Plan version: v1, 2026-10-14. Last updated 2026-10-15.
+Plan version: v1, 2026-10-14. Last updated 2026-10-16.
 
 ## 1. Status
 
@@ -15,7 +15,7 @@ Plan version: v1, 2026-10-14. Last updated 2026-10-15.
 | M2 Eyebrow prototype | §12 M2 | **CAD ready to print (v1.1)**: mechanism, hard stops and bench rig all pass their checks. Waiting on the print and bench test | Both brows bench-tested on MG90S servos; travel, neutral adjustment and hard stops measured |
 | M3 Integrated skull | §12 M3 | **in progress**: skull pieces with screwed joints, the EyeMech cradle and strap, the neck base plate and the rear access panel pass every check; the mouth mount (Q14), fan room, skin attachments and service check next | Skull printed; all 19 servos move through their full range with no skin fitted; each servo can be swapped |
 | M4 Snap attachment prototype | §12 M4 | not started | Snap size, adapter and pad chosen from measured pull-off and cycle tests on cast samples |
-| M5 Sculpting integration | §12 M5 | not started | Registered armature printed; datums and attachment coordinates handed to the sculptor |
+| M5 Sculpting integration | §12 M5 | **started early**: sculpt base v1 (whole head, the skull's outside + 3 mm) passes its checks and is ready to print | Registered armature printed; datums and attachment coordinates handed to the sculptor |
 | M6 Silicone skin integration | §12 M6 | not started | First skin fitted and connected; attachment positions revised where needed |
 | M7 Final mechanical validation | §12 M7 | not started | Every motion with the skin on, no collisions or overstretch; skin removable for service |
 
@@ -251,7 +251,21 @@ Goal: a brow that deforms the skin convincingly, built and tested on the bench b
   - 4 countersunk M3 × 6 screws from outside, heads flush under the skin.
   - With it off, the brows and the back of the EyeMech are in view.
 - [ ] Cable channel features, fan room and vent (R6), and fixed skin attachments (with M4).
-- [ ] `service_check`: tool paths and removal for every servo and module. Print poses optimised; the v0 poses are a first guess.
+- [x] Service paths, found with a direction search (straight-line moves, point clouds confirmed exactly against the meshes):
+  - **Back upper piece** (with the access panel and the eye strap): lifts off up and back at about 50° (47.5–55° is clear).
+    - The first design came off straight back only. The tabs on its seams are now placed per tab (`BACK_UPPER_OUT_DEG`): on whichever piece they can't hook as it leaves.
+    - The back seam's tabs now belong to the back upper piece, so they leave with it.
+  - **EyeMech and both brows: together.** They interlock; neither passes the other.
+    - Unbolt the brows' flanges, then slide the three back 50 mm, lift 4 mm and take them out the back.
+    - The cradle's rear stop now hangs from the strap, behind the base plate's rear lip, so it leaves with the back piece too.
+    - The back seam's tabs used to stand in that path.
+  - **Shelf:** up 8, then back.
+  - **Neck plate:** straight down.
+  - **Mouth:** no clear path yet. It hits the back lower piece going back and the front upper piece going up. This is part of the mouth mount (Q14).
+- [x] `service_check.py` in the pipeline. It runs the paths above as a teardown sequence, and puts an L hex key on every screw that must come out on the way, which must swing at least 60°.
+  - The two front brow flange screws have only 16.3 mm under the crown. They need a **stubby 2.5 mm key** (short arm cut to 12 mm), which gets 125° of swing.
+  - Every other screw takes a standard key.
+- [ ] Print poses optimised; the v0 poses are a first guess.
 
 ### M4 — Snap attachment prototype
 - Caliper the 7 mm snaps and design a printed adapter that holds the socket half on a linkage end.
@@ -268,6 +282,15 @@ Goal: a brow that deforms the skin convincingly, built and tested on the bench b
 - **Exports:** armature STL, skin clearance envelope STEP, outer face reference, and a CSV of attachment coordinates in the head frame.
 - **Registration keys** on the armature base carry into the mold.
 - Exit: armature printed and the datums checked against the skull.
+
+**Progress:**
+- [x] Sculpt base v1 (`cad/sculpt_base.py`, checked by `cad/sculpt_check.py`), started early so sculpting can begin (D13):
+  - The whole head as a solid: the skull's outside raised by `SCULPT_MIN_SKIN` (3 mm, ASSUMPTION), so the skin is never thinner than that.
+  - Eye sockets inside the skull's own eye openings, with the lids' sphere and a pupil dimple at the true eye positions.
+  - Grooves: the midline, the brow windows, the mouth opening and the lip line.
+  - Split at z 186 for the bed and joined by dowels, standing on a base plate with 4 mold registration keys. M4 bolts go into inserts in the neck.
+  - The check confirms no skull point stands outside the base, the eyes sit on the EyeMech's eyeballs, and every piece fits the bed.
+- [ ] Mold core (the skull's outside itself, with the same plate and keys), exports, and the attachment-point CSV.
 
 ### M6 — Silicone skin integration
 Fit the first skin, connect the snaps, film each motion, and move attachment points where the skin bunches or overstretches. CAD changes go through the normal check loop, and every move is logged.
@@ -291,6 +314,7 @@ Run every motion and the combined extremes with the skin on. Confirm no collisio
 | Q10 | Personal Halloween prop, or a commercial piece? | EyeMech is CC BY-NC-SA 4.0: no commercial use without Cogley's permission, and modified versions must be shared under the same licence. The mouth's licence is unconfirmed (§3). | |
 | Q11 | Who sculpts, and what skin thickness are they aiming for? Separate moving eyelid skins (brief §3B)? | Sets the skin zones and decision D7. | |
 | Q12 | Where did the two Onshape models come from (Cogley's own Onshape document, or rebuilt or converted by the team)? | Provenance and licence record; whether they match the parts that will be printed. | **Will Cogley's own Onshape documents, through the team's paid Patreon membership.** These are member-only files, so the repo stays private and the STEP files are never redistributed. (2026-10-15) |
+| Q15 | Who sculpts, with which clay, and what is the thinnest skin they want? The sculpt base assumes 3 mm (`SCULPT_MIN_SKIN`). The clay must be sulfur-free if the skin is platinum-cure silicone. | Sets the armature offset; sulfur in the clay stops platinum silicone from curing. | |
 | Q14 | How does Cogley fix the mouth module's top plate (TopBase) into his Robot Head α2.0 frame? An Onshape STEP export of the full α2.0 head would show it, and the α2.0 brow mechanism too. | The mouth mount in M3; the top plate has pockets and shallow holes but no obvious mounting points. | |
 | Q13 | The EyeMech STEP is ε3.1, and the brief says ε3.2: which one will be printed? The mouth STEP has 9 MG90S servos, and the brief says 8: is the ninth the tongue, and is it kept? | The printed parts must match the CAD the skull is built around. | **Eyes:** ε3.1 and ε3.2 have the same outer geometry (see the comparison in §3). Print ε3.2-PIP MG90s and lay out with the ε3.1 STEP (D11). **Tongue:** keep it if it is no hassle (D10). (2026-10-15) |
 
@@ -308,6 +332,7 @@ Run every motion and the combined extremes with the skin on. Confirm no collisio
 | D8 | Electronics location | PCBs in the base / PCBs in the head | in the base, per brief §10 | proposed |
 | D9 | Skull modules | backbone with bolt-on upper and lower modules (§5) | as §5 | proposed |
 | D10 | Tongue servo | keep / leave out | keep: it sits inside the mouth module and the α2.0 mouth board has a channel for it. It costs one more lead through the neck. If it fights the jaw sweep or the skin, raise it again | **decided 2026-10-15**: keep if no hassle |
+| D13 | Art style and the sculpt base | campy flat-top Frankenstein built into the skull / a normally proportioned head / sculpt it all in clay | — | **decided 2026-10-16:** a normally proportioned head, not the traditional campy look. The style may change later. The sculpt base covers the whole head (face, cranium, nape, neck). |
 | D12 | Tongue clash with a mouth servo when the jaw opens (M1 sweep) | A: trim ~3 mm off the tongue's back corner. B: leave it; the team's built mouth is the evidence. C: drop the tongue (18 servos) | A, then confirm on the bench | **decided 2026-10-15: B.** "Leave in the tongue, no need to modify it; I've printed this before and it's fine" |
 | D11 | Which EyeMech to print and model | ε3.1 / ε3.2 snap-fit / ε3.2-PIP | ε3.2-PIP MG90s (A or B, chosen with Cogley's test plate) for both the print and the CAD. Source, in order of preference: a ε3.2 STEP exported from Cogley's Onshape; otherwise the public ε3.2 print parts, each snapped onto the matching ε3.1 part's position | **decided 2026-10-15**: use ε3.2 |
 

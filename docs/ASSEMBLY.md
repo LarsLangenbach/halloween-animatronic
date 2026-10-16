@@ -4,7 +4,7 @@ Steps for the parts designed so far, in order. Hardware is in [BOM.md](BOM.md) a
 
 ## Eyebrow unit (one per side), on the bench rig or in the skull
 
-**Assembly order in the head:** fit both brow units to the skull **before** the EyeMech. The EyeMech's centre post blocks a straight hex key to the pivot screw. On the bench rig, the round hole in the inner wall gives the key a straight line.
+**Assembly order in the head:** build each brow unit completely on the bench first (steps 1–6): in the head, the EyeMech's centre post blocks a straight hex key to the pivot screw. On the bench rig, the round hole in the inner wall gives the key a straight line. The brows and the EyeMech interlock, so neither can pass the other. They go into the head **together**, from the back, with the back upper piece off. Hold the brows in place over the EyeMech, slide the three in, set the EyeMech down on its pads, then bolt the brows up to their plates (step 7). Removal is the reverse: unbolt the brows, slide the three back 50 mm, lift 4 mm, and take them out.
 
 1. **Inserts.** Heat-set one M3 insert into the bracket's cheek, from the hub side. It sits in a 0.3 mm recess; push it flush with the bottom of that recess, not proud of it. Heat-set two M3 inserts into the top face of the flange.
 2. **Servo.** Centre the MG90S (90°, or 1500 µs) before fitting anything. Pass its case through the bracket plate's cutout from the inboard side, so the tabs rest on the plate, and fix it with the two M2 screws that came with it.
@@ -12,8 +12,25 @@ Steps for the parts designed so far, in order. Hardware is in [BOM.md](BOM.md) a
 4. **Carrier.** Screw an M2 ball stud into the hole at the end of the carrier's lever. Hold the carrier's hub against the cheek and pass the M3 shoulder screw through the hub (head on the inboard side) into the cheek's insert. Tighten until the shoulder seats on the insert. The hub should then turn freely, with about 0.4 mm of axial play.
 5. **Pushrod.** Thread a ball link onto each end of the M2 rod, about 30 mm ball to ball, and snap it onto both studs.
 6. **Neutral position.** With the servo centred, turn the pushrod (or one link) until the pads sit at their rest position: pad faces flush with the brow line on the rig, or touching the skin with no pull in the head.
-7. **Mount.** Bolt the bracket's flange to the rig's ceiling (or the skull) with two M3 × 8 screws from above, into the flange inserts.
+7. **Mount.** Bolt the bracket's flange to the rig's ceiling (or the skull) with two M3 × 8 screws from above, into the flange inserts. In the head, the front screw has only about 16 mm under the crown: use a stubby 2.5 mm hex key (or cut a key's short arm down to 12 mm).
 8. **Hard stops.** Drive the servo slowly to the full raise. Through the key hole over the front arm, turn the first set screw down until it just touches the arm, then back it off 0.5 mm. Repeat at the full lower with the screw over the back arm's end. Then set the firmware limits just inside these stops: the stops are a safety, not a working end position.
 9. **Check.** Run the brow end to end slowly. Nothing may rub or bind. The pads should slide along the window (rig) or under the skin (head) without lifting off or digging in.
 
 Log what you measured in [BUILD_LOG.md](BUILD_LOG.md): servo angles at both stops, the pushrod length at neutral, and anything that rubbed.
+
+## Sculpt base
+
+The head the clay face is sculpted on (print guide: M5). Its surface is the skull's outside raised by 3 mm, the thinnest the skin may be. **Don't sand or carve into it.**
+
+1. **Inserts.** Heat-set four M4 inserts into the holes in the neck's underside (`sculpt_lower`).
+2. **Join the head.** Glue four Ø6 × 24 dowels into the lower piece's top face. Then glue the upper piece on (epoxy, or thick CA), lining up the midline groove across the joint. Fill the seam flush.
+3. **Plate.** Bolt the plate under the neck with four M4 × 16 socket head screws from below, heads in the counterbores, the cone keys facing up. Screw the plate to a board or turntable through its four corner holes.
+4. **Seal.** Seal the print (shellac or a primer), so the clay's oils don't soak into it and the clay grips evenly.
+5. **Sculpt** in sulfur-free oil-based clay (Q15). On the base:
+   - **Eyes:** each sphere is the EyeMech's lids at their true position. The dimple is the gaze, straight ahead. Sculpt the eyelids round them; the socket is the skull's own eye opening.
+   - **Brow windows:** the rounded rectangles above the eyes. The moving brow pads sit under the skin there, so keep that skin able to flex.
+   - **Mouth opening:** the rectangle round the mouth. The lips must lie inside it; the lip plates sit behind it, about 8 mm under the skin's surface.
+   - **Lip line:** the horizontal groove, where the lips meet (the stomion).
+   - **Midline groove:** for symmetry.
+6. **Mold.** Leave the plate's keys clear of clay: the mold registers on them, and so will the mold core later.
+

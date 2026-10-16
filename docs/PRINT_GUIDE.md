@@ -28,6 +28,18 @@ Printer: Bambu Lab P2S, 0.4 nozzle, 256 × 256 × 256 bed. Every part fits the b
 
 `skull_front_upper`, `skull_front_lower`, `skull_back_upper`, `skull_back_lower`, `skull_shelf`, `skull_eye_strap`, `skull_neck_plate` and `skull_access_panel` have their joints, the EyeMech cradle, the neck base and the access panel. The mouth mount isn't in yet (Q14), so print them only as a fit or look test. Each piece fits the bed (199 mm tallest).
 
+## M5: sculpt base (ready to print)
+
+The head the clay face is sculpted on: the skull's outside raised by 3 mm. Three prints, one per printer at a time:
+
+| Part | Size (print pose) | Orientation | Supports | Estimate |
+|---|---|---|---|---|
+| `sculpt_upper` | 183 × 248 × 168 | upright, on its flat cut face (as exported) | none (the eye sockets are shaped to print without) | ~8 h, ~410 g |
+| `sculpt_lower` | 168 × 216 × 186 | upside down, on its flat cut face (as exported) | none | ~6 h, ~310 g |
+| `sculpt_plate` | 190 × 174 × 8 | flat, keys up (as exported) | none | ~2 h, ~95 g |
+
+Print them solid: PLA, 0.2 mm layers (0.28 is fine for speed), 3 walls, 4 top and bottom layers, lightning infill at 10 %. The estimates are rough; trust the slicer's. Assembly: [ASSEMBLY.md](ASSEMBLY.md#sculpt-base).
+
 ## Suggested slicer settings
 
 | | Brackets, carriers | Bench rig | Coupon |

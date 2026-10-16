@@ -29,6 +29,53 @@ Rules:
 
 ---
 
+## 2026-10-16 — M3 / M5 — Sculpt base; service paths for the back, the EyeMech and the brows
+
+**Done:**
+- **Sculpt base v1** (`cad/sculpt_base.py`, `cad/sculpt_check.py`), started early so the sculptor can begin (D13: normal proportions, whole head):
+  - Its surface is the skull's outside raised by 3 mm (`SCULPT_MIN_SKIN`, ASSUMPTION). The clay can't make the skin thinner than that.
+  - Eye sockets sit inside the skull's own eye openings, with the lids' sphere (R 18.1) and a pupil dimple at the true eye positions. The socket ceilings slope at 55° so the upper piece prints without supports.
+  - Grooves mark the midline, the brow windows, the mouth opening and the lip line.
+  - Three prints: `sculpt_upper` (upright), `sculpt_lower` (upside down) and `sculpt_plate`. They join with 4 Ø6 dowels. The plate has 4 conical mold keys, 4 board screw holes, and 4 × M4 into inserts in the neck.
+- **EyeMech supports:** Cogley's own 3MF has tree (auto) supports on at 30°. His original file is now in `output/plates/` (commit `9433581`).
+- **Service paths**, from a direction search:
+  - **Back upper piece:** lifts off at about 50° up and back.
+  - **EyeMech and both brows:** they come out together (brows unbolted). Slide back 50, lift 4, then out the back.
+  - **Shelf:** up and back.
+  - **Neck plate:** down.
+  - **Mouth:** no path yet (Q14).
+- **`cad/service_check.py`** (new, in the pipeline): runs the teardown in order and checks tool access with an L hex key on the brow flange and shelf screws. The two front brow flange screws have only 16.3 mm of headroom under the crown, so they need a stubby 2.5 mm key (short arm cut to 12 mm, 125° of swing).
+- **To make those paths clear:**
+  - The tabs on the back upper piece's two seams are placed per tab, on whichever piece they can't hook as it leaves (`BACK_UPPER_OUT_DEG` 52).
+  - The EyeMech's rear stop moved from the shelf to a fin on the strap, behind the base plate's rear lip, so it leaves with the back piece.
+
+**Numbers:**
+- New: `BACK_UPPER_OUT_DEG` 52, `CRADLE_STOP` (2.4, 60) (thickness, width; was (2.4, 4.0): thickness, height).
+- New: `SCULPT_MIN_SKIN` 3, `SCULPT_GROOVE` 1.2, `SCULPT_GROOVE_GAP` 2, `SCULPT_EYE_SOCKET` 10, `SCULPT_PUPIL` 3, `SCULPT_SOCKET_CEILING_DEG` 55.
+- New: `SCULPT_PLATE` (8, 25), `SCULPT_PLATE_CBORE` (8.5, 4.5), `SCULPT_KEY` (12, 6), `SCULPT_BOARD_SCREW` 5, `SCULPT_DOWEL` (6.3, 12), `M4_INSERT_HOLE` 5.6 (ASSUMPTION), `M4_INSERT_DEPTH` 10.
+- New: `EYEMECH_EYE_R` (16.5, 18.1) (MEASURED).
+- New: `SERVICE_EYE_OUT`, `SERVICE_SHELF_OUT`, `SERVICE_TOL` 0.3, `SERVICE_KEY` (20, 65, 2), `SERVICE_STUBBY_KEY` (12, 65, 2), `SERVICE_KEY_SWING` 60, `SERVICE_HEAD_H` 3.
+- Sculpt base estimate (not sliced yet): upper ~8 h, lower ~6 h, plate ~2 h; about 0.8 kg of PLA.
+
+**Check:** `check: PASS (0 hard failure(s), 0 warning(s), 268 s)`.
+
+**Renders:** [process_images](../process_images/README.md) snapshot 15 (`sculpt.png`, `skull.png`).
+
+**Decisions:** D13 (art style: normally proportioned, not campy; sculpt base covers the whole head).
+
+**Problems and fixes along the way:**
+- With every tab of the back upper's vertical seam on the front piece, its side tabs locked the back piece in every direction. With them all on the back piece, the crown tabs locked it going up. The fix was the per-tab rule.
+- A first try hung the stop from the strap behind the rear foot, but that foot sits under the base plate. The stop now bears on the base plate's rear lip instead.
+- The eyes sit 3.4 mm under the skull's outside, so nothing of them showed on the base; it needed sockets.
+- The socket ceilings were overhangs (7.4 mm along the normal; the 45° corners still too). A hull of the rims flattened them to 11° until each rim line was tilted.
+- One socket reached 0.7 mm into the skull's wall under the eye. Sockets are now clipped to the skull's own opening.
+- The plate's round offset left near-duplicate points that opened the mesh on reload (and crashed `check.py`'s measure step). It is simplified before extruding.
+- `print_check` ran out of memory on the solid head pieces: every inward ray crosses the whole part. It now casts its rays in batches of 2000 faces (the skill's toolkit has the same code).
+
+**Next:**
+- Print the sculpt base once the printers are free.
+- Mouth mount (Q14).
+
 ## 2026-10-16 — M3 — Neck base plate and rear access panel
 
 **Done:**

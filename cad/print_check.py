@@ -46,6 +46,7 @@ BRIDGE_SPAN = float(_P["bridge_span"])    # mm; roofs held by walls all round pr
 MIN_WALL = float(_P["min_wall"])          # mm; two extrusion widths
 MIN_REGION = 10.0       # mm2; smaller overhang regions bridge or sag harmlessly
 BED_Z = 0.05
+RAY_BATCH = 2000        # faces per ray-cast batch (memory)
 COLOURS = dict(plain=(225, 215, 220), over=(220, 40, 40), thin=(40, 90, 230), bed=(60, 170, 80))
 TILE = 400
 WARNS = []
@@ -126,10 +127,14 @@ def analyse(name, mesh, settings):
     over = (n[:, 2] < -np.cos(np.radians(OVERHANG_DEG))) & ~bed
 
     c = mesh.triangles_center
-    loc, ray, tri = mesh.ray.intersects_location(c - n * 1e-3, -n, multiple_hits=False)
     thick = np.full(len(c), np.inf)
-    opposite = (mesh.face_normals[tri] * n[ray]).sum(axis=1) < -0.5   # a facing wall, not a corner
-    thick[ray[opposite]] = np.linalg.norm(loc[opposite] - c[ray[opposite]], axis=1)
+    # in batches: on a solid part every inward ray crosses the whole part, and its candidate
+    # triangles (21 M for a solid head) ran out of memory with the other checks running
+    for s in range(0, len(c), RAY_BATCH):
+        cs, ns = c[s:s + RAY_BATCH], n[s:s + RAY_BATCH]
+        loc, ray, tri = mesh.ray.intersects_location(cs - ns * 1e-3, -ns, multiple_hits=False)
+        opposite = (mesh.face_normals[tri] * ns[ray]).sum(axis=1) < -0.5   # a facing wall, not a corner
+        thick[s + ray[opposite]] = np.linalg.norm(loc[opposite] - cs[ray[opposite]], axis=1)
     thin = thick < MIN_WALL - 0.01
 
     supports = settings.get("supports")

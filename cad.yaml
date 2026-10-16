@@ -35,6 +35,7 @@ pipeline:
   - {script: brow, kind: build}          # M2 eyebrow mechanism v1: carriers, brackets (+ servo refs)
   - {script: brow_rig, kind: build}      # M2 bench rig for the left brow (a forehead fragment)
   - {script: skull, kind: build}         # M3 skull v0: shell pieces with openings, shelf, brow mount plates
+  - {script: sculpt_base, kind: build}   # M5 early: the head the clay face is sculpted on
   - {script: test_coupon, kind: build}
   - {script: assembly_check, kind: check, level: hard, pass: "^NO OVERLAPS$"}
   - {script: print_check, kind: check, level: soft, pass: "^PRINT CHECK OK$"}
@@ -42,6 +43,8 @@ pipeline:
   - {script: pose_sweep, kind: check, level: soft, pass: "^SWEEP OK$"}      # M1: jaw, eyes, lids moving; reserved space
   - {script: brow_check, kind: check, level: soft, pass: "^BROW OK$"}       # M2: brows through their travel
   - {script: skull_check, kind: check, level: soft, pass: "^SKULL OK$"}     # M3: skull vs everything, at rest and moving
+  - {script: sculpt_check, kind: check, level: soft, pass: "^SCULPT OK$"}   # M5: sculpt base vs the skull
+  - {script: service_check, kind: check, level: soft, pass: "^SERVICE OK$"} # M3: teardown paths, tool access
 
 # Scripts in the source folder that check.py knows about but doesn't run
 # (the toolkit's own scripts are known already). Any other script gets a
@@ -78,9 +81,12 @@ parts:
   skull_back_upper: {colour: [0.80, 0.76, 0.66], supports: true}
   skull_back_lower: {colour: [0.75, 0.71, 0.62], supports: true, print_rotate: [180, 0, 0]}
   skull_shelf: {colour: [0.55, 0.75, 0.75], supports: false}
-  skull_eye_strap: {colour: [0.55, 0.75, 0.75], supports: false}
+  skull_eye_strap: {colour: [0.55, 0.75, 0.75], supports: false, print_rotate: [180, 0, 0]}
   skull_neck_plate: {colour: [0.45, 0.60, 0.70], supports: false}
   skull_access_panel: {colour: [0.70, 0.66, 0.56], supports: true}
+  sculpt_upper: {colour: [0.80, 0.62, 0.52], supports: false, assembly: false}        # solid: 3 walls, lightning infill
+  sculpt_lower: {colour: [0.76, 0.58, 0.48], supports: false, assembly: false, print_rotate: [180, 0, 0]}
+  sculpt_plate: {colour: [0.45, 0.45, 0.50], supports: false, assembly: false}
 
 every_part: {watertight: hard, single_body: hard, fits_bed: soft}
 
