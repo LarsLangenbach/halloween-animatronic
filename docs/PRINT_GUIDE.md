@@ -35,7 +35,7 @@ Printer: Bambu Lab P2S, 0.4 nozzle, 256 × 256 × 256 bed. Every part fits the b
   - Its eyelids, with its own eyeballs filling the openings (open eyes, no holes). Each eyeball is centred exactly on the eye mechanism's eye centre (±37.5, z 212.4). An iris ring and a pupil are marked round each eye axis.
   - Its lips, scaled evenly (×1.11) about where they meet, so the corners reach just past the ends of Cogley's lip plates. The lip line sits on the gap between his upper and lower plates. The gap between MakeHuman's lips is closed, with a clean line where they meet.
 - **Outline and surface:** from the chin over the forehead onto the skull, and round to the ears. Smooth for printing.
-- **Print pose:** face up (as exported), with tree supports. They only touch the inside.
+- **Print pose:** face up (as exported), with tree supports (they also touch the backs of the ears and the rim edges). The printed lip groove is about 6 mm low: sculpt the lip line 71.2 mm below the eye-centre line (`process_images/*lips-on-printed-mask*`).
 
 **The old sculpt base pieces (`sculpt_upper`, `sculpt_lower`, `sculpt_plate`) are replaced by the mask: don't print them.**
 

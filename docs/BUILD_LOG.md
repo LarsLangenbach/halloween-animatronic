@@ -29,6 +29,24 @@ Rules:
 
 ---
 
+## 2026-10-17 — M5 — Printed mask (v9): the lip line is 5–7 mm low
+
+**Found (cad-reviewer on v6, then measured on v9):** the parting line printed on the mask is at z 134–137, not on Cogley's lip plates (z 141.2).
+- Cause: the push clear of his head runs along rays from c, and at the mouth those rays point 21–26° down, so the lips slid down as they moved out.
+- The eyes are not affected: their centres measured (37.46, 212.42) and (−37.45, 212.42) on v6.
+
+**Team:** keep the print, no corrected file. The marked image shows where to sculpt the lip line: 71.2 mm below the eye-centre line, 69 mm corner to corner, about 6 mm above the printed groove.
+- A fix was tried and set aside: warp the lips higher until the finished line lands on the plates. It converged at z 142.5 with +2.6 mm.
+- Do it if the mask is ever reprinted.
+
+**Also from the review:**
+- The tree supports touch the outside too (the backs of the ears, the rim edges), not only the inside.
+- `print_check.py` takes `output/stl`, not `output/print` (it applies `print_rotate` itself).
+
+**Renders:** process_images snapshot 31 (`sculpt_where_lips_sit.png`).
+
+---
+
 ## 2026-10-16 — M5 — Face mask v8: thin shell, flat eyes and nose guide
 
 **Done (team: save filament; eyes and nose only as guides):**
