@@ -32,3 +32,4 @@ The build log ([docs/BUILD_LOG.md](../docs/BUILD_LOG.md)) links here.
 - **2026-10-16_27_face-mask-v7**: Face mask v7: flat lips with parting line and lip outlines; iris rings inside the eyes ([skull.png](2026-10-16_27_face-mask-v7/skull.png), 68 file(s))
 - **2026-10-16_28_face-mask-v7b**: Face mask v7b: mouth area completely flat from under the nose to above the chin, with the lip lines ([skull.png](2026-10-16_28_face-mask-v7b/skull.png), 68 file(s))
 - **2026-10-16_29_face-mask-v8**: Face mask v8: 2 mm shell; eyes and mouth flat with marks, nose low as a guide ([skull.png](2026-10-16_29_face-mask-v8/skull.png), 76 file(s))
+- **2026-10-16_30_face-mask-v9**: Face mask v9: almond eyelids back, eye openings flat (no eyeball, no target) ([skull.png](2026-10-16_30_face-mask-v9/skull.png), 83 file(s))
