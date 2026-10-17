@@ -361,8 +361,18 @@ def skin(warped, wrap, c, eye_y):
     band = (np.abs(E - line) * k_l < 1.2) & (np.abs(A) < a_c + 1.0 / k_l)
     band |= ndimage.binary_dilation(gap > 0.15, iterations=2)
     r = inpaint(r, band & mouth, iters=600)                           # no comb of ridges along it
-    fade = np.clip((a_c - np.abs(A)) * k_l / 4.0, 0.0, 1.0)
-    r -= P.MASK_LIP_LINE * fade ** 2 * np.exp(-(((E - line) * k_l) ** 2) / (2 * 0.45 ** 2))
+    # the lips flattened (team, 2026-10-16: the sculptor shapes them): a smooth surface with
+    # the long parting line where they meet, and a line round each lip (MASK_LIP_MARKS)
+    wf = np.exp(-(((A * k_l) / (half + 4.0)) ** 4 + (((E - e_l) * k_l) / 12.0) ** 4))
+    r = (1 - wf) * r + wf * ndimage.gaussian_filter(r, 4.0 / (k_l * st))
+    fade = np.clip((a_c - np.abs(A)) * k_l / 2.0, 0.0, 1.0)
+    r -= P.MASK_LIP_LINE * fade * np.exp(-(((E - line) * k_l) ** 2) / (2 * 0.45 ** 2))
+    up, low, depth = P.MASK_LIP_MARKS
+    shape = np.sqrt(np.clip(1.0 - (A / a_c) ** 2, 0.0, 1.0))
+    bow = 1.0 - 0.15 * np.exp(-((A * k_l / 4.0) ** 2))                # a slight dip in the middle (Cupid's bow)
+    inside = np.abs(A) < a_c
+    for edge in (line + up * shape * bow / k_l, line - low * shape / k_l):
+        r -= depth * inside * np.exp(-(((E - edge) * k_l) ** 2) / (2 * 0.4 ** 2))
     # the plain skin smoothed (MakeHuman's low-poly facets rippled the cheeks); the eyes, nose
     # and lips kept sharp
     feat = np.zeros(r.shape)

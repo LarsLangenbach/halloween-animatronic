@@ -29,6 +29,25 @@ Rules:
 
 ---
 
+## 2026-10-16 — M5 — Face mask v7: flat lips with marks, smaller iris rings
+
+**Done (team, building closing):**
+- **Lips:** the lip shapes are flattened (smoothed over 4 mm), because the sculptor shapes them. Three lines are cut into the flat area:
+  - the long parting line where the lips meet, out to the corners, 0.7 mm deep
+  - a line round the upper lip (9 mm high in the middle, with a slight Cupid's bow), 0.5 mm deep
+  - a line round the lower lip (11 mm), 0.5 mm deep
+- **Eyes:** the iris ring ran onto the eyelids. It is now R 4.0 (was 6.5), the pupil R 1.6 (was 2.4).
+
+**Numbers:**
+- MASK_IRIS = (4.0, 1.6, 0.8), was (6.5, 2.4, 1.2).
+- MASK_LIP_MARKS = (9.0, 11.0, 0.5), new.
+
+**Check:** not run (no time); face_mask build watertight, 1 body, 206 × 250 × 169 in print pose. The surface changes only in the mouth and the eye marks.
+
+**Renders:** process_images snapshot 27 (`sculpt_mask_flat_lips*.png`).
+
+---
+
 ## 2026-10-16 — M5 — Face mask v6: eyes exactly on the eye axes, MakeHuman's real lips
 
 **Done (team: "ensure the eye placement matches exactly the mechanic and show me"; the lips still didn't look like v1's real lips):**

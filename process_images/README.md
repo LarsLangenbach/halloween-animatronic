@@ -28,3 +28,5 @@ The build log ([docs/BUILD_LOG.md](../docs/BUILD_LOG.md)) links here.
 - **2026-10-16_23_face-mask-v3**: Face mask v3: smooth, closed eyes, ears, mouth on Cogley's lip plates ([sculpt_face_mask.png](2026-10-16_23_face-mask-v3/sculpt_face_mask.png), 88 file(s))
 - **2026-10-16_24_face-mask-v4**: Face mask v4: open eyes on the eye axes, MakeHuman lips on Cogley's lip plates ([sculpt_face_mask.png](2026-10-16_24_face-mask-v4/sculpt_face_mask.png), 88 file(s))
 - **2026-10-16_25_face-mask-v5**: Face mask v5: MakeHuman's own eyes (with eyeballs) and lips, placed on the mechanism ([sculpt_face_mask.png](2026-10-16_25_face-mask-v5/sculpt_face_mask.png), 88 file(s))
+- **2026-10-16_26_face-mask-v6**: Face mask v6: eyes exactly on the eye axes, real MakeHuman lips with a clean closed line, inside never crosses the skin ([skull.png](2026-10-16_26_face-mask-v6/skull.png), 62 file(s))
+- **2026-10-16_27_face-mask-v7**: Face mask v7: flat lips with parting line and lip outlines; iris rings inside the eyes ([skull.png](2026-10-16_27_face-mask-v7/skull.png), 68 file(s))
