@@ -30,9 +30,10 @@ Printer: Bambu Lab P2S, 0.4 nozzle, 256 × 256 × 256 bed. Every part fits the b
 
 ## M5: face mask (ready to print, D19)
 
-`output/print/face_mask.stl` (v4): a 3 mm shell of a man's face with ears, 206 × 240 × 169 in its print pose, about 270 g.
-- **Eyes:** open, with no holes. An almond opening on each eye mechanism's eye axis, with an eyeball 2 mm behind the lids and an iris ring and pupil marking the axis.
-- **Lips:** MakeHuman's own. The line where they meet sits on the gap between Cogley's upper and lower lip plates, and the corners just past the plates' ends (±34). The lips are 1.35× taller.
+`output/print/face_mask.stl` (v5): a 3 mm shell of a man's face with ears, 206 × 239 × 169 in its print pose, about 270 g.
+- **Eyes and lips:** MakeHuman's own.
+  - Its eyelids, with its own eyeballs filling the openings (open eyes, no holes). Each eyeball is centred on the eye mechanism, with a pupil mark on the axis.
+  - Its lips, scaled evenly (×1.21) about where they meet, so the corners reach just past the ends of Cogley's lip plates. The lip line sits on the gap between his upper and lower plates.
 - **Outline and surface:** from the chin over the forehead onto the skull, and round to the ears. Smooth for printing.
 - **Print pose:** face up (as exported), with tree supports. They only touch the inside.
 

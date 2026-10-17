@@ -29,6 +29,19 @@ Rules:
 
 ---
 
+## 2026-10-16 — M5 — Face mask v5: MakeHuman's own eyes and lips
+
+**Done (team feedback on v4):** the designed eyes and lips looked inhuman; use the reference mesh's own.
+- **Eyes:** MakeHuman's eyelids, with its eyeball helpers (`helper-l-eye`, `helper-r-eye`) added to the head before the warp, so they fill the openings: open eyes, no holes. The eye centres are pinned onto the EyeMech's. The designed almond, eyeball and eye-region fill are gone. An iris ring and a pupil still mark the axis.
+- **Lips:** MakeHuman's own, scaled evenly across and up (×1.21, not deeper) about where they meet. The corners land 1 mm past the ends of Cogley's lip plates (team's choice over natural size, 2026-10-16). Pinned on a 5 × 5 grid round the mouth, so the shape is kept.
+- **Print pose:** 206 × 239 × 169, about 270 g, watertight.
+
+**Decisions:** the lips scaled to span the plates (asked, answered "scaled to the plates").
+
+**Renders:** process_images snapshot 25 (`sculpt_face_mask.png`).
+
+---
+
 ## 2026-10-16 — M5 — Face mask v4: open eyes, real lips
 
 **Done (team feedback on v3):** the lips didn't look human or made for the mechanism; the eyes had to be clearly marked, and open with no holes.

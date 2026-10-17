@@ -369,24 +369,17 @@ M4_INSERT_DEPTH = 10.0
 # read as a radius over directions (azimuth, elevation, degrees) from a point in the head.
 MASK_SCALE = 1.15              # MakeHuman's face scaled up like the head (HEAD_SCALE): it then spans
                                # Cogley's mechanism, and its eyes land within 0.5 of the EyeMech's
-MASK_FEATURE_SCALE = 1.05      # the eye slits and nose wings are held at MakeHuman's width times this
+MASK_FEATURE_SCALE = 1.05      # the nose wings are held at MakeHuman's width times this
 MASK_MOUTH_PAST = 1.0          # the mouth's corners sit this far past the ends of Cogley's lip plates
-MASK_LIP_FULL = 1.35           # the lips' fronts this much further above and below where they meet
+                               # (MakeHuman's lips scaled evenly to get there: team, 2026-10-16)
 MASK_FINAL_SMOOTH = 8          # Taubin passes over the finished skin: prints smooth
                                # (the overall scale made them 20 % too wide)
 MASK_MALE = (10.0, 4.0)        # a man's face: jaw angles this much wider each side; brow ridge forward
 MASK_CENTRE_BACK = 75.0        # the directions start this far behind the eyes (15 below them)
 MASK_GRID_DEG = 0.5            # direction grid
-MASK_EYE_ZONE = (24.0, 15.0)   # each eye's region replaced by a designed open eye: half width, half height
-MASK_EYE_OPEN = (16.0, 6.0, 5.0, 1.5)  # the almond opening: half width, up, down, outer corner lift
-MASK_EYEBALL_R = 17.0          # open eyes: an eyeball this big (the EyeMech's is 16)...
-MASK_EYE_RECESS = 2.0          # ...its front this far behind the lids
-MASK_LID_SOFT = 2.0            # the lid margin blends over this width (mm)
-MASK_EYE_DEEP = 3.0            # the eyeball never more than this behind the lids (mm)
 MASK_IRIS = (6.5, 2.4, 1.2)    # iris ring radius, pupil radius, pupil depth: centred on the eye axis
 MASK_SMOOTH = 0.5              # a smoothing of the skin, degrees (the sampling left it grainy)
 MASK_PUSH_SMOOTH = 4.0         # and of the push out over Cogley's helmet, degrees
-MASK_EYE_SMOOTH = 2.5          # the eye band smoothed into closed lids, degrees
 MASK_TOP_SMOOTH = 4.0          # the forehead and skull, smoothed hard above the brows, degrees
 MASK_CORE_OK = 0.05            # the whole face moves forward until only this share of its middle
                                # still needs a local push
