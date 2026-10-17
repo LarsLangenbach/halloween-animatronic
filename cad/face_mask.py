@@ -121,7 +121,26 @@ def landmarks(mesh, joints):
     band = v[(np.abs(v[:, 2] - (stomion[2] - 22.0)) < 2.0) & (v[:, 1] > ey - 40.0)]
     jaw = np.array([band[np.argmax(band[:, 0])], band[np.argmin(band[:, 0])]])
     brow = np.array([0.0, at(0.0, ez + 18.0), ez + 18.0])
-    return dict(eyes=eyes, nose=nose, stomion=stomion, chin=chin, mouth=mouth, wings=wings, jaw=jaw, brow=brow)
+    sel = (zs > stomion[2]) & (zs < stomion[2] + 12.0)                # the lips' fronts
+    k = np.where(sel)[0][np.argmax(col[sel])]
+    upper = np.array([0.0, col[k], zs[k]])
+    sel = (zs < stomion[2]) & (zs > stomion[2] - 14.0)
+    k = np.where(sel)[0][np.argmax(col[sel])]
+    lower = np.array([0.0, col[k], zs[k]])
+    return dict(eyes=eyes, nose=nose, stomion=stomion, chin=chin, mouth=mouth, wings=wings, jaw=jaw, brow=brow,
+                upper=upper, lower=lower)
+
+
+def lip_half_width():
+    """Half the mouth's width: the outer ends of Cogley's lip plates, plus MASK_MOUTH_PAST."""
+    lips = [m for n, k, g, m in C.load({"mouth"}) if n in ("UpperLeftLip", "Part 34", "LowerLeftLip", "Part 37")]
+    return max(max(abs(m.bounds[0][0]), abs(m.bounds[1][0])) for m in lips) + P.MASK_MOUTH_PAST
+
+
+def lip_front():
+    """The front of Cogley's lip plates (y)."""
+    lips = [m for n, k, g, m in C.load({"mouth"}) if n in ("UpperLeftLip", "Part 34", "LowerLeftLip", "Part 37")]
+    return max(m.bounds[1][1] for m in lips)
 
 
 def lip_target():
@@ -158,10 +177,15 @@ def warp(mesh, lm):
     f = (ez - nose[2]) / (ez - st[2])
     nose_z = ez - f * (ez - st_z)
     pin(nose, (0.0, nose[1], nose_z))
-    nat = P.MASK_FEATURE_SCALE                                        # natural mouth and nose widths
+    nat = P.MASK_FEATURE_SCALE
+    half = lip_half_width()                                           # the mouth spans Cogley's lip plates
     for m in lm["mouth"]:
         q = sim(m)
-        pin(q, (m[0] * nat, q[1], q[2] + dz))
+        pin(q, (np.sign(m[0]) * half, q[1], st_z))
+    lip_y = lip_front() + P.LIP_SKIN_T - P.MASK_LIP_SHIFT              # the lips sit on his plates
+    for key, sgn in (("upper", 1.0), ("lower", -1.0)):                # full enough to cover them
+        q = sim(lm[key])
+        pin(q, (0.0, lip_y, st_z + sgn * abs(q[2] - st[2]) * P.MASK_LIP_FULL))
     for w in lm["wings"]:
         q = sim(w)
         pin(q, (w[0] * nat, q[1], nose_z - (nose[2] - q[2]) * nat / s))
@@ -185,7 +209,7 @@ def warp(mesh, lm):
     v = v + rbf(v)
     eye_y = sim(lm["eyes"][0])[1]
     return trimesh.Trimesh(v, mesh.faces, process=False), eye_y, dict(
-        scale=s, stomion=st_z, mouth=lm["mouth"][0, 0] * nat, wing=lm["wings"][0, 0] * nat)
+        scale=s, stomion=st_z, mouth=half, wing=lm["wings"][0, 0] * nat)
 
 
 def directions(phi, psi):
@@ -233,15 +257,18 @@ def skin(warped, wrap, c, eye_y):
     """The mask's outer skin as a radius over (phi, psi) from c: closed, smooth, clear of
     Cogley's head. Returns (phi, psi, radius grid, how far it was pushed out)."""
     st = P.MASK_GRID_DEG
-    phi = np.arange(-100.0, 100.0 + st, st)
+    phi = np.arange(-125.0, 125.0 + st, st)
     psi = np.arange(-75.0, 88.0 + st, st)
-    r = outer_radius(warped, c, phi, psi, per_mm2=20.0)
-    # dips (the eye openings, between the lips) and misses: well below their neighbourhood
+    r = outer_radius(warped, c, phi, psi, per_mm2=40.0)
+    # dips (the eye openings, between the lips) and misses: well below their neighbourhood;
+    # filled first, then the grain of the sampling smoothed out (the other way round, the
+    # smoothing smeared the eye openings into the lids)
     filled = np.where(np.isnan(r), np.nanmedian(r), r)
     near = ndimage.median_filter(filled, size=int(round(8.0 / st)) * 2 + 1)
     bad = np.isnan(r) | (r < near - P.MASK_DIP)
-    bad = ndimage.binary_dilation(bad, iterations=2)
+    bad = ndimage.binary_dilation(bad, iterations=1)
     r = inpaint(r, bad)
+    r = ndimage.median_filter(r, size=5)
     A, E = np.meshgrid(phi, psi, indexing="ij")
     ez = G.eye_z(S)
     lines = []
@@ -256,16 +283,23 @@ def skin(warped, wrap, c, eye_y):
         region = lab == k
         dist = ndimage.distance_transform_edt(region)
         r += np.where(region, P.MASK_LID_DOME * np.sqrt(np.clip(dist / max(dist.max(), 1), 0, 1)), 0.0)
-        cols = np.where(region.any(axis=1))[0]
-        a0, a1 = phi[cols.min()], phi[cols.max()]
-        la = np.linspace(a0 + 1.5, a1 - 1.5, 40)
-        lines.append(("lash", la, e - 1.0 - 1.5 * np.sin(np.linspace(0, np.pi, 40))))
+        # a natural closed eye: a lash line as long as the slit, gently curved down
+        span = np.degrees(np.arctan2(P.MASK_EYE_HALF * P.MASK_FEATURE_SCALE, np.linalg.norm(eye[1:])))
+        la = np.linspace(a - span, a + span, 40)
+        lines.append(("lash", la, e - 0.6 - 1.2 * np.sin(np.linspace(0, np.pi, 40))))
     r = ndimage.gaussian_filter(r, P.MASK_SMOOTH / st)
+    # the band across the eyes and the bridge of the nose: MakeHuman's deep eye sockets
+    # left creases there; smooth it into calm closed lids
+    eye = np.array([P.EYE_SPACING / 2, eye_y, ez]) - c
+    a_e = np.degrees(np.arctan2(eye[0], eye[1]))
+    e_e = np.degrees(np.arcsin(eye[2] / np.linalg.norm(eye)))
+    zone = np.exp(-((np.abs(A) / (a_e + 14.0)) ** 4 + ((E - e_e) / 9.0) ** 4))
+    r = (1 - zone) * r + zone * ndimage.gaussian_filter(r, P.MASK_EYE_SMOOTH / st)
     st_z = lip_target()                                               # lip line
     lp = np.array([0.0, eye_y + 10.0, st_z]) - c
     e_l = np.degrees(np.arcsin(lp[2] / np.linalg.norm(lp)))
-    half = np.degrees(np.arctan2(P.MASK_FEATURE_SCALE * 22.0, np.linalg.norm(lp[1:])))
-    lines.append(("lip", np.linspace(-half, half, 40), np.full(40, e_l)))
+    half = np.degrees(np.arctan2(lip_half_width() - 2.0, np.linalg.norm(lp[1:])))
+    lines.append(("lip", np.linspace(-half, half, 40), e_l - 0.8 * np.sin(np.linspace(0, np.pi, 40)) ** 2))
     # clear of Cogley's head: the outside at least SCULPT_MIN_SKIN from his parts (a reference
     # to sculpt on: the clay goes on top, and the skin is cast on a core of his head)
     rw = ndimage.gaussian_filter(np.nan_to_num(outer_radius(wrap, c, phi, psi, per_mm2=10.0), nan=0.0), 2.0)
@@ -336,6 +370,10 @@ def mesh_from(phi, psi, r, c):
     outer = trimesh.Trimesh(V, np.array(F), process=False)
     if (outer.face_normals[:, 1] > 0).mean() < 0.5:                   # face outward (+y at the front)
         outer.invert()
+    rim_ids = np.array([vid(nr - 1, j) for j in range(nt)])
+    keep_rim = outer.vertices[rim_ids].copy()
+    trimesh.smoothing.filter_taubin(outer, lamb=0.5, nu=-0.53, iterations=P.MASK_FINAL_SMOOTH)
+    outer.vertices[rim_ids] = keep_rim                                # keep the outline where it is
     sm = outer.copy()
     trimesh.smoothing.filter_laplacian(sm, lamb=0.5, iterations=10)
     inner = outer.vertices - sm.vertex_normals * P.MASK_T
@@ -356,6 +394,11 @@ def build():
     head = trimesh.Trimesh(V, F, process=True)
     lm = landmarks(head, joints)
     warped, eye_y, info = warp(head, lm)
+    ez0 = G.eye_z(S)
+    keep = warped.triangles_center[:, 2] > ez0 - 260.0                # the head: smooth it (MakeHuman is low-poly)
+    warped = warped.submesh([np.where(keep)[0]], append=True)
+    warped = warped.subdivide().subdivide()
+    trimesh.smoothing.filter_taubin(warped, lamb=0.5, nu=-0.53, iterations=15)
     ez = G.eye_z(S)
     c = np.array([0.0, eye_y - P.MASK_CENTRE_BACK, ez - 15.0])
     # his parts + SCULPT_MIN_SKIN (sculpt_base.py's tight wrap; its wrap.stl is inflated at the face)

@@ -30,10 +30,10 @@ Printer: Bambu Lab P2S, 0.4 nozzle, 256 × 256 × 256 bed. Every part fits the b
 
 ## M5: face mask (ready to print, D19)
 
-`output/print/face_mask.stl` (v2): a 3 mm shell of a man's face, 170 × 243 × 108 in its print pose, about 190 g.
-- **Shape:** closed eyes with a lash line, a natural nose and mouth, and a lip line. Its outline is a smooth egg reaching over the forehead onto the front of the skull.
-- **Its features sit on the mechanism:** the eyes on the eye mechanism's eyes, the lips on Cogley's lips, the nose between them.
-- **Print pose:** face up (as exported), with tree supports. They only touch the inside, so the face stays clean. The mask fits the bed only lengthwise; don't stand it up.
+`output/print/face_mask.stl` (v3): a 3 mm shell of a man's face with ears, 202 × 240 × 168 in its print pose, about 260 g.
+- **Shape:** closed eyes, a nose, and a mouth designed round Cogley's lip plates: the corners just past the plates' ends (±34), the lips' fronts 8 mm (`LIP_SKIN_T`) in front of the plates. The outline runs from the chin over the forehead onto the skull, and round to the ears.
+- **Surface:** smoothed for printing.
+- **Print pose:** face up (as exported), with tree supports. They only touch the inside.
 
 **The old sculpt base pieces (`sculpt_upper`, `sculpt_lower`, `sculpt_plate`) are replaced by the mask: don't print them.**
 

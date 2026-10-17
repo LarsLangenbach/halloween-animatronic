@@ -29,6 +29,24 @@ Rules:
 
 ---
 
+## 2026-10-16 — M5 — Face mask v3
+
+**Done (team feedback on v2):**
+- **Asked for:** a smooth, printable surface; extended to the ears, with ears; natural eye slits; lips that make sense on Cogley's mechanism; MakeHuman's proportions kept.
+- **Changes:**
+  - The head is smoothed before it is read (subdivided twice, Taubin), and read 40 points per mm². Openings are filled before the grain is filtered out (median 5). The finished skin gets 20 Taubin passes. The pushes clear of his head spread wider (14°, smoothed 4°), and the eye band is smoothed into calm closed lids (2.5°).
+  - **Mouth:** its corners sit 1 mm past the ends of Cogley's lip plates (±34.3). The lips' fronts are pinned `LIP_SKIN_T` (8 mm) in front of the plates and 1.25× fuller. The lash lines are 31.5 mm long, with a 1 mm lid dome.
+  - **Outline:** ±112° in azimuth, taking in MakeHuman's ears. The scale is 1.15.
+- **Print pose:** 202 × 240 × 168, about 260 g, watertight; it fits the bed face up.
+
+**Open:**
+- A small pinch remains at the top of the nose bridge, and a sharp notch in the upper lip's middle.
+- The first idea of pinning the eye-slit corners at the eye centres folded the skin round the eyes. Those pins are gone.
+
+**Renders:** process_images snapshot 23 (`sculpt_face_mask.png`).
+
+---
+
 ## 2026-10-16 — M5 — Face mask v2
 
 **Done (team feedback on v1):**
