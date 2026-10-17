@@ -129,6 +129,15 @@ def wrap_surface(parts):
     m = W.surface_nets(F, lo, h, level=P.SCULPT_MIN_SKIN)
     trimesh.smoothing.filter_taubin(m, iterations=10)
     body = R.to_mf(m) ^ box((-BIG, -BIG, z0), (BIG, BIG, BIG))
+    # the tight wrap alone (his parts + SCULPT_MIN_SKIN, no inflation): what the face mask
+    # must clear
+    T = ndimage.gaussian_filter(tight, 1.0)
+    for sl in ((slice(0, 2),), (slice(-2, None),), (slice(None), slice(0, 2)), (slice(None), slice(-2, None)),
+               (slice(None), slice(None), slice(0, 2)), (slice(None), slice(None), slice(-2, None))):
+        T[sl] = 50.0
+    out_ref = os.path.join(G.ref_dir(), "sculpt")
+    os.makedirs(out_ref, exist_ok=True)
+    W.surface_nets(T, lo, h, level=P.SCULPT_MIN_SKIN).export(os.path.join(out_ref, "tight.stl"))
     return body
 
 

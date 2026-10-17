@@ -365,13 +365,24 @@ M4_INSERT_DEPTH = 10.0
 
 # ---------------------------------------------------------------------------
 # Face mask (M5, D19: face_mask.py). A thin shell of a man's face from the MakeHuman base
-# mesh (CC0), warped so its features sit on the mechanism, clear of Cogley's head.
-MASK_SCALE_TRIM = 1.0          # times the geometric mean of the eye-spacing and eye-to-lips scales
+# mesh (CC0), warped so its features sit on the mechanism, clear of Cogley's head. Its skin is
+# read as a radius over directions (azimuth, elevation, degrees) from a point in the head.
+MASK_SCALE = 1.2               # MakeHuman's face scaled up like the head (HEAD_SCALE): it then spans
+                               # Cogley's mechanism, and its eyes land within 0.5 of the EyeMech's
+MASK_FEATURE_SCALE = 1.05      # the mouth and nose wings are held at MakeHuman's width times this
+                               # (the overall scale made them 20 % too wide)
 MASK_MALE = (10.0, 4.0)        # a man's face: jaw angles this much wider each side; brow ridge forward
-MASK_OUTLINE = (78.0, 106.0, -24.0)  # the mask's oval seen from the front: half width, half height,
-                               # centre below the eye line
+MASK_CENTRE_BACK = 75.0        # the directions start this far behind the eyes (15 below them)
+MASK_GRID_DEG = 0.5            # direction grid
+MASK_DIP = 2.0                 # a radius this far below its neighbourhood is an opening (eyes, lips)
+MASK_LID_DOME = 2.0            # closed lids bulge this much over the filled eye openings
+MASK_SMOOTH = 0.7              # a smoothing of the skin, degrees (the sampling left it grainy)
+MASK_PUSH_SMOOTH = 2.5         # and of the push out over Cogley's helmet, degrees
+MASK_TOP_SMOOTH = 4.0          # the forehead and skull, smoothed hard above the brows, degrees
+MASK_CORE_OK = 0.05            # the whole face moves forward until only this share of its middle
+                               # still needs a local push
+MASK_BULGE = 10.0              # pushes clear of Cogley's head spread this wide, degrees
+MASK_LINE = (0.6, 0.35)        # lash and lip lines: depth (mm), width (degrees)
+MASK_OUTLINE = (72.0, 55.0, -55.0, 0.12)  # egg outline: half width, top and bottom elevation (deg),
+                               # widening toward the top; it reaches over the forehead onto the skull
 MASK_T = 3.0                   # shell thickness, inward
-MASK_INSIDE_OK = 0.01          # share of points still inside after the forward move (pushed out locally)
-MASK_BULGE = 12.0             # those are pushed out as smooth bulges this wide (sigma)
-MASK_SUBDIVIDE = 1             # loop subdivisions of MakeHuman's face, for a smooth print
-

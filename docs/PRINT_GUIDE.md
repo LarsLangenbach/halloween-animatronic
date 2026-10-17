@@ -30,10 +30,10 @@ Printer: Bambu Lab P2S, 0.4 nozzle, 256 × 256 × 256 bed. Every part fits the b
 
 ## M5: face mask (ready to print, D19)
 
-`output/print/face_mask.stl`: a 3 mm shell of a man's face, 153 × 205 × 63 in its print pose, about 100 g.
-- **Its features sit on the mechanism:** the eye holes on the eye mechanism's eyes, the lips on Cogley's lips, the nose between them.
-- **Print pose:** face up (as exported), with tree supports. They only touch the inside, so the face stays clean.
-- **Repair is normal:** the shell folds over itself slightly at the eyelid rims and the lip line. Bambu Studio repairs that when it imports the file. Accept the repair.
+`output/print/face_mask.stl` (v2): a 3 mm shell of a man's face, 170 × 243 × 108 in its print pose, about 190 g.
+- **Shape:** closed eyes with a lash line, a natural nose and mouth, and a lip line. Its outline is a smooth egg reaching over the forehead onto the front of the skull.
+- **Its features sit on the mechanism:** the eyes on the eye mechanism's eyes, the lips on Cogley's lips, the nose between them.
+- **Print pose:** face up (as exported), with tree supports. They only touch the inside, so the face stays clean. The mask fits the bed only lengthwise; don't stand it up.
 
 **The old sculpt base pieces (`sculpt_upper`, `sculpt_lower`, `sculpt_plate`) are replaced by the mask: don't print them.**
 

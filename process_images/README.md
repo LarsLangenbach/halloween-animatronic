@@ -24,3 +24,4 @@ The build log ([docs/BUILD_LOG.md](../docs/BUILD_LOG.md)) links here.
 - **2026-10-16_19_cogley-eye-mount**: How the eye mechanism mounts in Cogley's frame: on the mouth's top plate, 2 screws per side through the frame into the base plate's ends, cheek bone underneath ([studies_cogley_eye_mount.png](2026-10-16_19_cogley-eye-mount/studies_cogley_eye_mount.png), 70 file(s))
 - **2026-10-16_20_sculpt-base-v2**: Sculpt base v2 on Cogley's head: the 3 print files, assembled and exploded ([sculpt_files.png](2026-10-16_20_sculpt-base-v2/sculpt_files.png), 76 file(s))
 - **2026-10-16_21_face-mask**: Face mask (D19): a man's face shell on the mechanism, clear of Cogley's head ([sculpt_face_mask.png](2026-10-16_21_face-mask/sculpt_face_mask.png), 88 file(s))
+- **2026-10-16_22_face-mask-v2**: Face mask v2: closed eyes, natural nose and mouth, smooth edge, up onto the skull ([sculpt_face_mask.png](2026-10-16_22_face-mask-v2/sculpt_face_mask.png), 88 file(s))

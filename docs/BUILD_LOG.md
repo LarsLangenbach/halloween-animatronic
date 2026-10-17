@@ -29,6 +29,33 @@ Rules:
 
 ---
 
+## 2026-10-16 — M5 — Face mask v2
+
+**Done (team feedback on v1):**
+- **Asked for:** the edges smoothed, no holes, the lips and nose narrower, closed eyes instead of eye holes, and the mask reaching up toward the skull.
+- **`cad/face_mask.py` v2:**
+  - It reads the warped MakeHuman head as a radius over a grid of directions from a point 75 mm behind the eyes: the outermost skin, from surface samples binned by direction.
+  - Openings (radius dips) are filled smoothly. Closed lids get a 2 mm dome and a lash line, and the lips get a lip line.
+  - The whole face moves 5.5 mm forward; the outside is then pushed out smoothly where it would come within 3 mm of Cogley's parts (the sculpt base's new tight wrap, `output/ref/sculpt/tight.stl`).
+  - The forehead and skull are smoothed hard, so the helmet's facets don't show.
+  - Trimmed to an egg outline (±72° wide, from −55° to +55° in elevation) and thickened 3 mm.
+- **Landmarks** now come from a dense front height map. The point-by-point read had taken the back of the head for the lips.
+- **Widths:** the nose and mouth are pinned to MakeHuman's width × 1.05 (nose wings ±16.8, mouth ±25.9). The scale is a fixed 1.2.
+- **Print pose:** 170 × 243 × 108, about 190 g; it fits the 256 bed lengthwise. An outline topping out at 70° was 268 long.
+
+**Numbers:**
+- New: `MASK_SCALE` 1.2 (was `MASK_SCALE_TRIM`), `MASK_FEATURE_SCALE` 1.05, `MASK_CENTRE_BACK` 75, `MASK_GRID_DEG` 0.5, `MASK_DIP` 2, `MASK_LID_DOME` 2, `MASK_SMOOTH` 0.7, `MASK_PUSH_SMOOTH` 2.5, `MASK_TOP_SMOOTH` 4, `MASK_CORE_OK` 0.05, `MASK_BULGE` 10, `MASK_LINE` (0.6, 0.35), `MASK_OUTLINE` (72, 55, −55, 0.12).
+- Gone: `MASK_INSIDE_OK`, `MASK_SUBDIVIDE`.
+
+**Problems along the way:**
+- Rays through the 500k-triangle wrap took over 10 minutes. Binning surface samples by direction takes seconds.
+- Checking against the sculpt base's surface (inflated up to 11 mm at the face) pushed the face 50 mm forward. The tight wrap fixed it.
+- The face is a reference to sculpt on, so its outside (not its inside) keeps 3 mm from his parts.
+
+**Renders:** process_images snapshot 22 (`sculpt_face_mask.png`).
+
+---
+
 ## 2026-10-16 — M5 — Face mask (D19)
 
 **Done:**
