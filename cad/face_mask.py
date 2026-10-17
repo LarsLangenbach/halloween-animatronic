@@ -363,11 +363,24 @@ def skin(warped, wrap, c, eye_y):
     r = inpaint(r, band & mouth, iters=600)                           # no comb of ridges along it
     # the lips flattened (team, 2026-10-16: the sculptor shapes them): a smooth surface with
     # the long parting line where they meet, and a line round each lip (MASK_LIP_MARKS)
-    wf = np.exp(-(((A * k_l) / (half + 4.0)) ** 4 + (((E - e_l) * k_l) / 12.0) ** 4))
-    r = (1 - wf) * r + wf * ndimage.gaussian_filter(r, 4.0 / (k_l * st))
+    up, low, depth = P.MASK_LIP_MARKS
+    # flat: the lips' area refilled as a smooth membrane from the skin round it (no lip shapes)
+    # from just under the nose to the crease above the chin (a smaller patch left the upper
+    # lip's bulge standing above it as a ledge)
+    zone = ((A * k_l) / (half + 6.0)) ** 4 + (((E - line) * k_l) / P.MASK_LIP_FLAT) ** 4 < 1.0
+    ii, jj = np.where(zone)
+    box = np.s_[ii.min() - 3:ii.max() + 4, jj.min() - 3:jj.max() + 4]
+    sub, z = r[box].copy(), zone[box]
+    sub[z] = ndimage.gaussian_filter(r, 4.0 / (k_l * st))[box][z]
+    for _ in range(3000):
+        avg = 0.25 * (np.roll(sub, 1, 0) + np.roll(sub, -1, 0) + np.roll(sub, 1, 1) + np.roll(sub, -1, 1))
+        sub[z] = avg[z]
+    r[box] = sub
+    edge = ndimage.gaussian_filter(zone.astype(float), 1.5 / (k_l * st))
+    edge = 4.0 * edge * (1.0 - edge)                                  # soften the rim of the refill
+    r = r + edge * (ndimage.gaussian_filter(r, 1.5 / (k_l * st)) - r)
     fade = np.clip((a_c - np.abs(A)) * k_l / 2.0, 0.0, 1.0)
     r -= P.MASK_LIP_LINE * fade * np.exp(-(((E - line) * k_l) ** 2) / (2 * 0.45 ** 2))
-    up, low, depth = P.MASK_LIP_MARKS
     shape = np.sqrt(np.clip(1.0 - (A / a_c) ** 2, 0.0, 1.0))
     bow = 1.0 - 0.15 * np.exp(-((A * k_l / 4.0) ** 2))                # a slight dip in the middle (Cupid's bow)
     inside = np.abs(A) < a_c

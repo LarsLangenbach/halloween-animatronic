@@ -385,6 +385,7 @@ MASK_LIP_ZONE = 8.0            # the gap between the lips is closed within this 
 MASK_LIP_LINE = 0.7            # the line where the lips meet, cut this deep (mm)
 MASK_LIP_MARKS = (9.0, 11.0, 0.5)  # the lips are flat, with a line round each: upper and lower
                                # lip height at the middle, line depth (mm)
+MASK_LIP_FLAT = 18.0           # the mouth is flat this far above and below the parting line (mm)
 MASK_PUSH_SMOOTH = 4.0         # and of the push out over Cogley's helmet, degrees
 MASK_TOP_SMOOTH = 4.0          # the forehead and skull, smoothed hard above the brows, degrees
 MASK_CORE_OK = 0.05            # the whole face moves forward until only this share of its middle

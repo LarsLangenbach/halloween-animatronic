@@ -32,7 +32,7 @@ Rules:
 ## 2026-10-16 — M5 — Face mask v7: flat lips with marks, smaller iris rings
 
 **Done (team, building closing):**
-- **Lips:** the lip shapes are flattened (smoothed over 4 mm), because the sculptor shapes them. Three lines are cut into the flat area:
+- **Lips:** the mouth area is flat, refilled as a smooth membrane from under the nose to above the chin (MASK_LIP_FLAT = 18 mm each way), because the sculptor shapes the lips. A first, smaller patch left the upper lip's bulge as a ledge. Three lines are cut into the flat area:
   - the long parting line where the lips meet, out to the corners, 0.7 mm deep
   - a line round the upper lip (9 mm high in the middle, with a slight Cupid's bow), 0.5 mm deep
   - a line round the lower lip (11 mm), 0.5 mm deep
