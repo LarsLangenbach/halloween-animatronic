@@ -14,13 +14,15 @@ realistic, neutral adult. Its units are decimetres, +y up, the face toward +z.
      (MASK_CENTRE_BACK behind the eyes): the outermost surface along each direction. That
      covers the face, the forehead and the front of the skull in one smooth sheet
   4. the eyes and lips are MakeHuman's own: its eyelids, with its eyeballs (helper-l/r-eye)
-     filling the openings, so open eyes without holes, marked with an iris ring and a pupil
-     where the eye mechanism's axis comes through (MASK_IRIS); its lips, scaled evenly about
-     where they meet so their corners reach just past the ends of Cogley's lip plates
+     placed rigidly on the eye mechanism's eye centres and filling the openings, so open eyes
+     without holes, marked with an iris ring and a pupil round each eye axis (MASK_IRIS); its
+     lips, scaled evenly about where they meet so their corners reach just past the ends of
+     Cogley's lip plates, the gap between them closed with a clean line (MASK_LIP_LINE)
   5. move it forward, then push it out smoothly, wherever its outside would come within
      SCULPT_MIN_SKIN of Cogley's head (sculpt_base.py's tight wrap)
   6. trim it to a smooth egg outline (MASK_OUTLINE, in directions: half width, top and bottom
-     elevation, egg) and thicken it MASK_T inward
+     elevation, egg) and thicken it MASK_T inward (the inside a smooth surface of its own, never
+     crossing the skin)
 
 Run:  python cad/face_mask.py  -> <stl_dir>/face_mask.stl
 """
@@ -65,9 +67,12 @@ def read_makehuman():
         for f in groups[g]:
             tris += [(f[0], f[k], f[k + 1]) for k in range(1, len(f) - 1)]
     joints = {}
-    for g in ("joint-l-eye", "joint-r-eye"):
-        idx = np.unique(np.concatenate([np.array(f) for f in groups[g]]))
-        joints[g] = V[idx].mean(axis=0)
+    # the eye centres: the middle of MakeHuman's eyeballs (its eye joints sit a little off),
+    # and the eyeballs' vertices, placed rigidly later
+    for g, h in (("joint-l-eye", "helper-l-eye"), ("joint-r-eye", "helper-r-eye")):
+        idx = np.unique(np.concatenate([np.array(f) for f in groups[h]]))
+        joints[g] = (V[idx].min(axis=0) + V[idx].max(axis=0)) / 2
+        joints[h] = idx
     return V, np.array(tris), joints
 
 
@@ -96,6 +101,7 @@ def landmarks(mesh, joints):
     and brow, on MakeHuman's head in our frame (its own scale)."""
     v = mesh.vertices
     eyes = np.array([joints["joint-l-eye"], joints["joint-r-eye"]])
+    eyeballs = [joints["helper-l-eye"], joints["helper-r-eye"]]
     ez, ey = eyes[:, 2].mean(), eyes[:, 1].mean()
     xs, zs, H = front_height(mesh, ey, ez)
 
@@ -106,15 +112,20 @@ def landmarks(mesh, joints):
     sel = (zs > ez - 120.0) & (zs < ez - 20.0)
     k = np.where(sel)[0][np.argmax(col[sel])]
     nose = np.array([0.0, col[k], zs[k]])
-    sel = (zs > nose[2] - 45.0) & (zs < nose[2] - 12.0)
-    k = np.where(sel)[0][np.argmin(col[sel])]                        # the dent between the lips
+    # where the lips meet: the narrow dip between them (the crease under the nose is above the
+    # window, the broad crease under the lower lip, which is deeper, below it)
+    hp = H - ndimage.gaussian_filter1d(H, 4.0, axis=1)
+    sel = (zs > nose[2] - 40.0) & (zs < nose[2] - 18.0)
+    k = np.where(sel)[0][np.argmin(hp[np.argmin(np.abs(xs)), sel])]
     stomion = np.array([0.0, col[k], zs[k]])
     sel = (zs < stomion[2] - 25.0) & (zs > stomion[2] - 55.0)        # the chin's front, below the lower lip
     k = np.where(sel)[0][np.argmax(col[sel])]
     chin = np.array([0.0, col[k], zs[k]])
-    # mouth corners: MakeHuman's closed lips barely show a slit, so the standard proportion,
-    # the mouth 0.8 of the eye spacing wide
-    corner = 0.4 * abs(eyes[0, 0] - eyes[1, 0])
+    # mouth corners: where that dip fades out sideways
+    band = np.abs(zs - stomion[2]) < 7.0
+    dip = -hp[:, band].min(axis=1)
+    corner = min(max(abs(x) for x, d in zip(xs, dip) if d > 0.3 and sx * x > 0 and abs(x) < 45.0)
+                 for sx in (+1, -1))
     mouth = np.array([[sx * corner, at(sx * corner, stomion[2]), stomion[2]] for sx in (+1, -1)])
     zw = stomion[2] + 16.0                                            # nose wings, 16 above the lips
     row = np.array([at(x, zw) for x in xs])
@@ -129,8 +140,8 @@ def landmarks(mesh, joints):
     sel = (zs < stomion[2]) & (zs > stomion[2] - 14.0)
     k = np.where(sel)[0][np.argmax(col[sel])]
     lower = np.array([0.0, col[k], zs[k]])
-    return dict(eyes=eyes, nose=nose, stomion=stomion, chin=chin, mouth=mouth, wings=wings, jaw=jaw, brow=brow,
-                upper=upper, lower=lower)
+    return dict(eyes=eyes, eyeballs=eyeballs, nose=nose, stomion=stomion, chin=chin, mouth=mouth, wings=wings,
+                jaw=jaw, brow=brow, upper=upper, lower=lower)
 
 
 def lip_half_width():
@@ -212,6 +223,11 @@ def warp(mesh, lm):
     rbf = RBFInterpolator(src, dst - src, kernel="thin_plate_spline")
     v = sim(mesh.vertices)
     v = v + rbf(v)
+    # MakeHuman's eyeballs placed rigidly, exactly on the eye mechanism's eye centres (the
+    # warp bent them, and their middles drifted up to 0.6 mm)
+    for e, ids in zip(lm["eyes"], lm["eyeballs"]):
+        target = np.array([np.sign(e[0]) * P.EYE_SPACING / 2, sim(e)[1], ez])
+        v[ids] = (mesh.vertices[ids] - e) * s + target
     eye_y = sim(lm["eyes"][0])[1]
     return trimesh.Trimesh(v, mesh.faces, process=False), eye_y, dict(
         scale=s, stomion=st_z, mouth=half, wing=lm["wings"][0, 0] * nat, lip_scale=f_lip)
@@ -248,6 +264,46 @@ def outer_radius(mesh, c, phi, psi, per_mm2=6.0, reach=260.0):
     return grid
 
 
+def radial_exact(mesh, c, phi, psi):
+    """The outermost radius of the mesh in each direction from c, exactly: every triangle is
+    rasterised over the (phi, psi) grid and its radius interpolated (a max-buffer). No
+    sampling, so no grain to smooth away (smoothing it blurred the eyes and lips)."""
+    v = mesh.vertices - c
+    rr = np.linalg.norm(v, axis=1)
+    aa = np.degrees(np.arctan2(v[:, 0], v[:, 1]))
+    ee = np.degrees(np.arcsin(np.clip(v[:, 2] / rr, -1.0, 1.0)))
+    f = mesh.faces
+    A, E, Rr = aa[f], ee[f], rr[f]
+    ok = (np.ptp(A, axis=1) < 30.0)                                   # not across the back seam
+    A, E, Rr = A[ok], E[ok], Rr[ok]
+    st = phi[1] - phi[0]
+    fa, fe = (A - phi[0]) / st, (E - psi[0]) / st
+    i0, j0 = np.floor(fa.min(axis=1)).astype(int), np.floor(fe.min(axis=1)).astype(int)
+    wi = np.ceil(fa.max(axis=1)).astype(int) - i0
+    wj = np.ceil(fe.max(axis=1)).astype(int) - j0
+    grid = np.full((len(phi), len(psi)), -np.inf)
+    (x0, y0), (x1, y1), (x2, y2) = (fa[:, 0], fe[:, 0]), (fa[:, 1], fe[:, 1]), (fa[:, 2], fe[:, 2])
+    den = (y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2)
+    den = np.where(np.abs(den) < 1e-12, 1e-12, den)
+    for di in range(int(min(wi.max(), 12)) + 1):
+        for dj in range(int(min(wj.max(), 12)) + 1):
+            gi, gj = i0 + di, j0 + dj
+            sel = (di <= wi) & (dj <= wj) & (gi >= 0) & (gi < len(phi)) & (gj >= 0) & (gj < len(psi))
+            if not sel.any():
+                continue
+            px, py = gi[sel].astype(float), gj[sel].astype(float)
+            l0 = ((y1 - y2)[sel] * (px - x2[sel]) + (x2 - x1)[sel] * (py - y2[sel])) / den[sel]
+            l1 = ((y2 - y0)[sel] * (px - x2[sel]) + (x0 - x2)[sel] * (py - y2[sel])) / den[sel]
+            l2 = 1.0 - l0 - l1
+            inside = (l0 >= -1e-6) & (l1 >= -1e-6) & (l2 >= -1e-6)
+            if not inside.any():
+                continue
+            rv = (l0 * Rr[sel, 0] + l1 * Rr[sel, 1] + l2 * Rr[sel, 2])[inside]
+            np.maximum.at(grid, (gi[sel][inside], gj[sel][inside]), rv)
+    grid[np.isinf(grid)] = np.nan
+    return grid
+
+
 def inpaint(r, bad, iters=1500):
     """Fill the cells marked bad with a smooth membrane (repeated neighbour averaging)."""
     r = r.copy()
@@ -264,16 +320,59 @@ def skin(warped, wrap, c, eye_y):
     st = P.MASK_GRID_DEG
     phi = np.arange(-125.0, 125.0 + st, st)
     psi = np.arange(-75.0, 88.0 + st, st)
-    r = outer_radius(warped, c, phi, psi, per_mm2=40.0)
+    r = radial_exact(warped, c, phi, psi)
     A, E = np.meshgrid(phi, psi, indexing="ij")
     ez = G.eye_z(S)
-    eyes = []
-    for sx in (+1, -1):
-        v = np.array([sx * P.EYE_SPACING / 2, eye_y, ez]) - c
-        eyes.append((sx, np.degrees(np.arctan2(v[0], v[1])), np.degrees(np.arcsin(v[2] / np.linalg.norm(v)))))
+
+    def on_axis(r):
+        """For each eye: the grid direction whose skin point lies on the eye mechanism's eye
+        axis (x = +-EYE_SPACING/2 at eye height, along y), and every skin point's distance
+        from that axis, mm (far off for points not on the eye's front)."""
+        pts = c + directions(A, E) * r[..., None]
+        out = []
+        for sx in (+1, -1):
+            rho = np.hypot(pts[..., 0] - sx * P.EYE_SPACING / 2, pts[..., 2] - ez)
+            rho = np.where(pts[..., 1] > c[1] + 40.0, rho, 1e3)
+            i, j = np.unravel_index(np.argmin(rho), rho.shape)
+            out.append((sx, phi[i], psi[j], rho))
+        return out
+
     r = inpaint(r, np.isnan(r))                                       # directions that missed
-    r = ndimage.median_filter(r, size=3)                              # the sampling's grain
-    r = ndimage.gaussian_filter(r, P.MASK_SMOOTH / st)
+    eyes = [(sx, a, e) for sx, a, e, _ in on_axis(r)]
+    # the lips: MakeHuman's mouth is a little open, and traced into, the gap came out as a
+    # jagged, tooth-like edge. Close it (a grey closing up and down, within the mouth) and cut
+    # a clean line where the lips meet, along the gap's own curve, fading out at the corners
+    st_z = lip_target()
+    i0 = int(np.argmin(np.abs(phi)))
+    z0 = c[2] + np.sin(np.radians(psi)) * r[i0]
+    j0 = int(np.argmin(np.where(psi < 0.0, np.abs(z0 - st_z), np.inf)))
+    e_l = psi[j0]                                                     # the lips, seen from c
+    k_l = np.radians(1.0) * r[i0, j0]                                 # mm per degree there
+    half = lip_half_width()
+    mouth = (np.abs(A) * k_l < half + 6.0) & (np.abs(E - e_l) * k_l < P.MASK_LIP_ZONE)
+    closed = ndimage.grey_closing(r, size=(1, int(round(4.0 / (k_l * st))) | 1))
+    gap = np.where(mouth, closed - r, 0.0)
+    wm = np.clip(ndimage.gaussian_filter(mouth.astype(float), 1.0 / (k_l * st)) * 2.0, 0.0, 1.0)
+    r = r + wm * (closed - r)
+    cols = gap.max(axis=1) > 0.3
+    a_c = np.abs(phi[cols]).max()                                     # the corners
+    e_s = np.polyfit(phi[cols], psi[np.argmax(gap[cols], axis=1)], 4, w=np.sqrt(gap.max(axis=1)[cols]))
+    line = np.polyval(e_s, A)
+    band = (np.abs(E - line) * k_l < 1.2) & (np.abs(A) < a_c + 1.0 / k_l)
+    band |= ndimage.binary_dilation(gap > 0.15, iterations=2)
+    r = inpaint(r, band & mouth, iters=600)                           # no comb of ridges along it
+    fade = np.clip((a_c - np.abs(A)) * k_l / 4.0, 0.0, 1.0)
+    r -= P.MASK_LIP_LINE * fade ** 2 * np.exp(-(((E - line) * k_l) ** 2) / (2 * 0.45 ** 2))
+    # the plain skin smoothed (MakeHuman's low-poly facets rippled the cheeks); the eyes, nose
+    # and lips kept sharp
+    feat = np.zeros(r.shape)
+    for _, a, e in eyes:
+        feat = np.maximum(feat, np.exp(-(((A - a) / 12.0) ** 4 + ((E - e) / 8.0) ** 4)))
+    feat = np.maximum(feat, np.exp(-(((A * k_l) / (lip_half_width() + 10.0)) ** 4 + (((E - e_l) * k_l) / 16.0) ** 4)))
+    nz = np.array([0.0, eye_y + 30.0, (ez + st_z) / 2]) - c
+    e_n = np.degrees(np.arcsin(nz[2] / np.linalg.norm(nz)))
+    feat = np.maximum(feat, np.exp(-(((A * k_l) / 22.0) ** 4 + (((E - e_n) * k_l) / 30.0) ** 4)))
+    r = feat * r + (1 - feat) * ndimage.gaussian_filter(r, P.MASK_SKIN_SMOOTH / st)
     # clear of Cogley's head: the outside at least SCULPT_MIN_SKIN from his parts (a reference
     # to sculpt on: the clay goes on top, and the skin is cast on a core of his head)
     rw = ndimage.gaussian_filter(np.nan_to_num(outer_radius(wrap, c, phi, psi, per_mm2=10.0), nan=0.0), 2.0)
@@ -290,18 +389,14 @@ def skin(warped, wrap, c, eye_y):
     w = np.clip((E - e_b) / 12.0, 0.0, 1.0)
     r = (1 - w) * r + w * ndimage.gaussian_filter(r, P.MASK_TOP_SMOOTH / st)
     # MakeHuman's own eyes: its eyelids, and its eyeballs in the openings (no holes). Marks on
-    # each eyeball where the eye mechanism's eye axis comes through: an iris ring and a pupil
-    for sx, a, e in eyes:
-        d = np.array([sx * P.EYE_SPACING / 2, eye_y, ez]) - c
-        dirs = directions(A, E)
-        ang = np.degrees(np.arccos(np.clip(dirs @ (d / np.linalg.norm(d)), -1.0, 1.0)))
-        front = np.linalg.norm(d) + 12.0
-        iris = np.degrees(np.arctan2(P.MASK_IRIS[0], front))
-        pupil = np.degrees(np.arctan2(P.MASK_IRIS[1], front))
-        depth, width = P.MASK_LINE
-        r -= depth * np.exp(-((ang - iris) ** 2) / (2 * width ** 2)) * (ang < iris + 3 * width)
-        r -= P.MASK_IRIS[2] * np.clip(1.0 - (ang / pupil) ** 2, 0.0, 1.0)
-    return phi, psi, r, float(push.max())
+    # each eyeball, centred on the eye mechanism's eye axis (circles round it seen from the
+    # front, measured on the skin): an iris ring and a pupil
+    eyes = on_axis(r)
+    depth, width = P.MASK_LINE
+    for sx, a, e, rho in eyes:
+        r -= depth * np.exp(-((rho - P.MASK_IRIS[0]) ** 2) / (2 * width ** 2)) * (rho < P.MASK_IRIS[0] + 3 * width)
+        r -= P.MASK_IRIS[2] * np.clip(1.0 - (rho / P.MASK_IRIS[1]) ** 2, 0.0, 1.0)
+    return phi, psi, r, float(push.max()), [(a, e) for _, a, e, _ in eyes]
 
 
 def forward(warped, wrap, c):
@@ -320,6 +415,21 @@ def forward(warped, wrap, c):
     return 60.0
 
 
+def inner_radius(phi, psi, r):
+    """The inside of the shell, as a radius over the same directions as the skin: MASK_T in
+    from it along its normal, smooth, following its deepest creases, and never nearer to it
+    than half MASK_T along the ray, so the two can't cross (an offset along the vertex
+    normals crossed the skin in the eyelid creases)."""
+    st = phi[1] - phi[0]
+    k = np.radians(1.0) * float(np.median(r))                         # mm per degree
+    # under the deepest point within 4 mm (the inner eye corners are deep, steep notches)
+    low = ndimage.gaussian_filter(ndimage.minimum_filter(r, size=int(round(8.0 / (k * st))) | 1), 2.0 / (k * st))
+    d_a, d_e = np.gradient(low, np.radians(st))
+    tan = np.hypot(d_a / np.cos(np.radians(psi))[None, :], d_e) / low   # the normal's tilt from the ray
+    cos = np.clip(1.0 / np.sqrt(1.0 + tan ** 2), 0.35, 1.0)
+    return np.minimum(low - P.MASK_T / cos, r - 0.5 * P.MASK_T)
+
+
 def mesh_from(phi, psi, r, c, keep=()):
     """The shell: the skin inside the egg outline, sampled on rings, thickened inward. The
     finishing smooth spares the zones in `keep` ((azimuth, elevation, half width, half height,
@@ -328,7 +438,7 @@ def mesh_from(phi, psi, r, c, keep=()):
     cz = (top + bottom) / 2
     hz = (top - bottom) / 2
     f = RegularGridInterpolator((phi, psi), r)
-    nr, nt = 120, 480
+    nr, nt = 260, 1000
     rho = np.linspace(0.0, 1.0, nr + 1)[1:]
     th = np.linspace(0.0, 2 * np.pi, nt, endpoint=False)
     Rh, Th = np.meshgrid(rho, th, indexing="ij")
@@ -360,9 +470,10 @@ def mesh_from(phi, psi, r, c, keep=()):
         w = np.maximum(w, how * np.exp(-(((va - a0) / ha) ** 4 + ((ve - e0) / he) ** 4)))
     outer.vertices = w[:, None] * before + (1 - w[:, None]) * outer.vertices
     outer.vertices[rim_ids] = before[rim_ids]                         # keep the outline where it is
-    sm = outer.copy()
-    trimesh.smoothing.filter_laplacian(sm, lamb=0.5, iterations=10)
-    inner = outer.vertices - sm.vertex_normals * P.MASK_T
+    fi = RegularGridInterpolator((phi, psi), inner_radius(phi, psi, r))
+    rin = fi(np.stack([A.ravel(), E.ravel()], axis=1)).reshape(A.shape)
+    inner = np.vstack([(c + directions(0.0, cz) * fi([[0.0, cz]])[0])[None],
+                       (c + directions(A, E) * rin[..., None]).reshape(-1, 3)])
     nv = len(V)
     rim = [vid(nr - 1, j) for j in range(nt)]
     side = []
@@ -377,25 +488,22 @@ def mesh_from(phi, psi, r, c, keep=()):
 
 def build():
     V, F, joints = read_makehuman()
-    head = trimesh.Trimesh(V, F, process=True)
+    head = trimesh.Trimesh(V, F, process=False)                       # keep the indices (the eyeballs)
     lm = landmarks(head, joints)
     warped, eye_y, info = warp(head, lm)
     ez0 = G.eye_z(S)
     keep = warped.triangles_center[:, 2] > ez0 - 260.0                # the head: smooth it (MakeHuman is low-poly)
     warped = warped.submesh([np.where(keep)[0]], append=True)
     warped = warped.subdivide().subdivide()
-    trimesh.smoothing.filter_taubin(warped, lamb=0.5, nu=-0.53, iterations=15)
+    trimesh.smoothing.filter_taubin(warped, lamb=0.5, nu=-0.53, iterations=P.MASK_HEAD_SMOOTH)
     ez = G.eye_z(S)
     c = np.array([0.0, eye_y - P.MASK_CENTRE_BACK, ez - 15.0])
     # his parts + SCULPT_MIN_SKIN (sculpt_base.py's tight wrap; its wrap.stl is inflated at the face)
     wrap = trimesh.load(os.path.join(G.ref_dir(), "sculpt", "tight.stl"), force="mesh")
     dy = forward(warped, wrap, c)
     warped.apply_translation((0.0, dy, 0.0))
-    phi, psi, r, pushed = skin(warped, wrap, c, eye_y)
-    keep = []
-    for sx in (+1, -1):                                               # the eyes' marks, the lips' detail
-        v = np.array([sx * P.EYE_SPACING / 2, eye_y, ez]) - c
-        keep.append((np.degrees(np.arctan2(v[0], v[1])), np.degrees(np.arcsin(v[2] / np.linalg.norm(v))), 9.0, 6.0, 0.6))
+    phi, psi, r, pushed, eye_dirs = skin(warped, wrap, c, eye_y)
+    keep = [(a, e, 9.0, 6.0, 0.6) for a, e in eye_dirs]               # the eyes' marks, the lips' detail
     v = np.array([0.0, eye_y + 20.0, info["stomion"]]) - c
     keep.append((0.0, np.degrees(np.arcsin(v[2] / np.linalg.norm(v))), 16.0, 5.0, 0.6))
     shell = mesh_from(phi, psi, r, c, keep)

@@ -372,19 +372,22 @@ MASK_SCALE = 1.15              # MakeHuman's face scaled up like the head (HEAD_
 MASK_FEATURE_SCALE = 1.05      # the nose wings are held at MakeHuman's width times this
 MASK_MOUTH_PAST = 1.0          # the mouth's corners sit this far past the ends of Cogley's lip plates
                                # (MakeHuman's lips scaled evenly to get there: team, 2026-10-16)
-MASK_FINAL_SMOOTH = 8          # Taubin passes over the finished skin: prints smooth
+MASK_FINAL_SMOOTH = 2          # Taubin passes over the finished skin: prints smooth
                                # (the overall scale made them 20 % too wide)
 MASK_MALE = (10.0, 4.0)        # a man's face: jaw angles this much wider each side; brow ridge forward
 MASK_CENTRE_BACK = 75.0        # the directions start this far behind the eyes (15 below them)
-MASK_GRID_DEG = 0.5            # direction grid
+MASK_GRID_DEG = 0.25           # direction grid (about 0.5 mm on the face)
 MASK_IRIS = (6.5, 2.4, 1.2)    # iris ring radius, pupil radius, pupil depth: centred on the eye axis
-MASK_SMOOTH = 0.5              # a smoothing of the skin, degrees (the sampling left it grainy)
+MASK_HEAD_SMOOTH = 8           # Taubin passes over MakeHuman's subdivided head (its low-poly facets)
+MASK_SKIN_SMOOTH = 0.9         # the plain skin (not the eyes, nose, lips) smoothed this much, degrees
+MASK_LIP_ZONE = 8.0            # the gap between the lips is closed within this far above and below them (mm)
+MASK_LIP_LINE = 0.7            # the line where the lips meet, cut this deep (mm)
 MASK_PUSH_SMOOTH = 4.0         # and of the push out over Cogley's helmet, degrees
 MASK_TOP_SMOOTH = 4.0          # the forehead and skull, smoothed hard above the brows, degrees
 MASK_CORE_OK = 0.05            # the whole face moves forward until only this share of its middle
                                # still needs a local push
 MASK_BULGE = 14.0              # pushes clear of Cogley's head spread this wide, degrees
-MASK_LINE = (0.9, 0.35)        # the iris ring: depth (mm), width (degrees)
+MASK_LINE = (0.9, 0.55)        # the iris ring: depth, width (mm)
 MASK_OUTLINE = (112.0, 55.0, -55.0, 0.0)  # egg outline: half width, top and bottom elevation (deg),
                                # widening toward the top; it reaches over the forehead onto the skull
 MASK_T = 3.0                   # shell thickness, inward

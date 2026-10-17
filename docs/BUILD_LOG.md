@@ -29,6 +29,30 @@ Rules:
 
 ---
 
+## 2026-10-16 — M5 — Face mask v6: eyes exactly on the eye axes, MakeHuman's real lips
+
+**Done (team: "ensure the eye placement matches exactly the mechanic and show me"; the lips still didn't look like v1's real lips):**
+- **Eyes:** MakeHuman's eyeballs are placed rigidly on the eye mechanism's eye centres after the warp (the warp had bent them 0.3–0.7 mm off). Measured centre: x ±37.500, z 212.400, 0.000 mm off. The iris ring and pupil marks were drawn along rays from the head's centre point, which put them about 8 mm outboard of the real axis. They are now circles round the eye axis itself: pupil measured within 0.5 mm of it.
+- **Lips:**
+  - The "where the lips meet" landmark had picked the crease under the lower lip, 14 mm too low. It now finds the narrow dip between the lips (31 mm below MakeHuman's nose tip), and the corners where that dip fades (±26.5 mm).
+  - The lips scale ×1.11, not ×1.21, so the corners reach just past Cogley's plates.
+  - The gap between them is closed (a grey closing, then a smooth fill along the gap's own curve) with a 0.7 mm line cut along it that fades at the corners. The comb of "teeth" is gone.
+- **Skin:** the surface is now traced exactly from MakeHuman's mesh (triangle rasterisation, not sampling). The plain skin is smoothed; the eyes, nose and lips keep their detail.
+- **Shell inside:** it was offset 3 mm along smoothed normals, and it crossed the skin in the eyelid creases (walls of 0.00 mm over 82 regions). It is now a smooth surface of its own over the same directions: under the deepest point within 4 mm, 3 mm in along the normal, and never nearer the skin than 1.5 mm along the ray.
+- **print_check:** ran out of memory on the 1.04 M-face mask (a full-length ray cast tests about 59 k triangles per ray). Meshes over 200 k faces now get a short-range wall test (`local_thickness`). It agreed with the full ray cast on an eye crop.
+
+**Numbers:** MASK_LINE = (0.9, 0.55) mm (was a width in degrees); MASK_LIP_ZONE = 8.0 (new; replaces MASK_SLIT_DIP); MASK_LIP_LINE = 0.7; MASK_GRID_DEG = 0.25; MASK_FINAL_SMOOTH = 2; MASK_HEAD_SMOOTH = 8; MASK_SKIN_SMOOTH = 0.9.
+
+**Check:** `check: PASS (0 hard failure(s), 5 warning(s), 474 s)`. The 5 warnings were the print_check memory crash, fixed after this run. Then print_check on the mask alone: 17 thin spots of 2 mm² or less at the steep inner eye corners (was 82, down to 0.00 mm).
+
+**Renders:** [process_images/2026-10-16_26_face-mask-v6](../process_images/2026-10-16_26_face-mask-v6/) (`sculpt_mask_eyes*.png`: the eye axes through the pupils, cuts through each eye axis and at eye height; `sculpt_mask_closeups*.png`: eyes, lips, whole mask).
+
+**Problems:** the inside touches Cogley's eye frame (EyeCorePivotHolder, LidTR) at the inner eye corners, and brow parts at the forehead sides. The mask is a standalone sculpting piece, so it doesn't matter for the sculpt; it won't sit over the assembled mechanism. Print size 206 × 250 × 169, 364 cm³ solid.
+
+**Next:** print it (face up, tree supports inside); the team sculpts on it.
+
+---
+
 ## 2026-10-16 — M5 — Face mask v5: MakeHuman's own eyes and lips
 
 **Done (team feedback on v4):** the designed eyes and lips looked inhuman; use the reference mesh's own.

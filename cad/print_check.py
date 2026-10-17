@@ -47,6 +47,7 @@ MIN_WALL = float(_P["min_wall"])          # mm; two extrusion widths
 MIN_REGION = 10.0       # mm2; smaller overhang regions bridge or sag harmlessly
 BED_Z = 0.05
 RAY_BATCH = 2000        # faces per ray-cast batch (memory)
+DENSE = 200_000         # faces; denser meshes get the short-range wall test (local_thickness)
 COLOURS = dict(plain=(225, 215, 220), over=(220, 40, 40), thin=(40, 90, 230), bed=(60, 170, 80))
 TILE = 400
 WARNS = []
@@ -115,6 +116,38 @@ def where(mesh, faces):
     return f"({c[0]:+.1f}, {c[1]:+.1f}, z {c[2]:.1f})"
 
 
+def local_thickness(mesh, c, n, reach, batch=50_000):
+    """Wall thickness along each face's inward normal, looking only at triangles whose centres
+    lie within `reach` (plus a typical triangle's size): for very dense meshes, where the full
+    ray cast tests tens of thousands of triangles per ray (a 1 M-face face shell ran out of
+    memory). Walls thicker than `reach` read as infinite."""
+    from scipy.spatial import cKDTree
+    tri = mesh.triangles
+    size = float(np.percentile(np.linalg.norm(tri - c[:, None], axis=2).max(axis=1), 99))
+    tree = cKDTree(c)
+    thick = np.full(len(c), np.inf)
+    for s in range(0, len(c), batch):
+        near = tree.query_ball_point(c[s:s + batch], reach + size, return_sorted=False)
+        i = np.repeat(np.arange(s, s + len(near)), [len(k) for k in near])
+        j = np.concatenate([np.asarray(k, dtype=np.int64) for k in near])
+        facing = (n[i] * n[j]).sum(axis=1) < -0.5                       # a facing wall
+        i, j = i[facing], j[facing]
+        o, d = c[i] - n[i] * 1e-3, -n[i]                                # Moller-Trumbore
+        t0, e1, e2 = tri[j, 0], tri[j, 1] - tri[j, 0], tri[j, 2] - tri[j, 0]
+        p = np.cross(d, e2)
+        det = (e1 * p).sum(axis=1)
+        ok = np.abs(det) > 1e-12
+        inv = 1.0 / np.where(ok, det, 1.0)
+        sv = o - t0
+        u = (sv * p).sum(axis=1) * inv
+        q = np.cross(sv, e1)
+        v = (d * q).sum(axis=1) * inv
+        t = (e2 * q).sum(axis=1) * inv
+        hit = ok & (u >= 0) & (v >= 0) & (u + v <= 1) & (t > 0)
+        np.minimum.at(thick, i[hit], t[hit])
+    return thick
+
+
 def analyse(name, mesh, settings):
     mesh = mesh.copy()
     for axis, deg in enumerate(settings.get("print_rotate", [0, 0, 0])):
@@ -128,9 +161,11 @@ def analyse(name, mesh, settings):
 
     c = mesh.triangles_center
     thick = np.full(len(c), np.inf)
+    if len(c) > DENSE:
+        thick = local_thickness(mesh, c, n, 2.0 * MIN_WALL)
     # in batches: on a solid part every inward ray crosses the whole part, and its candidate
     # triangles (21 M for a solid head) ran out of memory with the other checks running
-    for s in range(0, len(c), RAY_BATCH):
+    for s in range(0, len(c) if len(c) <= DENSE else 0, RAY_BATCH):
         cs, ns = c[s:s + RAY_BATCH], n[s:s + RAY_BATCH]
         loc, ray, tri = mesh.ray.intersects_location(cs - ns * 1e-3, -ns, multiple_hits=False)
         opposite = (mesh.face_normals[tri] * ns[ray]).sum(axis=1) < -0.5   # a facing wall, not a corner
