@@ -29,6 +29,25 @@ Rules:
 
 ---
 
+## 2026-10-16 — M5 — Face mask v8: thin shell, flat eyes and nose guide
+
+**Done (team: save filament; eyes and nose only as guides):**
+- **Shell:** 2 mm, was 3. The inside follows the deepest point within 2 mm, was 4. Volume 207 cm³, was 364.
+- **Eyes:** flat (no eyeballs, no lids) over 21 × 13 mm each side of each eye centre. The iris ring (R 4) and pupil mark the eye axes.
+- **Nose:** kept at 35 % of its height over a smooth base, as a guide for where to build it.
+- **Mouth:** flat, with the parting line and a line round each lip (v7b).
+
+**Numbers:**
+- MASK_T = 2.0, was 3.0.
+- MASK_EYE_FLAT = (21, 13), new.
+- MASK_NOSE_KEEP = 0.35, new.
+
+**Check:** not run (building closing). face_mask is watertight, 1 body, 206 × 250 × 157 in print pose. Before the eyes were flattened, print_check found 8 thin spots of 6.7 mm² or less at the inner eye corners; those corners are now inside the flat eye areas.
+
+**Renders:** process_images snapshot 29 (`sculpt_mask_flat*.png`).
+
+---
+
 ## 2026-10-16 — M5 — Face mask v7: flat lips with marks, smaller iris rings
 
 **Done (team, building closing):**

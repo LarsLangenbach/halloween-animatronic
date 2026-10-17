@@ -386,6 +386,8 @@ MASK_LIP_LINE = 0.7            # the line where the lips meet, cut this deep (mm
 MASK_LIP_MARKS = (9.0, 11.0, 0.5)  # the lips are flat, with a line round each: upper and lower
                                # lip height at the middle, line depth (mm)
 MASK_LIP_FLAT = 18.0           # the mouth is flat this far above and below the parting line (mm)
+MASK_EYE_FLAT = (21.0, 13.0)   # each eye flat (no eyeball, no lids) this far across and up/down (mm)
+MASK_NOSE_KEEP = 0.35          # the nose kept at this share of its height: a guide to build on
 MASK_PUSH_SMOOTH = 4.0         # and of the push out over Cogley's helmet, degrees
 MASK_TOP_SMOOTH = 4.0          # the forehead and skull, smoothed hard above the brows, degrees
 MASK_CORE_OK = 0.05            # the whole face moves forward until only this share of its middle
@@ -394,4 +396,4 @@ MASK_BULGE = 14.0              # pushes clear of Cogley's head spread this wide,
 MASK_LINE = (0.9, 0.55)        # the iris ring: depth, width (mm)
 MASK_OUTLINE = (112.0, 55.0, -55.0, 0.0)  # egg outline: half width, top and bottom elevation (deg),
                                # widening toward the top; it reaches over the forehead onto the skull
-MASK_T = 3.0                   # shell thickness, inward
+MASK_T = 2.0                   # shell thickness, inward (thin: saves filament, team 2026-10-16)

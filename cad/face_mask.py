@@ -386,6 +386,32 @@ def skin(warped, wrap, c, eye_y):
     inside = np.abs(A) < a_c
     for edge in (line + up * shape * bow / k_l, line - low * shape / k_l):
         r -= depth * inside * np.exp(-(((E - edge) * k_l) ** 2) / (2 * 0.4 ** 2))
+    # the eyes flat (no eyeballs: the sculptor builds them; the marks below show the axes) and
+    # the nose low, a guide for where to build it (team, 2026-10-16)
+    pts = c + directions(A, E) * r[..., None]
+    X, Y, Z = pts[..., 0], pts[..., 1], pts[..., 2]
+    front = Y > c[1] + 40.0
+    flat = np.zeros(r.shape, bool)
+    for sx in (+1, -1):
+        flat |= front & (((X - sx * P.EYE_SPACING / 2) / P.MASK_EYE_FLAT[0]) ** 4 + ((Z - ez) / P.MASK_EYE_FLAT[1]) ** 4 < 1.0)
+    top, bottom = ez - 12.0, st_z + P.MASK_LIP_FLAT - 1.0
+    nose = front & ((X / 20.0) ** 4 + ((Z - (top + bottom) / 2) / ((top - bottom) / 2)) ** 4 < 1.0)
+    flat |= nose
+    ii, jj = np.where(flat)
+    box = np.s_[ii.min() - 3:ii.max() + 4, jj.min() - 3:jj.max() + 4]
+    sub, z = r[box].copy(), flat[box]
+    sub[z] = ndimage.gaussian_filter(r, 4.0 / (k_l * st))[box][z]
+    for _ in range(5000):
+        avg = 0.25 * (np.roll(sub, 1, 0) + np.roll(sub, -1, 0) + np.roll(sub, 1, 1) + np.roll(sub, -1, 1))
+        sub[z] = avg[z]
+    base = r.copy()
+    base[box] = sub
+    wn = ndimage.gaussian_filter(nose.astype(float), 1.0 / (k_l * st))
+    height = ndimage.gaussian_filter(r - base, 1.5 / (k_l * st))
+    r = np.where(flat, base + P.MASK_NOSE_KEEP * wn * np.clip(height, 0.0, None), r)
+    edge = ndimage.gaussian_filter(flat.astype(float), 1.5 / (k_l * st))
+    edge = 4.0 * edge * (1.0 - edge)
+    r = r + edge * (ndimage.gaussian_filter(r, 1.5 / (k_l * st)) - r)
     # the plain skin smoothed (MakeHuman's low-poly facets rippled the cheeks); the eyes, nose
     # and lips kept sharp
     feat = np.zeros(r.shape)
@@ -445,8 +471,8 @@ def inner_radius(phi, psi, r):
     normals crossed the skin in the eyelid creases)."""
     st = phi[1] - phi[0]
     k = np.radians(1.0) * float(np.median(r))                         # mm per degree
-    # under the deepest point within 4 mm (the inner eye corners are deep, steep notches)
-    low = ndimage.gaussian_filter(ndimage.minimum_filter(r, size=int(round(8.0 / (k * st))) | 1), 2.0 / (k * st))
+    # under the deepest point within 2 mm (the inner eye corners are deep, steep notches)
+    low = ndimage.gaussian_filter(ndimage.minimum_filter(r, size=int(round(4.0 / (k * st))) | 1), 1.5 / (k * st))
     d_a, d_e = np.gradient(low, np.radians(st))
     tan = np.hypot(d_a / np.cos(np.radians(psi))[None, :], d_e) / low   # the normal's tilt from the ray
     cos = np.clip(1.0 / np.sqrt(1.0 + tan ** 2), 0.35, 1.0)
