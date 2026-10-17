@@ -1,36 +1,41 @@
 """
-Sculpt base check (M5, early): the base the clay face is sculpted on must match the skull
-the cast skin goes onto.
+Sculpt base check (M5, D17): the base the clay face is sculpted on must leave room for
+Cogley's head inside the skin.
 
-  skull inside   no point of any skull piece's outside stands proud of the base's surface
-                 (more than the grooves' depth): a skin sculpted on the base fits the skull
-  eyes           each eye sphere's centre on the EyeMech's eyeball centre at rest
-  bed            each piece fits the printer's bed in its print pose
+  his head inside   no part of his head (at rest; the eyes excepted, they show in their
+                    sockets by design) comes through the base's outer surface (the wrap
+                    sculpt_base.py writes, before the sockets, grooves and inside holes)
+  skin              how close his parts come to that surface (SCULPT_MIN_SKIN, less the
+                    grooves' depth)
+  eyes              each eye sphere's centre on his eyeball's centre (`Component74`)
+  bed               each piece fits the printer's bed in its print pose
 
-Run:  python cad/sculpt_check.py      (after skull.py and sculpt_base.py)
+Run:  python cad/sculpt_check.py      (after cogley_head.py and sculpt_base.py)
   -> <out>/sculpt/sculpt.md, sculpt.png
 Final line: SCULPT OK, or SCULPT: n issue(s), each listed as a WARN line.
 """
 import os
 import sys
 
+import manifold3d as mf
 import numpy as np
 import trimesh
+from scipy.spatial import cKDTree
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import cadkit as K  # noqa: E402
+import cogley_head as C  # noqa: E402
 import geom as G  # noqa: E402
 import layout_check as L  # noqa: E402
-import pose_sweep as PS  # noqa: E402
+import reserve as R  # noqa: E402
 
 sys.stdout.reconfigure(encoding="utf-8")
 P = K.params()
 S = P.HEAD_SCALE
 PIECES = ("sculpt_upper", "sculpt_lower", "sculpt_plate")
-SKULL = ("skull_front_upper", "skull_front_lower", "skull_back_upper", "skull_back_lower", "skull_access_panel")
 BED = 256.0
-TOL = P.SCULPT_GROOVE / 2 + 0.05     # the grooves cut this deep into the skull's outside
+SKIN_MIN = P.SCULPT_MIN_SKIN - P.SCULPT_GROOVE / 2 - 0.3     # grooves cut in; 0.3 for the wrap's voxels
 
 
 def main():
@@ -38,45 +43,57 @@ def main():
     base = {n: trimesh.load(os.path.join(stl, n + ".stl"), force="mesh") for n in PIECES}
     head = trimesh.util.concatenate([base["sculpt_upper"], base["sculpt_lower"]])
     issues, md = [], ["# Sculpt base check", ""]
+    # against the base's outer surface (sculpt_base.py's wrap, before the sockets, grooves and
+    # holes): the dowel and insert holes are inside, and the sockets stop at his parts by design
+    wrap = trimesh.load(os.path.join(G.ref_dir(), "sculpt", "wrap.stl"), force="mesh")
+    body = R.to_mf(wrap)
+    parts = C.load({"frame", "extras", "shell", "mouth", "brows", "hardware", "eyes"})
 
-    # skull inside the base: whatever of each skull piece is outside the base (manifold
-    # booleans), and how far its farthest point stands from the base's surface
-    import reserve as R
-    import manifold3d as mf
-    body = mf.Manifold.batch_boolean([R.to_mf(base["sculpt_upper"]), R.to_mf(base["sculpt_lower"])], mf.OpType.Add)
-    worst = (0.0, None, "")
-    for n in SKULL:
-        m = trimesh.load(os.path.join(stl, n + ".stl"), force="mesh")
-        diff = R.to_mf(m) - body
-        if diff.volume() < 1e-3:
+    # his head inside the base (the eyes show in their sockets by design)
+    outside, open_parts = [], 0
+    for n, k, g, m in parts:
+        if g == "eyes":
             continue
-        v = np.asarray(diff.to_mesh().vert_properties)[:, :3]
-        if len(v) > 20000:
-            v = v[np.random.default_rng(3).choice(len(v), 20000, replace=False)]
-        d = trimesh.proximity.closest_point(head, v)[1]
-        j = int(np.argmax(d))
-        if d[j] > worst[0]:
-            worst = (float(d[j]), v[j], n)
-    md.append(f"- skull outside the base: at most {worst[0]:.2f} mm"
-              + (f" ({worst[2]} at {np.round(worst[1], 1).tolist()})" if worst[1] is not None else ""))
-    if worst[0] > TOL:
-        issues.append(f"{worst[2]} stands {worst[0]:.2f} proud of the sculpt base at {np.round(worst[1], 1).tolist()}")
+        if not m.is_watertight:
+            open_parts += 1
+            continue
+        v = (R.to_mf(m) - body).volume()
+        if v > 1.0:
+            outside.append((v, f"{n} {k}"))
+    md.append(f"- his parts coming through the base: {len(outside)}"
+              + ("" if not outside else " (" + ", ".join(f"{n} {v:.0f} mm3" for v, n in sorted(outside)[::-1][:6]) + ")")
+              + f"; {open_parts} open meshes checked by distance only")
+    for v, n in outside:
+        issues.append(f"{n} comes {v:.0f} mm3 through the sculpt base")
 
-    # eyes on the EyeMech's eyeballs
-    base_scale, parts = L.load_parts()
-    L.place(parts, base_scale, S)
-    gr = PS.groups(parts)
+    # skin: how close his parts (the eyes excepted) come to the base's surface
+    tree = cKDTree(trimesh.sample.sample_surface(wrap, 400000, seed=2)[0])
+    worst = (np.inf, "", None)
+    for n, k, g, m in parts:
+        if g == "eyes":
+            continue
+        pts = trimesh.sample.sample_surface(m, int(np.clip(m.area * 0.5, 200, 30000)), seed=3)[0]
+        d, _ = tree.query(pts)
+        j = int(np.argmin(d))
+        if d[j] < worst[0]:
+            worst = (float(d[j]), f"{n} {k}", pts[j])
+    md.append(f"- thinnest skin over his parts (to the base's surface): {worst[0]:.2f} mm ({worst[1]} at "
+              f"{np.round(worst[2], 0).tolist()}); want >= {SKIN_MIN:.1f}")
+    if worst[0] < SKIN_MIN:
+        issues.append(f"only {worst[0]:.2f} mm between {worst[1]} and the base's surface at {np.round(worst[2], 0).tolist()}")
+
+    # eyes on his eyeballs
     ez = G.eye_z(S)
     for sx in (+1, -1):
         want = np.array([sx * P.EYE_SPACING / 2, 0.0, ez])
-        balls = [p for p in gr["eyes"] if (p["m"].bounds.mean(axis=0)[0] > 0) == (sx > 0)]
-        c = np.mean([p["m"].bounding_sphere.primitive.center for p in balls
-                     if p["m"].extents.max() > 2 * P.EYE_R - 1.0], axis=0)
+        balls = [m for n, k, g, m in parts if n == "Component74" and (m.bounds.mean(axis=0)[0] > 0) == (sx > 0)]
+        lo, hi = balls[0].bounds
+        c = np.array([(lo[0] + hi[0]) / 2, hi[1] - P.EYE_R, (lo[2] + hi[2]) / 2])
         err = float(np.linalg.norm(c - want))
         md.append(f"- eye {'left' if sx > 0 else 'right'}: sphere at {np.round(want, 1).tolist()}, "
-                  f"EyeMech eyeball at {np.round(c, 1).tolist()} ({err:.2f} off)")
+                  f"his eyeball at {np.round(c, 1).tolist()} ({err:.2f} off)")
         if err > 0.5:
-            issues.append(f"the {'left' if sx > 0 else 'right'} eye sphere is {err:.2f} off the EyeMech's eyeball")
+            issues.append(f"the {'left' if sx > 0 else 'right'} eye sphere is {err:.2f} off his eyeball")
 
     # bed
     for n, m in base.items():
@@ -121,11 +138,13 @@ def render(base, out_dir):
         tiles.append((title, RV.render([RV.surface_actor(pp, rgb) for pp, rgb in polys], c, d, (0, 0, 1), sc)))
     ez = G.eye_z(S)
     eye_c = np.array([0.0, 0.0, ez])
-    tiles.append(("eyes and brow windows, close", RV.render([RV.surface_actor(pp, rgb) for pp, rgb in polys],
-                                                            eye_c, (0.25, 1.0, 0.15), (0, 0, 1), sc * 0.45)))
-    mouth_c = np.array([0.0, 0.0, G.stomion(S)[2]])
-    tiles.append(("mouth marks, close", RV.render([RV.surface_actor(pp, rgb) for pp, rgb in polys],
-                                                  mouth_c, (0.25, 1.0, -0.1), (0, 0, 1), sc * 0.45)))
+    tiles.append(("eyes, eye line, brow lines, close", RV.render([RV.surface_actor(pp, rgb) for pp, rgb in polys],
+                                                                 eye_c, (0.25, 1.0, 0.15), (0, 0, 1), sc * 0.45)))
+    import sculpt_base as SB
+    lm = SB.landmarks(C.load({"mouth", "brows"}))
+    mouth_c = np.array([0.0, 0.0, (lm["nose"] + lm["chin"]) / 2])
+    tiles.append(("nose, lip line, mouth corners, chin, close", RV.render([RV.surface_actor(pp, rgb) for pp, rgb in polys],
+                                                                          mouth_c, (0.25, 1.0, -0.1), (0, 0, 1), sc * 0.45)))
     pm = base["sculpt_plate"]
     tiles.append(("base plate from above (keys, bolt and board holes)",
                   RV.render([RV.surface_actor(L.poly(pm), COLOURS["sculpt_plate"])], pm.bounds.mean(axis=0),
@@ -137,8 +156,9 @@ def render(base, out_dir):
                                                               for n, m in mm.items()], c, (1.0, 0.8, 0.3),
                                                              (0, 0, 1), sc * 1.25)))
     return L.sheet(tiles, out_dir, "sculpt", cols=4, header_lines=[
-        f"Sculpt base at head scale {S}: the skull's outside as a solid head (clay on it = the skin)",
-        "eye sockets with the lids' sphere; grooves: midline, brow windows, mouth opening, lip line"])
+        "Sculpt base v2: a smooth wrap of Cogley's whole head, 3 mm out from every part (clay on it + 3 mm = the skin)",
+        "eye sockets with the real eyes; grooves: midline, eye line, brow lines, nose bottom and width, lip line, "
+        "mouth corners, chin, hairline, ears"])
 
 
 if __name__ == "__main__":

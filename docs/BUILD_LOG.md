@@ -29,6 +29,59 @@ Rules:
 
 ---
 
+## 2026-10-16 — M5 — Face mask (D19)
+
+**Done:**
+- The team turned down the sculpt base v2 (a wrap of Cogley's head) and asked for a face mask instead: a thin shell of a man's face, like a theatrical mask, with its features where the mechanism puts them.
+- **`cad/face_mask.py`** builds it from the MakeHuman base mesh (CC0, `inputs/reference/makehuman/`):
+  - Scaled 1.208: the geometric mean of what fits the eye spacing and what fits eyes-to-lips.
+  - Warped with a thin-plate spline: the eye centres onto the EyeMech's, the lips onto where Cogley's lip plates meet (z 141.2), the nose at the same share of eyes-to-lips, and the chin following the lips.
+  - A man's proportions: the jaw angles 10 mm wider each side, the chin corners wider, the brow ridge 4 mm forward.
+  - Moved forward 16 mm to clear his head, with smooth local bulges where needed.
+  - Trimmed to an oval from forehead to chin, keeping only the face's outer skin, and thickened 3 mm inward. The eye holes are the face's own.
+- **Clearance:** the closest of Cogley's parts is 6.9 mm from the mask (the left brow bar).
+
+**Numbers:** `MASK_SCALE_TRIM` 1, `MASK_MALE` (10, 4), `MASK_OUTLINE` (78, 106, −24), `MASK_T` 3, `MASK_INSIDE_OK` 0.01, `MASK_BULGE` 12, `MASK_SUBDIVIDE` 1.
+
+**Renders:** process_images snapshot 21 (`sculpt_face_mask.png`).
+
+**Problems:**
+- trimesh's Loop subdivision threw the trimmed edge's points 60 mm out (spikes). It is now midpoint subdivision plus a gentle smooth.
+- Points at the edge and the nostrils with poor normals kept being pushed out. The push is now a smooth bulge along smoothed normals.
+- Open: the shell folds over itself slightly at the eyelid rims and the lip line (`print_check` reports 0 mm walls there). The slicer repairs it on import. A cleaner rebuild (a voxel slab) is the next step if it matters.
+
+**Decisions:** D19 (the face mask is what the sculptor works on).
+
+---
+
+## 2026-10-16 — M5 — Sculpt base v2 on Cogley's head; eye mount; firmware
+
+**Done:**
+- **Sculpt base v2** (`cad/sculpt_base.py`, with the new `cad/wrap.py`). Our proxy face is gone (D17). The base is a wrap of Cogley's complete head at rest: shell, frame, cheek bone, eyes, brows, mouth and screws.
+  - **How the wrap is made:** voxels at 1 mm. A tight wrap (closed by 7 mm) hugs every part. A smooth wrap (closed by 32 mm, blurred by 10) gives a head-like form, inflated by up to 11 mm at the face so it swallows the mechanism's lumps. The inflation is held off near the lips, brows and lids (8 mm, full at 23), where the skin must stay thin. The two are soft-unioned, with the surface 3 mm out.
+  - **Features:** eye sockets show the real eyes (the lids' sphere), with ceilings at 55° and stopping at his other parts. Sculpting guides as grooves: midline, eye line, brow lines along his bars, nose bottom (0.7 of eyes-to-lips) and width, lip line and mouth corners (his lip plates), chin, hairline, ears. A neck stub, the base plate, a split at z 186, and dowels.
+  - **Guide heights (z):** eyes 212.4, lips 141.2, nose bottom 162.6, chin 98.5, brow 244.8, hairline 308.9. The mouth is ±33.3 wide and the nose ±21.2.
+- **Surface extractor** `cad/wrap.py`: written here, because there is no marching-cubes package.
+- **`sculpt_check`** now checks his head against the base's outer surface:
+  - none of his parts come through
+  - the thinnest skin is 2.58 mm, over a frame screw head (the target is 3 less the grooves)
+  - both eye spheres sit 0.00 off his eyeballs
+- **Eye mount** (ASSEMBLY.md): the printed eye mechanism sits on the mouth's top plate between the frame's walls. Two M3 screws per side go through the frame into inserts in the base plate's end holes, which the printed plate already has. The cheek bone sits under it. MG90S servos clear the top plate by 2.7 mm.
+- **Firmware (D18):** 3 mouth boards stand in for Cogley's 1 mouth board + 2 Eyes/Brow/Neck boards. His eye and brow programs run on them with the mode switch moved to GP28 (`firmware/`).
+
+**Numbers:**
+- New: `SCULPT_GRID` 1, `SCULPT_TIGHT` (7, 2), `SCULPT_SMOOTH` (32, 10), `SCULPT_FACE_INFLATE` 11, `SCULPT_FACE_FADE_Y` (−50, 0), `SCULPT_MOVING_CLEAR` (8, 15), `SCULPT_BLEND` 10, `SCULPT_NECK` (50, 54, −70, 40), `SCULPT_SPLIT_Z` 186, `SCULPT_EYE_CAP` 4.
+- Gone: `SCULPT_EYE_SOCKET`.
+
+**Problems and fixes along the way:**
+- The first wraps followed every mechanism lump. Smoothing alone shrank the bumps until the tight wrap showed through again. Inflating everywhere thickened the skin over the lips and brows. The fix was face-only inflation, held off near the moving parts.
+- The surface pinched where a crevice was narrower than a voxel (the midline between the lips and between the brow bars). A light last blur fixed it, and the pieces now reload watertight.
+- The brow guide wiggled along the TPU bar's pleats. It is now a smooth fitted curve.
+
+**Next:** print the sculpt base; then the mold core, the neck (Q17) and the skin attachment points.
+
+---
+
 ## 2026-10-16 — Re-base — Cogley's whole head as designed (D17)
 
 **Done:**

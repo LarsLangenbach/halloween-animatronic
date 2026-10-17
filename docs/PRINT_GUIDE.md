@@ -28,7 +28,16 @@ Printer: Bambu Lab P2S, 0.4 nozzle, 256 × 256 × 256 bed. Every part fits the b
 
 `skull_front_upper`, `skull_front_lower`, `skull_back_upper`, `skull_back_lower`, `skull_shelf`, `skull_eye_strap`, `skull_neck_plate` and `skull_access_panel` have their joints, the EyeMech cradle, the neck base and the access panel. The mouth mount isn't in yet (Q14), so print them only as a fit or look test. Each piece fits the bed (199 mm tallest).
 
-## M5: sculpt base (ready to print)
+## M5: face mask (ready to print, D19)
+
+`output/print/face_mask.stl`: a 3 mm shell of a man's face, 153 × 205 × 63 in its print pose, about 100 g.
+- **Its features sit on the mechanism:** the eye holes on the eye mechanism's eyes, the lips on Cogley's lips, the nose between them.
+- **Print pose:** face up (as exported), with tree supports. They only touch the inside, so the face stays clean.
+- **Repair is normal:** the shell folds over itself slightly at the eyelid rims and the lip line. Bambu Studio repairs that when it imports the file. Accept the repair.
+
+**The old sculpt base pieces (`sculpt_upper`, `sculpt_lower`, `sculpt_plate`) are replaced by the mask: don't print them.**
+
+## M5: sculpt base (superseded by the face mask)
 
 The head the clay face is sculpted on: the skull's outside raised by 3 mm. Three prints, one per printer at a time:
 

@@ -34,17 +34,26 @@ Log what you measured in [BUILD_LOG.md](BUILD_LOG.md): servo angles at both stop
 
 ## Sculpt base
 
-The head the clay face is sculpted on (print guide: M5). Its surface is the skull's outside raised by 3 mm, the thinnest the skin may be. **Don't sand or carve into it.**
+The head the clay face is sculpted on (print guide: M5). It is a smooth wrap of Cogley's whole head, at least 3 mm out from every part of it. Clay on it plus that 3 mm is the skin, so nothing of his head can come through a skin sculpted on it. **Don't sand or carve into it.**
 
 1. **Inserts.** Heat-set four M4 inserts into the holes in the neck's underside (`sculpt_lower`).
 2. **Join the head.** Glue four Ø6 × 24 dowels into the lower piece's top face. Then glue the upper piece on (epoxy, or thick CA), lining up the midline groove across the joint. Fill the seam flush.
 3. **Plate.** Bolt the plate under the neck with four M4 × 12 socket head screws from below (not longer: they would bottom out in the insert holes), heads in the counterbores, the cone keys facing up. Screw the plate to a board or turntable through its four corner holes.
 4. **Seal.** Seal the print (shellac or a primer), so the clay's oils don't soak into it and the clay grips evenly.
-5. **Sculpt** in sulfur-free oil-based clay (Q15). On the base:
-   - **Eyes:** each sphere is the EyeMech's lids at their true position. The dimple is the gaze, straight ahead. Sculpt the eyelids round them; the socket is the skull's own eye opening.
-   - **Brow windows:** the rounded rectangles above the eyes. The moving brow pads sit under the skin there, so keep that skin able to flex.
-   - **Mouth opening:** the rectangle round the mouth. The lips must lie inside it; the lip plates sit behind it, about 8 mm under the skin's surface.
-   - **Lip line:** the horizontal groove, where the lips meet (the stomion).
-   - **Midline groove:** for symmetry.
-6. **Mold.** Leave the plate's keys clear of clay: the mold registers on them, and so will the mold core later.
+5. **Sculpt** in sulfur-free oil-based clay (Q15). The guide grooves on the base:
 
+   | Groove | What it marks | Where it comes from |
+   |---|---|---|
+   | Midline | the centre of the face, for symmetry | — |
+   | Eye line | through both eye centres (z 212) | the eyes |
+   | Eyes | each sphere is the eye mechanism's lids at their true position; the dimple is the gaze, straight ahead | Sculpt the eyelids round them |
+   | Brow lines | along Cogley's brow bars | The brows move here. Keep the skin over them thin so it moves with them |
+   | Nose bottom | the bottom of the nose (z 163) | 0.7 of the way from the eyes to the lips: standard proportions |
+   | Nose width | two short uprights above the nose bottom (±21) | the inner corners of the eyes: standard proportions |
+   | Lip line | where the lips meet (z 141), with a short mark at each mouth corner (±33) | Cogley's lip plates: the lips must be sculpted here |
+   | Chin | the bottom of the chin (z 99) | the lips sit a third of the way from the nose to the chin |
+   | Hairline | the top of the forehead (z 309) | the forehead as tall as the nose-to-chin third |
+   | Ears | a box on each side, from the brow height down to the nose bottom, behind the jaw | standard proportions |
+
+   The lumps round the mouth and over the eyes are Cogley's lips, teeth and brow bars under 3 mm of base. Lay the clay over them. Keep the lips and brows thin there so the skin moves with them.
+6. **Mold.** Leave the plate's keys clear of clay. The mold registers on them, and so will the mold core later.

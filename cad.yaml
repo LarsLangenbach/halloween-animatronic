@@ -36,7 +36,8 @@ pipeline:
   - {script: brow, kind: build}          # M2 eyebrow mechanism v1: carriers, brackets (+ servo refs)
   - {script: brow_rig, kind: build}      # M2 bench rig for the left brow (a forehead fragment)
   - {script: skull, kind: build}         # M3 skull v0: shell pieces with openings, shelf, brow mount plates
-  - {script: sculpt_base, kind: build}   # M5 early: the head the clay face is sculpted on
+  - {script: sculpt_base, kind: build}   # M5: the wrap of Cogley's head (the mask clears it); sculpt_* superseded by the mask
+  - {script: face_mask, kind: build}     # M5 D19: a man's face shell on the mechanism, to sculpt on
   - {script: test_coupon, kind: build}
   - {script: assembly_check, kind: check, level: hard, pass: "^NO OVERLAPS$"}
   - {script: print_check, kind: check, level: soft, pass: "^PRINT CHECK OK$"}
@@ -50,7 +51,7 @@ pipeline:
 # Scripts in the source folder that check.py knows about but doesn't run
 # (the toolkit's own scripts are known already). Any other script gets a
 # warning, so a new builder or check can't be silently left out.
-not_in_pipeline: [params, geom, snapshot, browgeom, export_print, make_plates, read3mf]
+not_in_pipeline: [params, geom, snapshot, browgeom, export_print, make_plates, read3mf, wrap]
 
 # Every print file, by STL name: the one place to update when a part is added,
 # renamed or printed differently. check.py warns about a built STL that isn't
@@ -88,6 +89,7 @@ parts:
   sculpt_upper: {colour: [0.80, 0.62, 0.52], supports: false, assembly: false}        # solid: 3 walls, lightning infill
   sculpt_lower: {colour: [0.76, 0.58, 0.48], supports: false, assembly: false, print_rotate: [180, 0, 0]}
   sculpt_plate: {colour: [0.45, 0.45, 0.50], supports: false, assembly: false}
+  face_mask: {colour: [0.88, 0.86, 0.84], supports: true, assembly: false, print_rotate: [90, 0, 0]}   # face up; tree supports inside
 
 every_part: {watertight: hard, single_body: hard, fits_bed: soft}
 

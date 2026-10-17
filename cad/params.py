@@ -331,13 +331,25 @@ PANEL_SCREW_IN = 5.5           # screw axis in from the opening's edge: counters
 PANEL_PAD = 13.0               # square pad on the lip round each screw: 4.5 wall beside the insert
 
 # ---------------------------------------------------------------------------
-# Sculpt base (M5, early: sculpt_base.py). The skull's outside as a solid head the clay
-# face is sculpted on, standing on a base plate. Decided 2026-10-16: whole head, normally
-# proportioned (the art style may change later).
-SCULPT_MIN_SKIN = 3.0          # ASSUMPTION: thinnest skin; the base is the skull's outside raised by this
+# Sculpt base v2 (M5, D17: sculpt_base.py). A smooth wrap of Cogley's complete head (his
+# outer shell, cheek bone, and the fronts of the eyes, brows and mouth) as a solid head the
+# clay face is sculpted on, standing on a base plate. Whole head, normal proportions (D13).
+SCULPT_MIN_SKIN = 3.0          # ASSUMPTION: thinnest skin over any of his parts
+SCULPT_GRID = 1.0              # voxel size of the wrap
+SCULPT_TIGHT = (7.0, 2.0)      # tight wrap: closing radius, blur (it hugs every part; at 6 and 1.5 it
+                               # pinched shut in the narrow gaps between the brow bars and the lips)
+SCULPT_SMOOTH = (32.0, 10.0)   # smooth wrap: closing radius, blur (a head-like form)
+SCULPT_FACE_INFLATE = 11.0     # the smooth wrap grows this much at the face, so it swallows the
+                               # mechanism's lumps there...
+SCULPT_FACE_FADE_Y = (-50.0, 0.0)  # ...fading in from y -50 (behind the ears) to y 0 (the eyes)
+SCULPT_MOVING_CLEAR = (8.0, 15.0)  # ...but not within 8 of the lips, brows and lids (full 15 further
+                               # on), where the skin must stay thin enough to move with them
+SCULPT_BLEND = 10.0            # soft union of the smooth and tight wraps
+SCULPT_NECK = (50.0, 54.0, -70.0, 40.0)  # neck stub: semi-axes x, y; centre y; bottom z (ASSUMPTION, Q17)
+SCULPT_SPLIT_Z = 186.0         # split for the bed (below the eyes)
 SCULPT_GROOVE = 1.2            # width of the marking grooves (half as deep)
 SCULPT_GROOVE_GAP = 2.0        # grooves stop this far short of the eye sockets
-SCULPT_EYE_SOCKET = 10.0       # eye sockets: depth under the skull's outside (the lids' sphere front is 3.4 under it)
+SCULPT_EYE_CAP = 4.0           # eye sockets go this far behind the lids' front, to show a cap of their sphere
 SCULPT_PUPIL = 3.0             # dimple at the front pole of each eye
 SCULPT_SOCKET_CEILING_DEG = 55.0  # the sockets' ceilings, above horizontal: prints upright without supports
 SCULPT_PLATE = (8.0, 25.0)     # base plate: thickness, margin round the neck
@@ -350,3 +362,16 @@ SCULPT_DOWEL = (6.3, 13.0)     # dowel holes across the split: diameter (6 x 24 
 SCULPT_DOWELS_XY = ((40.0, -30.0), (-40.0, -30.0), (40.0, -120.0), (-40.0, -120.0))
 M4_INSERT_HOLE = 5.6           # ASSUMPTION: M4 x 8 heat-set insert (check with the coupon's maker)
 M4_INSERT_DEPTH = 10.0
+
+# ---------------------------------------------------------------------------
+# Face mask (M5, D19: face_mask.py). A thin shell of a man's face from the MakeHuman base
+# mesh (CC0), warped so its features sit on the mechanism, clear of Cogley's head.
+MASK_SCALE_TRIM = 1.0          # times the geometric mean of the eye-spacing and eye-to-lips scales
+MASK_MALE = (10.0, 4.0)        # a man's face: jaw angles this much wider each side; brow ridge forward
+MASK_OUTLINE = (78.0, 106.0, -24.0)  # the mask's oval seen from the front: half width, half height,
+                               # centre below the eye line
+MASK_T = 3.0                   # shell thickness, inward
+MASK_INSIDE_OK = 0.01          # share of points still inside after the forward move (pushed out locally)
+MASK_BULGE = 12.0             # those are pushed out as smooth bulges this wide (sigma)
+MASK_SUBDIVIDE = 1             # loop subdivisions of MakeHuman's face, for a smooth print
+
