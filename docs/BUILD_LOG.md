@@ -29,6 +29,26 @@ Rules:
 
 ---
 
+## 2026-10-16 — M5 — Face mask v4: open eyes, real lips
+
+**Done (team feedback on v3):** the lips didn't look human or made for the mechanism; the eyes had to be clearly marked, and open with no holes.
+- **Lips:** MakeHuman's own lips are kept. The eye openings are filled; the line between the lips is no longer filled or grooved, and its fronts are no longer pulled back.
+  - Pinned: where the lips meet (onto the gap between Cogley's lip plates, z 141.2), the corners (1 mm past the plates' ends, ±34.3), and the lips' fronts 1.35× further above and below the lip line (fuller).
+  - A half cut-away render shows his upper plates behind the upper lip and his lower plates behind the lower lip.
+- **Eyes:** each eye region is replaced by a designed open eye:
+  - an almond opening 32 × 11 mm, the outer corner 1.5 up, on the eye mechanism's axis
+  - an eyeball (R 17) 2 mm behind the lids, never more than 3 mm behind them
+  - an iris ring (R 6.5) and a pupil (R 2.4, 1.2 deep)
+  - a 2 mm soft lid margin
+  The finishing smooth spares the eyes (60 %) and the lips (60 %).
+- **Print pose:** 206 × 240 × 169, about 270 g, watertight.
+
+**Open:** small ridges at the inner eye corners; a faint crease across one cheek where the clearance push fades out.
+
+**Renders:** process_images snapshot 24 (`sculpt_face_mask.png`).
+
+---
+
 ## 2026-10-16 — M5 — Face mask v3
 
 **Done (team feedback on v2):**

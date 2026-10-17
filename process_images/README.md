@@ -26,3 +26,4 @@ The build log ([docs/BUILD_LOG.md](../docs/BUILD_LOG.md)) links here.
 - **2026-10-16_21_face-mask**: Face mask (D19): a man's face shell on the mechanism, clear of Cogley's head ([sculpt_face_mask.png](2026-10-16_21_face-mask/sculpt_face_mask.png), 88 file(s))
 - **2026-10-16_22_face-mask-v2**: Face mask v2: closed eyes, natural nose and mouth, smooth edge, up onto the skull ([sculpt_face_mask.png](2026-10-16_22_face-mask-v2/sculpt_face_mask.png), 88 file(s))
 - **2026-10-16_23_face-mask-v3**: Face mask v3: smooth, closed eyes, ears, mouth on Cogley's lip plates ([sculpt_face_mask.png](2026-10-16_23_face-mask-v3/sculpt_face_mask.png), 88 file(s))
+- **2026-10-16_24_face-mask-v4**: Face mask v4: open eyes on the eye axes, MakeHuman lips on Cogley's lip plates ([sculpt_face_mask.png](2026-10-16_24_face-mask-v4/sculpt_face_mask.png), 88 file(s))
