@@ -89,6 +89,37 @@ Sources: TowerPro's SG90 and MG90S pages, Aus Electronics' measured SG90 drawing
 | Sulfur-free oil-based clay | as needed | e.g. Monster Clay. Sulfur stops platinum-cure silicone from curing (Q15) |
 | PLA | about 0.8 kg | upper ~410 g, lower ~310 g, plate ~95 g (estimate) |
 
+## Plaster mold of the clay face (M5, mold base)
+
+How to use them: [PLASTER_MOLD.md](PLASTER_MOLD.md).
+
+| Item | Qty | Notes |
+|---|---|---|
+| Ultracal 30 (or Hydrocal; plaster of Paris at a pinch) | 10 kg | the shell takes about 3 L mixed, about 4 kg of Ultracal; the rest covers waste and a spare batch. Mix 38 water : 100 plaster by weight |
+| Burlap (jute hessian) | about 1 m² | cut into 5 × 15 cm strips and 10 × 10 cm squares before mixing |
+| Release for the printed base | 1 tub or bottle | petroleum jelly thinned with mineral oil, Murphy's oil soap, or paste wax |
+| Hot glue sticks | a few | seal the base's seams from below and outside |
+| M3 × 20 bolts and nuts, or zip ties (or 4 medium binder clips, one per joint) | 8 | hold the four wall corners together at their ears, two per joint |
+| M3 screw, any length over 10 mm | 1 | turned into each pry wedge's end to pull it out |
+| Brass shim stock (or drink-can aluminium) | about 30 pieces of 2 × 4 cm | only for the three-piece mold |
+| Dust mask, nitrile gloves, flexible buckets, chip brushes, kitchen scale | | Ultracal contains crystalline silica: mask on while mixing |
+| PLA | about 1 kg | the 4 base pieces and 4 wall corners (about 1.8 L of model in all; trust the slicer) |
+
+## Silicone skin (M4 pads, M6 face cast)
+
+The skin silicone is **Smooth-On Dragon Skin FX-Pro** (PLAN D21, chosen 2026-10-15), brushed on in layers. Clay: Monster Clay. How to get the mold ready: [PLASTER_MOLD.md](PLASTER_MOLD.md), *Getting the mold ready for the silicone*.
+
+| Item | Qty | Status | Notes |
+|---|---|---|---|
+| Smooth-On Dragon Skin FX-Pro (Trial, 2 lb) | 1 or 2 units [confirm] | [have] | Shore 2A platinum silicone. Mix 1A:1B by weight or volume; pot life 12 min, demold 40 min at 23 °C; keep it at or above 18 °C (65 °F) while it cures. [confirm] there is enough for the snap pads and a face cast or two. |
+| Smooth-On Ease Release 200 spray | 1 can | [have] | The release Smooth-On recommends for this silicone; goes on after the sealer. |
+| Mold sealer: acrylic spray (e.g. Krylon Crystal Clear), or petroleum jelly thinned with mineral spirits, or Smooth-On SuperSeal | 1 | [buy] | Seals the plaster mold. Only on a fully dry mold. **Not shellac**: Smooth-On says its alcohol makes silicone bond to the mold. The two Bulls Eye shellac cans ordered (Amazon 10/22, Home Depot 10/24) are not for the mold. |
+| Smooth-On THI-VEX | 1 oz | [buy] ordered | Thickens it for brush-on layers that stay put on the mold's walls. |
+| Smooth-On Silc Pig pigments | 1 set | [buy] ordered | Colour mixed into the silicone. |
+| Smooth-On Slacker | optional | [buy] if needed | Makes the cured skin softer and more flesh-like; only if the bench tests show the servos struggling (PLAN R11). Use the same mix for the M4 pads. |
+| Smooth-On Sil-Poxy | 0.5 oz | [buy] in cart | Bonds cured silicone to cured silicone (re-attaching a pad). |
+| Sulfur-free clay; no latex | | | Sulfur clay and latex both stop platinum silicone from curing. |
+
 ## Skin attachment (M4, not designed yet)
 
 | Item | Qty | Notes |

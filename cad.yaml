@@ -38,6 +38,7 @@ pipeline:
   - {script: skull, kind: build}         # M3 skull v0: shell pieces with openings, shelf, brow mount plates
   - {script: sculpt_base, kind: build}   # M5: the wrap of Cogley's head (the mask clears it); sculpt_* superseded by the mask
   - {script: face_mask, kind: build}     # M5 D19: a man's face shell on the mechanism, to sculpt on
+  - {script: mold_base, kind: build}     # M5: the printed base the clay-covered mask lies in, face up, for the plaster mold
   - {script: test_coupon, kind: build}
   - {script: assembly_check, kind: check, level: hard, pass: "^NO OVERLAPS$"}
   - {script: print_check, kind: check, level: soft, pass: "^PRINT CHECK OK$"}
@@ -47,6 +48,7 @@ pipeline:
   - {script: skull_check, kind: check, level: soft, pass: "^SKULL OK$"}     # M3: skull vs everything, at rest and moving
   - {script: sculpt_check, kind: check, level: soft, pass: "^SCULPT OK$"}   # M5: sculpt base vs the skull
   - {script: service_check, kind: check, level: soft, pass: "^SERVICE OK$"} # M3: teardown paths, tool access
+  - {script: mold_check, kind: check, level: soft, pass: "^MOLD OK$"}       # M5: mold base vs the mask: seat, no hooks, bed
 
 # Scripts in the source folder that check.py knows about but doesn't run
 # (the toolkit's own scripts are known already). Any other script gets a
@@ -90,6 +92,17 @@ parts:
   sculpt_lower: {colour: [0.76, 0.58, 0.48], supports: false, assembly: false, print_rotate: [180, 0, 0]}
   sculpt_plate: {colour: [0.45, 0.45, 0.50], supports: false, assembly: false}
   face_mask: {colour: [0.88, 0.86, 0.84], supports: true, assembly: false, print_rotate: [90, 0, 0]}   # face up; tree supports inside
+  # M5 mold base: modelled in the mold pose (face up), which is the print pose: plate on the bed, no supports
+  mold_base_chin_L: {colour: [0.45, 0.62, 0.78], supports: false, assembly: false}
+  mold_base_chin_R: {colour: [0.38, 0.55, 0.72], supports: false, assembly: false}
+  mold_base_top_L: {colour: [0.55, 0.70, 0.62], supports: false, assembly: false}
+  mold_base_top_R: {colour: [0.48, 0.64, 0.56], supports: false, assembly: false}
+  # the 4 wall corners stand on the base's plate (separate prints, so they come off before the plaster is lifted)
+  mold_wall_chin_L: {colour: [0.62, 0.62, 0.66], supports: false, assembly: false}
+  mold_wall_chin_R: {colour: [0.55, 0.55, 0.60], supports: false, assembly: false}
+  mold_wall_top_L: {colour: [0.66, 0.64, 0.58], supports: false, assembly: false}
+  mold_wall_top_R: {colour: [0.60, 0.58, 0.52], supports: false, assembly: false}
+  mold_pry_wedge: {colour: [0.95, 0.55, 0.15], supports: false, assembly: false}   # print 8: loose, against the walls
 
 every_part: {watertight: hard, single_body: hard, fits_bed: soft}
 

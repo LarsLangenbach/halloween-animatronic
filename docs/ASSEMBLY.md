@@ -2,6 +2,8 @@
 
 Steps for the parts designed so far, in order. Hardware is in [BOM.md](BOM.md) and print settings in [PRINT_GUIDE.md](PRINT_GUIDE.md).
 
+**Cogley's whole head (D14-D16):** the step-by-step picture manual for his Robot Head α2.0.33 is a private Claude doc: https://claude.ai/artifact/PMPYGv9TJCFZaYW4FzNEWQ. It covers inserts, the EyeMech, the mouth, his brows, mounting, wiring and first power-up. Its pictures come from `cad/studies/assembly_manual.py` and are saved in [process_images/2026-10-22_36_assembly-manual](../process_images/2026-10-22_36_assembly-manual/), with the EyeMech steps and the linkage inserts added in [process_images/2026-10-25_37_assembly-manual-eyes-inserts](../process_images/2026-10-25_37_assembly-manual-eyes-inserts/). Every M3 shoulder joint in the mouth and brows threads into an M3 insert (28 in all), not a nut.
+
 ## Eye mechanism into Cogley's skull frame
 
 The printed EyeMech (ε3.2 MG90s-A) fits his head the way his own does: its base plate is the same part, with the same mounting holes. It isn't screwed from inside; it sits on three supports and two screws per side hold it.

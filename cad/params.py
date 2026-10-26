@@ -121,6 +121,9 @@ EYEMECH_EYE_SRC = (37.5, 0.0, 0.0)   # MEASURED: lid sphere centres (+-37.5, 0, 
 EYEMECH_EYE_R = (16.5, 18.1)   # MEASURED: the lids' inner and outer sphere radii
 EYE_SPACING = 2 * EYEMECH_EYE_SRC[0]  # 75.0: centre to centre (adult ~63)
 EYE_R = 16.0                   # MEASURED: eyeball part 32.0 across
+EYE_SOCKET_FRONT = 8.0         # MEASURED: the eyeball's socket (the pivot's cavity) reaches this far in front of its centre
+EYEBALL_FILL_FROM = 8.5        # the smooth eyeball (studies/cogley_eyeball.py): his front, iris dish and pupil hole,
+                               # is filled out to EYE_R from this far in front of the centre
 
 MOUTH_FILE = "reference/mouth/MouthAssembly.step"
 MOUTH_ROT_Z = 180.0            # the file faces -y
@@ -397,3 +400,50 @@ MASK_LINE = (0.9, 0.55)        # the iris ring: depth, width (mm)
 MASK_OUTLINE = (112.0, 55.0, -55.0, 0.0)  # egg outline: half width, top and bottom elevation (deg),
                                # widening toward the top; it reaches over the forehead onto the skull
 MASK_T = 2.0                   # shell thickness, inward (thin: saves filament, team 2026-10-16)
+
+# ---------------------------------------------------------------------------
+# Mold base (M5, mold_base.py): the printed base the clay-covered face mask lies on, face up,
+# while the plaster mold is made over it. It seats the mask exactly (a ledge under its rim and a
+# lip inside it), closes the space under the rim with a skirt that flares down to a flat flange,
+# and walls the flange in. The same base later holds the mask as the core for the silicone cast,
+# so the mold's keys must find it again. Mold pose: X = x, Y = -z (chin toward +Y), Z = y + lift
+# (face up), plate underside on the table at Z = 0.
+MOLD_PLATE_T = 6.0             # base plate thickness
+MOLD_RIM_LIFT = 8.0            # the mask's lowest rim point (by the ears) sits this far above the plate
+MOLD_SEAT = (0.4, 2.4, 6.0)    # ASSUMPTION: gap to the printed mask, lip thickness, lip length up the
+                               # inside of the mask (the print may differ from the STL by a few 0.1 mm)
+MOLD_LIP_ROOT = 5.0            # the lip thickens to this at its root: its inside then stands steeper than 45 deg
+                               # where the mask curves over at the forehead (2.4 all along leaned 49 deg)
+MOLD_SEAT_DROP = 4.0           # the collar under the rim is this deep before the skirt's inside starts
+MOLD_SKIRT = (4.0, 12.0)       # skirt thickness, draft (degrees from vertical; it flares out going down,
+                               # so the plaster lifts straight off it)
+MOLD_ROOM = 42.0               # the walls stand at least this far outside the mask seen from above:
+                               # clay (ASSUMPTION up to 12) + plaster and burlap jacket (about 20) + margin
+MOLD_FLANGE = 40.0             # and at least this far outside the skirt's foot: the mold's flat flange
+MOLD_WALL = (45.0, 6.0)        # wall height above the plate, thickness. The walls are 4 separate L-shaped
+                               # corners standing on the plate, clipped together: they come off outward
+                               # before the plaster is lifted (mold boxes are always taken off first)
+MOLD_RIB = (4.0, 4.0, 20.0)    # rib on the plate just inside the walls: width, height, inner face draft (deg);
+                               # it locates the walls and stops plaster running under them
+MOLD_EAR = (16.0, 4.0, 3.4, (12.0, 33.0))  # ears where the wall corners meet: reach out from the wall,
+                               # thickness, hole (M3 bolt, zip tie) and hole heights above the plate;
+                               # or one binder clip per joint (two don't fit on a 45 mm ear)
+MOLD_KEY = (22.0, 12.0, 8.0)   # registration cones on the flange: base dia, top dia, height
+MOLD_KEYS_X = 75.0             # two cones at each end of the flange, this far either side of the midline
+MOLD_PRY = (18.0, 14.0, 14.0, 7.0, 5.0)  # loose pry wedges (separate prints, 8 off) standing in gaps in the
+                               # rib against the walls: width at the wall, width inside, length in from the
+                               # wall, height at the wall, height inside. Tapered every way, so once the
+                               # walls are off each pulls straight out (an M3 screw in its end) and leaves
+                               # a slot under the flange's edge for a screwdriver
+MOLD_PRY_GAP = 0.2             # clearance per side in the rib gap the wedge stands in
+MOLD_PRY_X = 40.0              # two on each end wall, this far either side of the midline
+MOLD_PRY_Y = (-110.0, -290.0)  # and two on each side wall, at these Y
+MOLD_POST_R = 12.0             # posts under the mask's forehead and cheeks: radius
+MOLD_POST_GAP = 1.0            # pad top this far under the mask's inside (a pea of clay fills it)
+MOLD_POSTS = ((40.0, -262.0), (-40.0, -262.0), (52.0, -168.0), (-52.0, -168.0))   # (X, Y) mold pose
+MOLD_SPLIT_Y = -200.0          # the 4 pieces split at X = 0 and at this Y (= -z: through the ears,
+                               # where the skirt is shortest), so each fits the 256 bed
+MOLD_FIT = 0.15                # clearance per side in the joints between the pieces
+MOLD_TAB = (10.0, 16.0, 12.0)  # plate dovetails: neck width, head width, depth
+MOLD_TABS_X = (-22.0, -120.0, -285.0, -362.0)   # dovetails along X = 0, at these Y
+MOLD_TABS_Y = (55.0, 128.0)    # dovetails along the Y split, at these |X|

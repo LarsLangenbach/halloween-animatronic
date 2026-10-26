@@ -26,6 +26,23 @@ Use the sockets by their pin. On a mouth board each socket is the one that mouth
 | GP12 | CLL (lower corner, left) | BL: bottom-left lid | RO: right brow, outer |
 | GP13 | CLR (lower corner, right) | TL: top-left lid | RI: right brow, inner |
 
+## Bench test on one board
+
+`eyes_brows_bench_test.py` runs the 6 eye servos and the 4 brow servos from one mouth board, one servo at a time, with no master board. The eyes use their usual sockets (GP8–GP13). The brows go on the free sockets instead:
+
+| Pin | Mouth servo on that socket | Bench test |
+|---|---|---|
+| GP4 | JL (jaw, left) | LO: left brow, outer |
+| GP5 | JR (jaw, right) | RO: right brow, outer |
+| GP6 | LUL (upper lip, left) | LI: left brow, inner |
+| GP7 | LUR (upper lip, right) | RI: right brow, inner |
+
+Run it from Thonny without saving it as `main.py`. It centres every servo at 90, then `test_all()`, `wiggle()`, `sweep()`, `go()`, `center()` and `off()` work from the shell (commands listed at the top of the file).
+
+**Sliders on the PC:** save `pico_servo_ctl.py` on the Pico as `main.py`, then run `uv run --no-project --with pyserial python firmware/servo_controls.py COM9` (use the Pico's port). A window opens with one slider per servo, named by part and socket. Every servo stays loose until its slider is touched; "Loose" and "ALL LOOSE" switch them off.
+
+**Pico 2:** the bench board's Pico is an RP2350 (Pico 2). It needs the RPI_PICO2 MicroPython build (v1.29.0 used), not the RP2040 `.uf2` from Cogley's folder.
+
 ## The link cables
 
 The master tells the other two boards what to do over two wires each, through the small 4-pin connectors:

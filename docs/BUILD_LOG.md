@@ -29,6 +29,140 @@ Rules:
 
 ---
 
+## 2026-10-25 — M3 — EyeMech and brow servos on the bench: electronics work, horns slip on the shafts
+
+**Done:**
+- One spare mouth board drives all 10 eye and brow servos for the bench. The eyes are on their usual sockets (LLL left/right, LLR up/down, CUR/CUL right-eye top/bottom lid, CLR/CLL left-eye top/bottom lid, sides as seen from the front). The brows are on JL/JR/LUL/LUR for this test only.
+- Its Pico is a **Pico 2 (RP2350)**. It was blank, so it got MicroPython v1.29.0 for RPI_PICO2. Cogley's guide links the RP2040 build, which does not run on it.
+- New in `firmware/`: `eyes_brows_bench_test.py` (one servo at a time from Thonny), `pico_servo_ctl.py` (on the Pico as `main.py`, takes slider positions over USB) and `servo_controls.py` (slider window on the PC, one slider per servo, every servo loose until touched).
+- Read Cogley's ε3.2 assembly guide and compared his MG90s A and B print files part by part.
+
+**Physical:** all 10 servos turn when commanded, so the wiring, power and program are fine. The eye mechanism does not follow: the servo shafts turn inside the printed horns, even with the horn screws tight. On first power-up at 90° something buzzed; everything was switched off and then tested one servo at a time.
+
+**Problems:**
+- **The horns hold the shaft by a press fit only.** Each printed horn has a plain round shaft hole with no teeth, 2.9 mm deep, and a Ø2.6 hole behind it for the screw. The servo's splines have to cut into the plastic. The screw only keeps the horn on and cannot stop it turning. The horns come joined to their parts (print-in-place): the 4 lid horns to the lid sets, the up/down horn to the Y-axis set, the left/right horn to X-axis part B.
+- **Size A was printed without his fit test.** A and B differ only in those 6 horns: shaft hole Ø4.92 (A) or Ø4.72 (B). Every other part is identical. His `Testing Plate.3mf` (the servo sizing plate, 3.6 mm thick like a horn) has one hole of each size, to try on a real servo before choosing.
+- Manual step 2.13's sides: its pictures call x < 0 the head's left, but PLAN §4 has +x as the head's left. The socket for each servo position is unaffected. Which side Cogley's code means by L/R in TL/TR/BL/BR is still unconfirmed; the lid directions will show it once the horns grip.
+- **Mouth (same evening, mouth board on COM8, `HeadTest/cogley_mouth_main.py`):** the jaw ran backwards (slider toward open closed it, smoothly). That is the symptom of JL and JR on each other's sockets. The manual puts every "L" mouth servo (JL, LUL, LLL, CUL, CLL) at x < 0, which is the head's right in our frame. If the mouth was plugged by the manual, its sides are mirrored, and the lip and corner pairs are swapped too. The jaw was still reported backwards after the plug swap was suggested (whether the plugs were swapped is not recorded), so the board now turns the jaw the other way in software (`JAW_DIR = -1`, command `jawdir`), matching the plugs as they are now. Whether the lip and corner pairs are swapped is checked against his poses (lips_up should raise every lip). Until that is known, the manual's side labels stay as they are.
+- The mouth board's jaw width is now a setting (`jawdeg`, default his 40°, capped at 70°), with a "Jaw width" slider and pose buttons in `HeadTest/lip_tester.py`. The CAD sweep only covers the jaw up to 35°.
+- `output/plates/` now also has his `eyemech_e3.2_MG90s_B_cogley.3mf`, `eyemech_e3.2_servo_sizing_plate_cogley.3mf` and the assembly guide PDF (all public on his EyeMech_Epsilon GitHub, CC BY-NC-SA 4.0).
+
+**Fit test (same day):** printed Cogley's servo sizing plate (`output/plates/eyemech_servo_sizing_plate.stl`). On the team's servo shaft **B (Ø4.72) grips tight**; A (Ø4.92) is the size that slipped. Size B is the team's size (MEASURED).
+
+**Decisions:** D16 amended: keep the printed set, but reprint the 6 horn-carrying objects in size B.
+
+**Next:** print `output/plates/eyemech_B_horn_parts_plate.stl` (4 lid sets, Y-axis set, X-axis part B; tree supports), swap them in for the A ones, calibrate at 90° (eyes forward, lids shut and meeting in the middle), press the horns on, screw, and re-run the sliders.
+
+## 2026-10-25 — M3 — Assembly manual: EyeMech step by step; M3 inserts in the linkages
+
+**Done (team: eye assembly instructions in the manual, and the threaded inserts in the mouth and brow linkages):**
+- Stage 2 of the manual (https://claude.ai/artifact/PMPYGv9TJCFZaYW4FzNEWQ) is now 13 steps with a picture each (2.2–2.13), in the order of Cogley's ε3.2 assembly PDF: X-axis part A with the left/right servo, Y-axis part, central pivot holders, X-axis part B, onto the base, eyes, lids, outer lid pivots, the other 5 servos, retainers, horns, cable labels.
+- The pictures come from his EyeMech ε3.1 model (`output/ref/eyemech`, from `modules.py`). His head export lacks the lateral frame, two eye adaptors and a pivot holder. ε3.1 lacks one central pivot holder, so it is mirrored from the other.
+- Linkages: every M3 shoulder joint now threads into an M3 insert, not a nut. That is 28: lip plates 2 each, corner links 2 each, corner pieces 1 each, tongue arm 1, tongue link 1, brow arms 3 each. New manual step 1.6 shows where they go. Steps 3.5, 3.6, 3.9, 3.10, 4.3 and 4.4 were redrawn and reworded.
+- Counts: 95 inserts (107 with his shell), M3 inserts 16 → 44, no nuts. The 5.5 mm nut driver is off the tools list. The old 1.6 (frame inserts for his shell) is now 1.7.
+- `cad/studies/assembly_manual.py`: `inserts_link()`, `steps_link_inserts()`, `eyemech()`, `eye_steps()`. A view can now draw only some of the meshes (4th element of `v()`).
+
+**Physical:** the team's linkage parts already have their M3 inserts set (reported 2026-10-25), so the bench result overrides the CAD.
+
+**Problems:**
+- In Cogley's geometry these are nut pockets, not insert holes. The part is 4 mm thick there (2.9 at the corner pieces): a round Ø3.4–3.6 hole only 1.0–1.4 mm deep, then a hex pocket 5.7 mm across the flats and 2.6–3.0 mm deep. His print file has the same parts (volumes match the reference within 0.2 %).
+- His parts list has no nuts ("Around 25x M3 Shoulder Screws (optionally use standard M3 with lock nut)", "Various threaded inserts").
+- The manual says to check each insert sits flush and square, and that an M3 nut fits the same pocket if one spins.
+- His reference assembly's left brow arms (Part 12, Part 13) are an older version without the pocket. His print file's left arms are mirrors of Part 8 and Part 9, so step 1.6 draws only the head's right arms.
+
+**Renders:** [process_images/2026-10-25_37_assembly-manual-eyes-inserts](../process_images/2026-10-25_37_assembly-manual-eyes-inserts/) (20 images; `s1_06_linkage_mouth.png`, `s1_06_linkage_brows.png`, `s2_02`–`s2_13`).
+
+**Next:** build the EyeMech along Stage 2; note any step where the printed ε3.2 set differs from the ε3.1 pictures.
+
+## 2026-10-24 — M2 — Cogley's TPU brow bars ready to print
+
+**Done:**
+- Took Cogley's two flexible brow bars (Part 11 = left, Part 14 = right) out of plate 5, "Brows - Flexible", of his `BambuPrintfile.3mf`. Their geometry and his print pose are unchanged. Both meshes are watertight, 66.9 × 25.1 × 18.9 mm and 1.73 cm³ each, and the top view matches his plate thumbnail.
+- New files: `output/plates/cogley_brow_bar_L.stl`, `cogley_brow_bar_R.stl` and `cogley_brow_bars_tpu_plate.stl` (both bars, 171 × 26 mm). PRINT_GUIDE has his TPU settings.
+
+**Problems:** In his pose each bar touches the bed only at its ends, so the arch needs tree supports. TPU supports stick hard and the pleats are 1.5–3.4 mm thick, so take the supports off gently.
+
+**Next:** Print both bars in TPU 95A, then fit them on the "Brows - Main" parts with one screw at each end (manual step 4.4).
+
+## 2026-10-24 — M4/M5/M6 — Skin silicone set to Dragon Skin FX-Pro (D21)
+
+**Done:**
+- The team confirmed the skin silicone is Smooth-On Dragon Skin FX-Pro (chosen 2026-10-15 in a claude.ai chat, in hand by 10/19, a unit on the Blick receipt 10/21). It replaces the brief's candidates, Ecoflex 00-30 and PlatSil Gel-OO30, everywhere.
+- PLAN: new D21 with the TB numbers; Q15 partly answered; R4 and R11 updated; M4 pads to be cast in the same mix as the face. Last-updated line moved to 2026-10-24.
+- BOM: new *Silicone skin* section (FX-Pro, Ease Release 200, Bulls Eye shellac, THI-VEX, Silc Pig, Slacker optional, Sil-Poxy).
+- PLASTER_MOLD.md: new section *Getting the mold ready for the silicone*: dry checks without a scale (plastic-wrap, touch, colour), cleaning, sealing, a cure-and-release test on sealed scrap, Ease Release 200, casting at 18 °C or warmer within the 12-minute pot life.
+- **Correction, same session:** the sealer was first written as Zinsser Bulls Eye shellac (bought on the advice of earlier chats). Smooth-On's sealer guide says never use shellac with silicone (its alcohol makes the rubber bond), and not to wipe the mold with alcohol. Changed everywhere to acrylic spray, thinned petroleum jelly or SuperSeal, then Ease Release 200.
+- Budget workbook: the Ecoflex 00-30 row is marked not buying (status cleared, so it leaves the totals); the FX-Pro row notes it is the project's skin silicone.
+- CLAUDE.md: one line naming the silicone. BRIEF.md left verbatim, as the rules require.
+**Numbers:** none in params.py. `SKIN_T` 5.0 and `LIP_SKIN_T` 8.0 stay ASSUMPTIONs until FX-Pro samples are tested on the brows and lips.
+**Physical:** the face was sculpted in Monster Clay on the printed mask (done 2026-10-21). The plaster mold is one piece (splash coat, then a thick plaster-bandage shell, Ease Release 200 on the clay), laid up the night of Wed 2026-10-21 to Thu 10-22. At 2026-10-24 17:30 (about 2.7 days) it is likely not fully dry; plastic-wrap test before sealing. Tiny clay specks remain in it. Whether the plaster was Ultracal 30 and whether the printed mold base (D20) was used is not recorded.
+**Decisions:** D21 decided (team): Dragon Skin FX-Pro.
+**Problems:** FX-Pro (Shore 2A) is firmer than a 00-30 silicone, so the servo loads are higher than first assumed (R11). Whether the one unit bought is enough for the pads and the face casts has not been checked.
+**Next:** wrap-test the mold; once dry, seal it (not shellac), release it, test-cure FX-Pro on sealed scrap, then cast the M4 snap pads (snaps arrive 10/25, THI-VEX 10/26).
+
+---
+
+## 2026-10-22 — M3 — Step-by-step assembly manual for Cogley's head (eyes, brows, mouth)
+
+**Done (team: a picture manual to build his Robot Head α2.0.33 one step at a time):**
+- Researched what exists: no written manual for the full head. His Notion download page calls the documentation minimal and lists only supplies (2 MG996R, 19 MG90S, ~25 M3 and ~10 M4 shoulder screws, threaded inserts, 50 mm fan, 5 V 10 A). Only the EyeMech ε3.2 has an assembly PDF.
+- Worked out the build from his reference assembly instead:
+  - **Screws:** each screw traced to the parts it passes through.
+  - **Inserts:** hole sizes measured along every screw axis. Ø3.2 holes take M2 inserts, Ø4.3 M3, Ø5.3 M4: 24 + 16 + 27 inserts.
+  - **Brows and tongue (no screws in his export):** the joints were found by matching coaxial holes. Ø5.2 pivots take M4 shoulder screws; Ø4.3 pivots take M3 shoulder screws with a nut in a hex pocket.
+  - **Order:** each module was slid out of the assembly along 8 directions to find the order and direction it goes in. Mouth from below, cheek bone from the front, EyeMech from above-front, brows from the front, fan bracket from the back.
+  - **Sockets:** from `MouthMaster.py`: JL GP4, JR GP5, LUL GP6, LUR GP7, LLL GP8, LLR GP9, CUL GP10, CUR GP11, CLL GP12, CLR GP13, TON GP14.
+- New study `cad/studies/assembly_manual.py`: one picture per step. Inserts are coloured by size, and each label is placed on a part the camera can see (depth-buffer test).
+- The manual is a Claude doc (private, Cogley's Patreon CAD in its pictures): https://claude.ai/artifact/PMPYGv9TJCFZaYW4FzNEWQ
+
+**Renders:** [process_images/2026-10-22_36_assembly-manual](../process_images/2026-10-22_36_assembly-manual/) (28 step images; `s3_12_mouth_servo_map.png` is the mouth's socket map).
+
+**Problems:**
+- Not in his model, so still open:
+  - which screws hold the fan bracket
+  - the M4 length for the brow body (~12 mm, from the hole depths)
+  - whether his code's "left" is the head's own left (Stage 6 of the manual checks it by swapping plugs)
+- By geometry, in this frame (+y front, +z up, right-handed) the character's left is −x. Cogley's `UpperLeftLip` sits at −x. PLAN §4 says +x is the character's left, so names like `brow_L` and `mold_base_chin_L` may be mirrored. To check.
+
+**Next:** the team builds along the manual, step by step.
+
+---
+
+## 2026-10-20 — M5 — Mold base for the plaster mold of the clay face (D20)
+
+**Done (team: a structurally sound base and watertight walls to cast plaster and burlap over the clay head tomorrow):**
+- Researched the process (plaster and burlap shells over clay, flanges, keys, release, Ultracal 30 mix 38:100 by weight, set 25–35 min) and wrote it up for the team: [PLASTER_MOLD.md](PLASTER_MOLD.md).
+- **Found:** lying face up, the mask wraps past its widest line. By the ears it is widest 14 mm above its edge and tucks back in by up to 22 mm; along the jaw, 6–9 mm. A one-piece rigid mold would lock on (96 cm² hidden from above). The rim is also a saddle: 8 mm above the plate by the ears, about 125 at the chin and 118 at the forehead end, so on a flat board the plaster would run under the edge into the mask. The team pictured a single pour; they get the choice instead: fill the tucks with clay for a one-piece shell (recommended for tomorrow), or make a three-piece mold. The base is the same for both.
+- **`cad/mold_base.py`:** the mask face up in a collar swept round its rim, read back exactly from `face_mask.stl`'s own sampling grid. The collar has a ledge under the rim face, a lip 6 mm up the inside (a wedge, 5 → 2.4 mm), 0.4 clear of the STL, and a skirt flaring down at 12° to a 6 mm plate. 4 posts under the forehead and cheeks (tops 1 mm under the inside, a pea of clay on each). 4 registration cones and 4 pry blocks on the flange. Walls 45 high, 6 thick, inner face drafted 2°. Four pieces, split at X = 0 and through the ears (Y −200), with dovetails in the plate and the walls half-lapped. Mold pose = print pose.
+- **`cad/mold_check.py`:** the base against the mask, hooks, overlaps, bed fit, the hidden strips, a plaster estimate (about 3 L mixed, about 4 kg Ultracal), and renders.
+
+**Review (cad-reviewer) found two blockers, both fixed:**
+- **The pieces couldn't be put together.** The wall laps only ran above the plate, so each wall tongue stood over the other piece's plate. Lifting chin_L straight off chin_R overlapped up to 305 mm³ until 60 mm up. Fix: the laps run down through the plate too. Every seam is now a vertical prism, and the tongues no longer overhang.
+- **The mask couldn't be lowered in.** The 6 mm lip followed the mask's inside, which flares out going up by the ears and jaw. Lowering the mask hit the lip from 0.5–1 mm above its seat (465 mm³ at 3 mm). Fix: wherever the inside flares out, the lip stands straight up from the rim's inner edge; at the chin and forehead it still follows the inside.
+- mold_check now lowers the mask, and every piece onto every other, from 0.25 to 60 mm: 0.000 mm³ worst overlap. Pushing the mask 0.5 mm into its seat overlaps 11 mm³ (the ledge carries it); it has under 0.6 mm of play in X and under 1 mm in Y.
+
+**Numbers:** new `MOLD_*` block in params.py. The lip's root went 2.4 → 5.0 (`MOLD_LIP_ROOT`): at the forehead middle its inside leaned 49° and print_check flagged 157 mm² of overhang on each top piece; that is now 0.
+
+**Check:** `check: PASS (0 hard failure(s), 2 warning(s), 981 s)`. The 2 warnings were that lip overhang, fixed after the run. After the lip and review fixes, on the mold pieces alone: `PRINT CHECK OK`, and `MOLD OK` (base vs mask: overlap 0.000 mm³, closest 0.23 mm; drop-in 0.000 mm³; 0.0 mm² of the base faces down on the plaster side).
+
+**Renders:** [process_images/2026-10-20_33_mold-base](../process_images/2026-10-20_33_mold-base/) (`mold.png`, `mold_sections.png`, `mold_seat_closeups.png`, `mold_why_one_piece_locks.png`, `print_check.png`).
+
+**Demolding (team: make it come apart easily without breaking the plaster):** the walls were part of the base pieces, with only 2° of draft. The flange would have had to be pried up out of a fixed box, and plaster expands slightly as it sets, so it grips walls like that. Mold boxes come off before the mold is lifted, so:
+- The walls are now 4 separate L-shaped corners (`mold_wall_*`, 168 × 224 × 45, quick prints). They stand on the plate outside a 4 × 4 mm rib (20° draft on the plaster side) and are held together by ears at each seam (2 × Ø3.4 holes for M3 bolts or zip ties, or binder clips).
+- Order: undo the clips, pull each corner straight outward, lever the flange up at 8 pry pockets (2 per side; there were 4, on the ends only), lift the shell.
+- mold_check also moves each wall corner outward from 0.25 to 60 mm against every other piece: 0.000 mm³. The base pieces lost their walls and laps: 360/355/335/332 cm³ (were 434/430/407/406).
+- The mask seat, the drop-in and the hooks results are unchanged.
+- **Second review (cad-reviewer):** the walls come off and the shell lifts clear. It modelled the flange plaster (1260–1585 cm³) and both moves overlapped it by 0.000 mm³, and the ears' holes are coaxial. But the pry blocks were fixed to the base and filled their pockets, so the plaster sat right on them with no slot for a blade. Levering there would chip the flange. Fix: 8 loose `mold_pry_wedge` prints (18 × 14 × 7, tapered 18 → 14 wide and 7 → 5 high, with an M3 hole in the end) stand in gaps in the rib. After the walls are off, an M3 screw pulls each one out and leaves a 7 mm slot. mold_check pulls them out 0.25–60 mm: 0.000 mm³. Also: two binder clips don't fit on one 45 mm ear; the doc now says one per joint, or the bolts or zip ties.
+- Renders: [process_images/2026-10-20_34_mold-base-removable-walls](../process_images/2026-10-20_34_mold-base-removable-walls/) (`mold.png`), and with the wedges [process_images/2026-10-20_35_mold-pry-wedges](../process_images/2026-10-20_35_mold-pry-wedges/) (`mold.png`, `mold_pry_wedge.png`).
+
+**Plates (team: print on the 2 P2S overnight):** `make_plates.py` now writes 4 plates. Each is one base piece, its wall corner nested round its outer corner (4.0 mm apart) and 2 wedges: 206–218 × 217–246 mm. Two base pieces can't share a 256 bed (each is up to 164 × 220), so the set is 2 plates per printer.
+
+**Decisions:** D20 (proposed): the printed base with a laid-up plaster and burlap shell; one piece with the tucks filled, or three pieces, is the team's call. R13 added: the mask's tucks.
+
+**Next:** print the 4 pieces (PLA, 4 walls, no supports, about 1 kg); assemble, seal and release them; make the mold (PLASTER_MOLD.md). Keep the base: it holds the cleaned mask as the core for the silicone cast.
+
+---
+
 ## 2026-10-17 — M5 — Printed mask (v9): the lip line is 5–7 mm low
 
 **Found (cad-reviewer on v6, then measured on v9):** the parting line printed on the mask is at z 134–137, not on Cogley's lip plates (z 141.2).

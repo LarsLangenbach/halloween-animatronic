@@ -27,7 +27,7 @@ STALE_S = 900              # s: images older than report.md by more than this ar
 SOURCES = ["views/views.png", "print_check.png", "layout/layout.png", "layout/layout_*.png",
            "layout/layout.md", "sweep/*.png", "sweep/sweep.md", "brow/*.png", "brow/brow.md",
            "studies/*.png", "studies/*.md", "skull/*.png", "skull/skull.md", "sculpt/*.png",
-           "sculpt/sculpt.md", "service/service.md"]
+           "sculpt/sculpt.md", "service/service.md", "mold/*.png"]
 
 
 def main():
