@@ -1,0 +1,22 @@
+{
+ "voice_id": "bFrjFL4nlpeYNwNRhXxq",
+ "model_id": "eleven_v3",
+ "name": "Mossbeard",
+ "from_preview": "ElevenLabs Voice Library, https://elevenlabs.io/voices/bFrjFL4nlpeYNwNRhXxq",
+ "description": "ElevenLabs Voice Library: \"Gnarly voice of an ancient creature.\" Glacial, immense, tender.",
+ "gargle": 0,
+ "backup": {
+  "voice_id": "cQdrXChtUnOM9fQcnAPo",
+  "from_preview": "2026-10-26_221927 #3",
+  "description": "A middle-aged British man with a refined accent, speaking at full volume, never whispering. His voice is wet and gargled, as if he is talking through liquid in his mouth and throat: gurgling, phlegmy and bubbling, thick and slightly slurred, with harsh gravel and vocal fry underneath. Low pitch, a hollow resonance and imperfect articulation. Worn and tired, but strong and wry."
+ },
+ "tried": [
+  {
+   "voice_id": "5AYcH1Cr8nW0XgDTtRI4",
+   "name": "Silent Systemus - Sovereign Protocol"
+  }
+ ],
+ "chosen": "2026-10-26 by Anushhka: Mossbeard, plain; 2026-10-28 by Anushhka: eleven_v3 at Creative (stability 0) with acting tags, output/frank/voice/expressive_v3/listen.html row 1: 'v3 at most expressive is good'",
+ "speed": 1.2,
+ "model_before": "eleven_turbo_v2_5 (2026-10-28, an hour: 0.30 s to first audio but flat); before that eleven_multilingual_v2"
+}

@@ -83,6 +83,145 @@ Then the human set new open and closed eyes on the sliders and asked for only th
 
 **Next:** plug the mouth servos into the mouth board, find CLOSED (teeth just together, no servo buzzing) and OPEN (the jaw's stop) on the two jaw sliders and SAVE them; then the lips and corners; then put the saved angles into a team copy of `MouthMaster.py`.
 
+## 2026-10-28 — Vision — Frank's eyes: faces, who's talking, being moved, and the scene
+
+**Done:**
+- New in `frank/` (contract in [frank/README.md](../frank/README.md), section "Vision"):
+  - `eyes.py`: the webcam on top of the jar, in its own process under `chat.py --see`, with a preview window. It sees:
+    - faces, tracked and given a distance and direction;
+    - who is engaged (within 2 m, facing him, for 0.7 s);
+    - who said each line (MediaPipe `jawOpen`);
+    - being picked up and set down, the same place or somewhere new (whole-picture optical flow; ORB against the view from before);
+    - darkness;
+    - sessions (20 s with nobody ends one).
+  - `faces.py`: OpenCV YuNet and SFace, and the gallery (SQLite in `output/frank/memory/`, git-ignored), with `list` and `forget`.
+  - `scene.py`: snapshots to Claude Haiku 5.5 for costumes, what people hold and do, and the room. Never bodies, age, race, gender or health, and never names from badges or screens.
+  - `camera.json`: the camera, its field of view and its position relative to the eyes.
+- `chat.py --see`:
+  - the eyes' notes go to the brain;
+  - Frank reacts unprompted to an arrival (after studying them for up to 3–4 s), being moved, being set down and darkness;
+  - each line is credited to whoever's mouth moved;
+  - `remember_person` and `forget_person` really store and delete faces (`run_tools`);
+  - a session ending starts a new conversation.
+- **Web page, same evening** (`frank/web.py` and `web.html`, for the team): Frank in the browser at http://localhost:8800, served by the laptop. Standard library only:
+  - an event stream of everything `chat.py` shows (`Chat.ui`);
+  - the annotated preview as JPEGs, 10 a second;
+  - `/state`;
+  - POSTs to say a line, enrol and forget.
+  It listens on 127.0.0.1 only, and the POSTs need an `X-Frank` header and a localhost Host (checked: 403 without them). `eyes.py` gained:
+  - enrolling live from the page (`Vision.start_enrol`);
+  - a preview picture for the browser (`render`, `Eyes.jpeg`).
+- `system_prompt.md`: notes can report his own body (moved, set down, dark). An unsure match ("someone you may have met before") gets no name, and he doesn't claim to remember them.
+- Checked on this Mac (M5 Pro, Python 3.14): OpenCV 5.0 and MediaPipe 1.2 have wheels. onnxruntime has none, so InsightFace is out (its models are also non-commercial). Detection 5 ms, a fingerprint 7 ms.
+
+**Numbers (starting points, to tune on site):**
+- presence: `ENGAGE_M` 2.0, `FACING` 0.35;
+- recognition: `faces.KNOWN` 0.45 over 5 prints with a 0.08 lead; `faces.POSSIBLE` 0.363 (OpenCV's SFace threshold);
+- mouths: `MOUTH_ACTIVE` 0.4 jawOpen/s;
+- being moved: `MOVE_SHIFT` 0.06 of the width per second, `MOVE_ROT` 3°/s;
+- camera (`camera.json`, ASSUMPTIONs): `offset_mm` [0, 0, 250], `tilt_deg` 10, `hfov_deg` 78.
+
+**Check:** no CAD change, so `check.py` wasn't run. Offline vision test on made-up frames, all checks passed:
+- arrival;
+- enrolling, then recognised again at 0.93, smaller and on the other side;
+- leaving and session end;
+- two people, with the speaker picked by mouth movement;
+- someone walking past, not counted as a move;
+- carried and set down in the same place, then somewhere new;
+- darkness;
+- the preview and `--enroll`.
+
+End to end, `chat.py --see --video` on a clip: arrival with a scene description, then Frank's unprompted "Oh. Hello.", then the departure.
+
+The web page was run on a clip and checked in headless Chrome:
+- the live camera picture;
+- "In view";
+- the conversation with face tags and timings;
+- a typed line answered in 0.82 s, and an unprompted reaction to an arrival;
+- enrol and forget, and the 403s.
+
+Three fixes came out of it:
+- labels are drawn on dark boxes, because OpenCV draws thick text wider, so outlines smeared;
+- the scene describer's placeholder text ("<UNKNOWN>") is filtered out;
+- the camera loop is renamed, because `frames` clashes with `window.frames`.
+
+Two fixes came out of the vision testing:
+- the motion thresholds became per second, since a gentle carry at 15 fps was missed;
+- nearby faces use MediaPipe's head turn, since YuNet's read 0.22–0.41 for one face at different sizes and MediaPipe's 0.27–0.29.
+
+**First try by Anushhka (22:26), with the web page:**
+- **The camera didn't open.** macOS hadn't given VS Code camera access: OpenCV said "not authorized to capture video (status 0)", and the vision process then gave up for good. It now:
+  - tries again every 3 s;
+  - shows the reason and the fix in the camera panel;
+  - exits if its parent dies (a test server's vision process had outlived it).
+- **No voice heard.** It was playing, to the Mac's default output, which was "External Headphones" (the headphone jack). The page now has a Speaker menu (`Voice.use_speaker`) and a Test sound button (`Voice.beep`), and `web.py` takes `--speaker`.
+- The microphone and the brain worked: "Hello. Can you hear me?" got an answer, 1.75 s to his first sentence.
+- **Restarted at 22:34 with the fixes:** the camera opened, though VS Code's camera switch had been on all along; why the first run got "not determined" is unknown. Frank saw Anushhka at 0.35–0.4 m, described the scene, and greeted her.
+  - It was the MacBook's built-in camera: macOS lists no other, so the jar webcam wasn't connected.
+  - One "Moved" note came while she sat close. It's a real move if the laptop lid moved; otherwise it was a false alarm from someone filling most of the picture.
+
+**After the first try (same evening). Anushhka: "he thought I picked him up", "he's picking up people talking in the background … when I was watching reels", "he needs to talk faster":**
+- **Who he listens to.** A line counts only if a mouth in front of him moved (or someone's there with their mouth hidden, such as a mask). Everything else is ignored: no reply, no interrupting him. The page shows it greyed out, and Frank gets a note once a minute that the room is busy, without the words. There's a switch (`/gate`, Mouth check). In her first session 9 of 12 lines were reels.
+- **Being moved.** People are cut out with MediaPipe's selfie segmenter, and motion is judged from the room only. With under 30 % room visible, he says nothing about moving. A move must last 0.8 s. Cause of the false move: she was pulling on a sweater 0.35 m from the camera.
+- **Voice model** `eleven_multilingual_v2` → `eleven_turbo_v2_5` (Anushhka chose #2 on the comparison page). Measured tonight: first audio median 0.30 s against 0.66 s, and one line 3.3 s long against 4.5 s. The brain stays Opus.
+- **Tested:** the earlier offline vision checks still pass. New checks:
+  - a person cut out of the sample photo, filling 46 % of the picture and moving: no "moved";
+  - a carry with someone in view: "moved";
+  - the mouth rule: moving mouth answered (2.26), still mouth not (0.00), nobody not, mouth hidden answered.
+  The chat test on the clip with lines put in by hand: reel lines and a reel interruption ignored (his reply wasn't cut), the busy note sent, and with the check off a line answered.
+- **Not done yet:** ending his wait as soon as the speaker's mouth stops (about 0.2–0.3 s). Also a ready-made "Hmm." in his voice to cover Opus's thinking.
+
+**Third try (23:05): "interruption handling is super super bad and he's very slow". From the log:**
+- Every line the mouth check dropped was real: "Hi, I'm Lars" (twice, 0.26), his next line (0.05), her "No, I have not done anything different" (0.13). The 0.4 threshold came from made-up faces. Interruptions went through the same check, so none got through. Another false "Moved" at 0.4 m.
+- **Fixed:** threshold 0.4 → 0.1, still means < 0.05, everyone within 2.5 m is checked (Lars spoke from the side before he counted as engaged), interruptions aren't mouth-checked at all, the echo window after he stops 2.5 → 1.0 s, mouth readings logged on every turn, room must be over half the picture before a move counts, and the move event records the shares.
+- **Faster:** default brain Opus → Sonnet (2.35 → 1.50 s to the first sentence, measured; Haiku 0.71 but weaker in character). He answers once the visitor's mouth has been still 0.3 s instead of waiting for the ears (~0.4 s saved; cut and redone if more words come). Backchannel: "Hmm." / "Hm." / "Well..." in his voice 0.9 s after the visitor stops when the reply isn't out yet. The prompt stops him narrating his senses.
+- **Tested on the clip with lines put in by hand:** early answer on a still mouth (`early: true`, the ears' confirmation skipped), more words → the early answer cut and the whole line answered, an interruption stopping him with no mouth check. Vision checks all pass. Filler ordering unit-checked; the clips weren't listened to here ("Mm." and "Ah." were dropped as 1.5–3.5 s drones by their length).
+
+**Fourth try (23:18, with Lars and Sonal): Lars taken for Anushhka, Sonal never heard, no greeting for her, no reaction while carried, voice monotone. From the log:**
+- Sonal's lines were dropped with mouth readings 0.0 on four different track numbers in 40 s: her face kept being lost while he was handled ("Still again" fired five times), and no data counted as a still mouth. **Fixed:** "still" needs a face followed ≥ 1 s and read ≥ 8 times in the line; anything less, or a line while he couldn't see, is listened to; 10 s after he asks a question, any line is the answer.
+- Lars got Anushhka's name because a face appearing where hers had just been inherited her identity by position. **Fixed:** identity only by face match. Lines while carried had no visible mouth: open, needs voice recognition.
+- Mid-session arrivals never prompted him, and prompts that came while he was busy were dropped. **Fixed:** held and fired when free; arrivals prompt (15 s cooldown); "Still again" once per bout; a silence remark after 25 s, half the time.
+- **Tested on the clip:** the held greeting fired after his reply; "I'm Sonal" accepted 2 s after "Who are you?" with a still mouth; the silence remark; the vision checks all pass.
+- **Voice:** turbo v2.5 has no style control; stability is at the account default. A comparison page with four versions of three lines (`output/frank/voice/expressive/listen.html`): turbo as now, turbo stability 0.3, multilingual v2 with style 0.5, v3. Anushhka to choose.
+- Real talking mouths at 0.5 m read 0.76–1.48 this session; still ones 0.00–0.01. The 0.1 threshold stands.
+
+**Voice, later the same evening:** none of the four versions on the first page was expressive enough for Anushhka. A second page rendered both account voices on `eleven_v3` at Creative (stability 0) with acting tags in the text ([sighs], [chuckles], [whispers]); v3 streams its first audio in 0.6–0.7 s. **Decided by Anushhka: v3 at its most expressive, Mossbeard.** `voice.json` → `eleven_v3`; his face tags become v3 delivery tags at every face change and piece start (`voice.V3_TAGS`); the prompt tells him his punctuation is performed; the filler clips were remade on v3. Library search for other voices needs the API key's "Voices: read" permission (not granted). Speed isn't sent to v3: at Creative one line came out 4.2 s and 5.7 s on two takes regardless.
+
+**Fifth try (23:44): "he starts and stops", "he's hearing himself and getting interrupted", "says hmm and well too much".** From the log, the "visitor line" that cut him off was his own sentence back through the laptop speakers ("It's rather late, Frank, okay? It's rather late."), a held reaction fired the instant he was cut off and died a second later, and the printed heads on the shelf counted as "a stranger". Fixed:
+- echo window after he stops 1.0 → 2.0 s (the 1.0 s cut was mine, an hour earlier); while he speaks an interruption needs 3 new words or a stop word, and with a solid still-mouth reading only "stop", "wait", "Frank", "hold" get through; every interruption decision is logged (`barge`: the new words, the mouths, blocked or not); the log records whether echo cancellation is on;
+- held reactions wait until nobody has spoken for 2 s;
+- a face pixel-still for 20 s (drift under 0.4 % of the width, no mouth movement) is a figure: not engaged, not counted, not listened to; it moves, it's a person again (tested: a printed photo still for 24 s is a figure, swaying 6 px it isn't);
+- fillers on 40 % of slow turns, never two running, 1.2 s in rather than 0.9, seven different ones ("Right.", "Let me think.", "Hm?", "Now then." added), and their words go into the echo filter; the prompt asks him to vary his openings, length and rhythm.
+- Open: with the ASKED window (10 s after a question any line counts), a reel line can be taken as the answer; and voice-prints for lines said while he's carried.
+
+**Sixth try (23:55): "he keeps saying two people are talking", "interrupts himself, doesn't finish any sentence".** The log showed no interruption at all, so the voice itself was failing. A reply run through the real v3 voice against a fake speaker found it: v3 rejects `previous_text` (400 "not yet supported"), which went with every piece after a reply's first, so only his first sentence ever played. Fixed (not sent to v3). Also: the voice now logs every piece queued, fetched, played, dropped and every stop with its reason; "two people talking" came from a second mouth reading 0.2 beside one at 0.85 (the bar for a second speaker is now 0.5 and half the first, and double detections of one face don't count); the log records whether echo cancellation is on (it was).
+
+**2026-10-29 00:04, "interruption not working".** The one interruption that reached the code stopped him within the second; the others never produced a transcript while he talked (no `barge` entries), most likely the echo canceller swallowing the visitor's voice while his plays from the laptop speakers. Added a second channel that needs no words: the microphone loud for 0.3 s while the camera sees a mouth in front of him moving stops him (`chat._over_him`, `ears.loud_for`). Everything the speech service hears while he talks is now logged (`while_speaking`, with the echo verdict).
+
+- 00:10: the words-free interruption verified offline (a loud microphone plus a moving mouth stopped him mid-count within the second). Anushhka: CV "working very well", moving and pick-up "worked so well"; slow to see and greet Tiffany, interruption and replies slow in general. Trimmed: engage after 0.5 s not 0.7; an arrival waits at most 1.5 s (2.5 if the scene look had to queue) for the description, not 3–4; a held reaction waits 1 s of quiet, not 2; the ears' silence 0.4 → 0.3 s and grace 0.35 → 0.25 s.
+
+**2026-10-29 00:37, three people (Anushhka, Lars, Robert): "not working great with more people", "incredibly slow at recognition".** The ears trace shows every line heard and interruptions firing. The trouble is reply length: each reply played 14–17 s (16–32 words, two expression changes, each change a separate v3 request); measured, Mossbeard on v3 speaks ~11 characters a second at any stability, and turbo was no faster. Fixes: the prompt now caps replies at one sentence (two at most, one tag change), and one short sentence to one person in a group (a `Group:` note when 2+ are engaged); recognition needs 3 prints instead of 5, taken every 0.12 s instead of 0.25; a mid-session greeting waits up to 1 s for recognition to settle (Lars was greeted as "someone you may have met" a second before the match); "Still again" no longer re-fires during one bout of handling. The earlier "he can't hear me" didn't recur; the ears now log partial/commit/resumed/final.
+
+**Decisions (team, 2026-10-28):**
+- The camera is the USB webcam on top of the jar.
+- The face controller is the creators' to design later.
+- Frank should be aware of everything around him, including being picked up and the background, and he may comment on costumes, so scene snapshots go to a cloud vision model.
+
+**Problems:**
+- Not yet tried with the real webcam, real faces and mouths, or the venue lighting.
+- `forget_person` doesn't yet delete the session's chat log.
+- The memory store (relationship and autobiographical) isn't built yet.
+- The sign must now say that snapshots go to an AI service, and give a contact for deletion after the event.
+
+**Next:**
+1. On the laptop: `eyes.py --cameras`, then put the webcam's number in `camera.json`.
+2. `eyes.py` to check distances and the mouth figure.
+3. `eyes.py --enroll Anushhka --creator` and the same for Lars.
+4. `web.py --talk` (or `chat.py --talk --see`).
+5. At the venue: re-enrol under the event lighting, measure the camera offset, and record a clip to set the thresholds.
+
+---
+
 ## 2026-10-28 — M8 — Enclosure and neck modelled (v0)
 
 **Done:**
@@ -172,6 +311,79 @@ Then the human set new open and closed eyes on the sliders and asked for only th
 **Problems:** the eye limits in `eyes_mouthboard.py` are still Cogley's (LR 40–140, UD 60–140, TL 90–160, BL 90–30, TR 90–30, BR 90–140; lids shut at 90). They have not been measured on the team's build.
 
 **Next:** mark the faulty servo and replace it. Press 90 before fitting the new servo's horn, so the brow sits mid-travel. Then measure each eye servo's free range with the sliders and put the numbers in `eyes_mouthboard.py`.
+## 2026-10-26 — Character — Frank's bible and system prompt; head reported working, skin going on
+
+**Done:**
+- The creators' character bible (Frank, v1.0, by Anushhka and Lars) is saved as written: [CHARACTER.md](CHARACTER.md). Frank is a bioengineered head grown in about ten days, newly conscious: he knows a great deal and has lived very little. He is Frankenstein-esque, not Frankenstein's creature.
+- [frank/system_prompt.md](../frank/system_prompt.md): Frank's system prompt v1, built from the bible. Added to it:
+  - rules for spoken output;
+  - expression tags for the face controller;
+  - a plain answer when someone sincerely asks whether he is an AI;
+  - no swearing around children, and no taking sides in partisan politics;
+  - a 988 line for visitors in distress;
+  - opt-in remembering (18 and over, through `remember_person` / `forget_person`).
+- [frank/README.md](../frank/README.md): the contract for the laptop software: the turn loop, tags, tools, context notes, memory, model candidates and latency.
+- Option 1 chosen: keep the ElevenLabs voice and the face tags, and choose the text model by test. New code in `frank/`:
+  - `brain.py`: one streamed conversation with Claude or OpenAI models (xAI dropped the same day);
+  - `speech.py`: splits the reply into face commands and whole sentences;
+  - `scenarios.py`: 23 test conversations;
+  - `bakeoff.py`: times every model and writes a blind rating page.
+- Checked: a dry run end to end, and requests built by both SDKs (anthropic 2.3.0, openai 3.39.0). xAI was dropped.
+- **Bake-off, first real runs** (23 scenarios, 49 turns per model, from this Mac):
+  - **Run 1 found:**
+    - Haiku spoke its reasoning aloud once ("...so I'll confirm and call forget_person");
+    - made-up tags ([puzzled], [serious], [concerned], [thoughtful], [gentle]);
+    - Claude replies ran to a median of 4–5 sentences.
+  - **Fixed:**
+    - the prompt now says never narrate, use only the listed tags, and keep most replies to one or two sentences;
+    - `speech.py` maps common stand-in tags to the nearest face and strips stray markdown.
+  - **Run 2 (`output/frank/bakeoff/2026-10-26_1949`), time to the first whole sentence, median / p90:**
+    - Haiku 5.5: 0.81 / 1.19 s
+    - GPT-5.4 mini: 0.85 / 1.02 s
+    - Sonnet 5.5: 1.26 / 1.92 s
+    - Opus 5.5: 1.85 / 2.69 s
+  - **Tool checks:** every model called the right tools in every scenario except Opus, once: it called `remember_person` on Anushhka's greeting and said nothing.
+  - **Must-pass cases, all four models:** the sincere AI question answered honestly; distress answered with care and the 988 line.
+  - Anushhka's partial blind ratings (18): Opus 3.75, GPT-5.4 mini 3.25, Sonnet 2.2, Haiku 2.0. Too few to decide, so we switched to talking to him live instead (`frank/chat.py`, feedback via `/fb`).
+- **Voice:**
+  - ElevenLabs voice design and remixes (gravelly, gargled, monstrous) couldn't produce a liquid-in-the-throat sound; design only makes natural human voices. The gargle effect (`gargle.py`) was built and is switched off.
+  - **Chosen by Anushhka:** "Mossbeard" from the ElevenLabs Voice Library on `eleven_multilingual_v2`, plain text (`frank/voice.json`). First sound about 1.0–1.3 s after the text is ready; the faster `eleven_v4_turbo` takes about 0.45 s but sounded worse.
+  - **Chat speech vs the sample:** sentence-by-sentence requests ("Oh.", "Hello.") changed how the voice sounded. `voice.py` now groups sentences into pieces of at least 60 characters for the first and 160 after.
+  - **Speed:** Mossbeard is very slow on his own settings (one line took 22.8 s). Speed set to 1.2, the maximum (2026-10-27). Setting it resets his other voice settings to the account defaults; giving the key `voices_read` would let us keep them.
+  - **Listening** (`frank/ears.py`, `chat.py --talk`): ElevenLabs Scribe realtime over a websocket, fed 100 ms microphone chunks.
+    - The service's own pause detection splits turns at pauses between sentences. Our turn only ends when a commit has stood 0.35 s with the mic quiet (a third of that after a question).
+    - Tested with synthesized speech: a three-sentence question came through as one turn, about 1.05 s after the speech stopped.
+    - The mic is muted while Frank talks. The chat prints the delay from the visitor stopping to Frank's first sound.
+  - **Latency (2026-10-27):** spoken turns measured 5.2 s and 8.1 s from the visitor stopping to Frank's first sound. Broken down:
+    - end of turn ~1.0 s;
+    - Opus to 60 characters ~2.0 s (Sonnet 1.6, Haiku 1.1);
+    - Mossbeard on multilingual v2 to first audio ~2.0 s (turbo v2.5 0.4 s, flash v2.5 0.27 s);
+    - reusing the connection made no difference.
+  - **Latency fixes done:**
+    - speculative turns: thinking starts when a sentence ends, about 0.35 s early, and is dropped if the visitor carries on;
+    - first voice piece cut from 60 to 30 characters.
+  - **Still to choose:** the voice model (`output/frank/voice/fast_models/listen.html`) and the brain.
+  - **Interruptions:** barge-in with an echo filter on Frank's own words (see the `ears.py` row in the README). The voice stops within 0.02 s and reports roughly what was heard. Tested end to end with synthesized speech and silent playback; not yet tested with a real microphone and speakers.
+  - **First real-mic test: Frank interrupted himself.** His "Hmm." came back through the laptop speakers, was transcribed as "Mm-hmm", counted as the visitor, and his echo then became the visitor's next turn. Fixed with:
+    - echo cancellation (`frank/aec.py`, WebRTC via `livekit`): 43–46 dB less echo in an offline test, and the visitor's speech kept (0.74 correlation at 14 ms);
+    - a stricter word filter: fillers never count, near-matches of his words count as his, and an interruption needs 2 or more new words or a stop word. It passes every case from the log;
+    - echo still filtered for 2.5 s after an interruption.
+    The synthetic end-to-end test passes. The real speakers and mic are still to be confirmed by Anushhka.
+  - **"It's not working" (no turns at all):**
+    - Cause: the echo delay came out at 776 ms, because the audio streams opened at 24/16 kHz while the Mac runs at 48 kHz, and the system buffered 441 ms out and 707 ms in. WebRTC refuses delays over 500 ms, the error was raised inside the microphone callback, and that stopped the mic.
+    - Fix: `frank/audio.py` runs both streams at 48 kHz and converts in code (speaker 56 ms, mic 33 ms, echo delay 108 ms). The delay is clamped, and an echo-canceller error now turns echo cancellation off instead of the mic.
+    - Bonus: Frank's voice reaches the speakers about 0.4 s sooner.
+  - **"Too friendly and giggly":** fixed in the prompt (low-key greetings, rare laughs, resting faces neutral, skeptical and concentrating) and in the voice (`[chuckle]` isn't voiced; the v4 delivery cues are dry).
+
+**Physical (team report, not checked here):** the eyes and the mouth work, the skin is cast, and it goes on today with the whole head assembled.
+
+**Decisions (team, 2026-10-26):** the full system runs from the laptop, vision included; the Pi does nothing on its own. Visitor profiles are created live at the event, with consent. Conversation must be low latency.
+
+**Problems:** still open: the awakening date, the age line for being remembered, whether vision sends observations to the model, how `[chuckle]` is made, the sign at the jar, and which AI model to use (README "Still open").
+
+**Next:** NightHack, Founders Inc., San Francisco, 2026-10-30. Choose the model by measured time to first audio, then build the laptop loop to `frank/README.md`.
+
+---
 
 ## 2026-10-25 — M3 — EyeMech and brow servos on the bench: electronics work, horns slip on the shafts
 

@@ -1,0 +1,11 @@
+{
+ "source": 0,
+ "width": 1920,
+ "height": 1080,
+ "hfov_deg": 78.0,
+ "mirrored": false,
+ "face_width_m": 0.16,
+ "offset_mm": [0.0, 0.0, 250.0],
+ "tilt_deg": 10.0,
+ "notes": "The USB webcam on top of the jar (team, 2026-10-28). ASSUMPTIONS until measured: source (find it with eyes.py --cameras), hfov_deg (from the webcam's spec), offset_mm (camera lens from the midpoint between the eyeballs, PLAN §4 axes: x to Frank's left, y forward, z up), tilt_deg (how far it points down). face_width_m: tune with a tape measure so the preview's distances read true."
+}

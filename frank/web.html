@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frank</title>
+<style>
+  :root {
+    --bg: #0b0f0d; --panel: #121815; --panel-2: #18201c; --line: #25302a;
+    --text: #e6ece8; --muted: #8fa198; --faint: #5f6f67;
+    --accent: #9fe07a; --accent-ink: #0b0f0d;
+    --frank: #15241a; --frank-line: #2c4a33; --visitor: #1b2228; --visitor-line: #2c3944;
+    --known: #7ee08a; --possible: #f0b44c; --stranger: #7fb6ff; --far: #5f6f67;
+    --warn: #f0b44c; --danger: #ff6b5e;
+    --radius: 12px;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--text); font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; }
+  button, input, select { font: inherit; color: inherit; }
+  button { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+  button:hover { border-color: var(--faint); }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .toggle[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  input[type="text"], input:not([type]), select { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+
+  .top { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;
+         padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 2; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .logo { font-weight: 800; letter-spacing: .18em; font-size: 18px; color: var(--accent); }
+  .pill { border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .pill.on { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); font-weight: 600; }
+  .pill.busy { color: var(--warn); border-color: var(--warn); }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .controls label { display: flex; gap: 6px; align-items: center; color: var(--muted); font-size: 13px; }
+
+  .grid { display: grid; grid-template-columns: minmax(340px, 560px) minmax(0, 1fr); gap: 16px; padding: 16px;
+          height: calc(100vh - 62px); }
+  .col { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+  .left { overflow-y: auto; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
+  .card-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0; font-weight: 600; }
+
+  .cam { position: relative; aspect-ratio: 16 / 9; background: #000; border-radius: 8px; overflow: hidden; }
+  .cam img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .cam img:not([src]) { visibility: hidden; }
+  .nocam { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); text-align: center;
+           padding: 24px; background: rgba(0, 0, 0, .78); line-height: 1.5; }
+  .nocam.problem { color: var(--warn); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; color: var(--muted); }
+  .chip.warn { color: var(--warn); border-color: var(--warn); }
+  .chip.danger { color: var(--danger); border-color: var(--danger); }
+  .chip.ok { color: var(--known); border-color: #2f5a37; }
+
+  .rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .rows li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--panel-2); border-radius: 8px; }
+  .rows .empty { color: var(--faint); background: none; padding: 4px 0; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .who { flex: 1; min-width: 0; }
+  .who b { font-weight: 600; }
+  .who .meta { display: block; font-size: 13px; color: var(--muted); }
+  .talking { font-size: 12px; color: var(--accent); animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
+  .role { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; margin-left: 6px; }
+  .enrol { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  .enrol input:not([type]) { flex: 1; min-width: 120px; }
+  .enrol label { color: var(--muted); font-size: 13px; display: flex; gap: 4px; align-items: center; }
+
+  .convo { display: flex; flex-direction: column; min-height: 0; }
+  .log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px 2px 8px; min-height: 200px; }
+  .log.no-senses .sense { display: none; }
+  .msg { max-width: 82%; padding: 9px 12px; border-radius: 12px; border: 1px solid; }
+  .msg .head { font-size: 12px; color: var(--muted); margin-bottom: 3px; display: flex; gap: 8px; align-items: baseline; }
+  .msg .head b { color: var(--text); font-weight: 600; }
+  .frank { align-self: flex-start; background: var(--frank); border-color: var(--frank-line); }
+  .frank .head b { color: var(--accent); }
+  .visitor { align-self: flex-end; background: var(--visitor); border-color: var(--visitor-line); }
+  .msg .tag { display: inline-block; font-size: 12px; color: var(--accent); border: 1px solid var(--frank-line); border-radius: 999px; padding: 0 7px; margin: 0 4px 2px 0; vertical-align: 1px; }
+  .msg .call { display: block; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); margin-top: 4px; }
+  .msg .foot { font-size: 12px; color: var(--faint); margin-top: 5px; }
+  .msg.cut { border-style: dashed; }
+  .msg.cut .foot::before { content: "interrupted · "; color: var(--warn); }
+  .sense, .sys, .divider { font-size: 13px; color: var(--muted); align-self: stretch; }
+  .sense { padding-left: 10px; border-left: 2px solid var(--line); }
+  .sense .react { color: var(--accent); margin-left: 6px; font-size: 12px; }
+  .sys.tool { color: var(--text); }
+  .sys.error { color: var(--danger); }
+  .ignored { align-self: flex-end; max-width: 82%; font-size: 13px; color: var(--faint); text-align: right; }
+  .ignored q { font-style: italic; color: var(--muted); }
+  .ignored q::before, .ignored q::after { content: '"'; }
+  .divider { text-align: center; color: var(--faint); margin: 6px 0; }
+  .unprompted { align-self: flex-start; font-size: 12px; color: var(--faint); margin-bottom: -6px; }
+  .hearing { color: var(--muted); font-style: italic; padding: 6px 2px; border-top: 1px dashed var(--line); }
+  .say { display: flex; gap: 8px; margin-top: 8px; }
+  .say input { flex: 1; }
+  .say button { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  .say-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+  .say-tools button { font-size: 13px; padding: 4px 10px; }
+  time { font-variant-numeric: tabular-nums; }
+
+  @media (max-width: 980px) {
+    .grid { grid-template-columns: 1fr; height: auto; }
+    .left { overflow: visible; }
+    .log { height: 60vh; flex: none; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="logo">FRANK</span>
+    <span id="status" class="pill">Starting…</span>
+    <span id="face" class="pill" title="The face he's making">face: neutral</span>
+  </div>
+  <div class="controls">
+    <button id="mic" class="toggle" aria-pressed="false" title="Listen on the laptop's microphone">Microphone</button>
+    <button id="gate" class="toggle" aria-pressed="true" title="On: he answers only someone in front of him whose mouth moved. Off: he answers everything the microphone hears.">Mouth check</button>
+    <button id="voice" class="toggle" aria-pressed="false" title="His voice on or off">Voice</button>
+    <label>Speaker <select id="speaker" aria-label="Speaker for his voice"></select></label>
+    <button id="beep" title="A short tone through the chosen speaker">Test sound</button>
+    <label>Brain <select id="model" aria-label="Brain"></select></label>
+    <button id="silence" title="Send '(no speech)' with a silence note">Let a silence pass</button>
+    <button id="new" title="The next visitor: a fresh conversation">New conversation</button>
+  </div>
+</header>
+
+<main class="grid">
+  <section class="col left">
+    <div class="card">
+      <div class="card-h"><h2>What he sees</h2><div id="senses" class="chips"></div></div>
+      <div class="cam"><img id="cam" alt="Frank's camera, with faces marked"><div id="nocam" class="nocam">Camera off</div></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>In view</h2><span id="far" class="muted small"></span></div>
+      <ul id="inview" class="rows"></ul>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>Remembered</h2><span class="muted small">faces stored on this laptop</span></div>
+      <ul id="stored" class="rows"></ul>
+      <form id="enrol" class="enrol">
+        <input id="enrol-name" placeholder="Name to enrol" autocomplete="off" aria-label="Name to enrol">
+        <label><input type="checkbox" id="enrol-creator" checked> creator</label>
+        <button>Enrol</button>
+      </form>
+      <p id="enrol-msg" class="muted small">One person in view, close to the camera, turning their head a little.</p>
+    </div>
+  </section>
+
+  <section class="col card convo">
+    <div class="card-h">
+      <h2>Conversation</h2>
+      <label class="muted small"><input type="checkbox" id="show-senses" checked> show what he senses</label>
+    </div>
+    <div id="log" class="log" aria-live="polite"></div>
+    <div id="hearing" class="hearing" hidden></div>
+    <form id="say" class="say">
+      <input id="text" placeholder="Type to Frank…" autocomplete="off" aria-label="Type to Frank">
+      <button>Send</button>
+    </form>
+    <div class="say-tools">
+      <button type="button" data-prefix="/note ">Add a note</button>
+      <button type="button" data-prefix="/fb ">Feedback on his last reply</button>
+      <span class="muted small">A note goes with the next line. /help lists the commands.</span>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const log = $("#log");
+let state = {}, lastSeq = 0, bubble = null, known = new Set();
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;   // never innerHTML: visitors' words are untrusted
+  return e;
+}
+function clock(t) { return new Date(t * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }); }
+function add(node) {
+  const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 120;
+  log.appendChild(node);
+  if (atBottom) log.scrollTop = log.scrollHeight;
+  return node;
+}
+async function post(path, body) {
+  const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json", "X-Frank": "1" }, body: JSON.stringify(body) });
+  return r.json();
+}
+const say = (text) => post("/say", { text });
+
+function setStatus(s) {
+  const p = $("#status");
+  p.textContent = s;
+  p.className = "pill" + (s === "Listening" ? " on" : s === "Thinking" || s === "Speaking" || s === "Hearing" ? " busy" : "");
+}
+const idle = () => setStatus(state.listening ? "Listening" : "Idle");
+
+// ----- the conversation -----
+function visitorLine(said, t) {
+  bubble = null;
+  if (said === "(no speech)") { add(el("div", "unprompted", "unprompted: he reacts to what he senses")); return; }
+  let name = "Visitor", text = said;
+  const m = said.match(/^([^:\n]{1,40}): ([\s\S]*)$/);
+  if (m && known.has(m[1])) { name = m[1]; text = m[2]; }
+  const box = el("div", "msg visitor");
+  const head = el("div", "head"); head.append(el("b", null, name), el("time", null, clock(t)));
+  box.append(head, el("div", "body", text));
+  add(box);
+}
+function frankBubble(t) {
+  const box = el("div", "msg frank");
+  const head = el("div", "head"); head.append(el("b", null, "Frank"), el("time", null, clock(t)));
+  box.append(head, el("div", "body"));
+  return add(box);
+}
+function body() { if (!bubble) bubble = frankBubble(Date.now() / 1000); return bubble.querySelector(".body"); }
+function sense(ev) {
+  const row = el("div", "sense");
+  row.append(el("span", null, ev.notes.join(" ")));
+  if (ev.prompt) row.append(el("span", "react", "he reacts"));
+  add(row);
+}
+function system(text, cls) { add(el("div", "sys" + (cls ? " " + cls : ""), text)); }
+
+function handle(ev) {
+  switch (ev.kind) {
+    case "new": bubble = null; add(el("div", "divider", `New conversation · ${ev.model} · ${clock(ev.t)}`)); break;
+    case "seen": sense(ev); break;
+    case "hearing": { const h = $("#hearing"); h.hidden = false; h.textContent = "hearing: " + ev.text; setStatus("Hearing"); break; }
+    case "visitor": $("#hearing").hidden = true; visitorLine(ev.said, ev.t); setStatus("Thinking"); break;
+    case "frank_start": bubble = frankBubble(ev.t); break;
+    case "face": case "sound":
+      body().append(el("span", "tag", ev.tag));
+      if (ev.kind === "face") $("#face").textContent = "face: " + ev.tag;
+      break;
+    case "say": body().append(document.createTextNode(ev.text + " ")); setStatus("Speaking"); break;
+    case "tool_call": body().append(el("span", "call", "calls " + ev.text)); break;
+    case "frank_end":
+      if (bubble) {
+        if (ev.silent && !ev.interrupted) body().append(el("span", "call", "says nothing: just the face"));
+        bubble.append(el("div", "foot", ev.timing || ""));
+        if (ev.interrupted) bubble.classList.add("cut");
+      }
+      bubble = null; idle(); break;
+    case "interrupted": if (bubble) bubble.classList.add("cut"); break;
+    case "tool": system(`${ev.name}: ${ev.text}`, "tool"); break;
+    case "ignored": {
+      $("#hearing").hidden = true; idle();
+      const row = el("div", "ignored");
+      row.append(el("q", null, ev.text), el("div", null, `not to him: ${ev.why}`));
+      add(row); break;
+    }
+    case "enrol": $("#enrol-msg").textContent = ev.text; break;
+    case "info": system(ev.text); break;
+    case "error": system(ev.text, "error"); break;
+  }
+}
+
+function connect() {
+  const es = new EventSource("/events");
+  es.onmessage = (e) => { const ev = JSON.parse(e.data); if (ev.seq <= lastSeq) return; lastSeq = ev.seq; handle(ev); };
+  es.onerror = () => { setStatus("Reconnecting…"); };
+  es.onopen = () => idle();
+}
+
+// ----- the switches and the senses, from /state -----
+function chip(text, cls) { return el("span", "chip" + (cls ? " " + cls : ""), text); }
+function dotColour(p) { return p.level === "known" ? "var(--known)" : p.level === "possible" ? "var(--possible)" : p.engaged ? "var(--stranger)" : "var(--far)"; }
+
+function render() {
+  $("#mic").setAttribute("aria-pressed", String(!!state.listening));
+  $("#gate").setAttribute("aria-pressed", String(!!state.gate));
+  $("#gate").hidden = !state.seeing;
+  $("#voice").setAttribute("aria-pressed", String(!!state.voice));
+  const sel = $("#model");
+  if (sel.options.length !== (state.models || []).length) {
+    sel.replaceChildren(...(state.models || []).map((m) => { const o = el("option", null, m); o.value = m; return o; }));
+  }
+  if (document.activeElement !== sel) sel.value = state.model;
+
+  known = new Set((state.people || []).map((p) => p.name));
+  const sight = state.sight, problem = state.eyes_error;
+  const nocam = $("#nocam");
+  nocam.hidden = !!(sight && frameUrl) && !problem;
+  nocam.classList.toggle("problem", !!problem);
+  nocam.textContent = !state.seeing ? "Camera off"
+    : problem && problem.includes("Privacy")
+      ? "No camera access. On the Mac: System Settings › Privacy & Security › Camera, and switch on the app running Frank (Visual Studio Code, or Terminal). He tries again every 3 s."
+    : problem ? problem
+    : frameUrl ? "The camera has stopped" : "The camera is starting…";
+
+  const spk = $("#speaker");
+  const devices = state.speakers || [];
+  if (spk.options.length !== devices.length + 1) {
+    const def = devices.find((d) => d.id === state.default_speaker);
+    const first = el("option", null, `Mac's default${def ? " (" + def.name + ")" : ""}`); first.value = "";
+    spk.replaceChildren(first, ...devices.map((d) => { const o = el("option", null, d.name); o.value = String(d.id); return o; }));
+  }
+  if (document.activeElement !== spk) spk.value = state.speaker == null ? "" : String(state.speaker);
+  spk.disabled = $("#beep").disabled = !state.voice_loaded;
+  $("#voice").title = state.voice_loaded ? "His voice on or off" : "The voice didn't load: see the terminal";
+
+  const chips = $("#senses");
+  if (!sight) { chips.replaceChildren(problem ? chip("no camera", "danger") : chip(state.seeing ? "starting" : "not watching")); }
+  else {
+    const c = [];
+    c.push(sight.moving ? chip("being moved", "warn") : sight.settling ? chip("just set down", "warn") : chip("still", "ok"));
+    c.push(sight.blind ? chip("can't see", "danger") : chip("can see", "ok"));
+    c.push(chip(sight.session ? "someone's with him" : "nobody close"));
+    if (sight.enrolling) c.push(chip(`enrolling ${sight.enrolling.name}: ${sight.enrolling.got}`, "warn"));
+    chips.replaceChildren(...c);
+  }
+
+  const people = sight ? [...sight.people].sort((a, b) => (b.engaged - a.engaged) || (a.dist - b.dist)) : [];
+  $("#far").textContent = sight && sight.far ? `${sight.far} further back` : "";
+  $("#inview").replaceChildren(...(people.length ? people.map((p) => {
+    const li = el("li");
+    const dot = el("span", "dot"); dot.style.background = dotColour(p);
+    const who = el("div", "who");
+    const name = p.name || (p.level === "possible" ? "Maybe met before" : `Stranger${p.stranger ? " " + p.stranger : ""}`);
+    who.append(el("b", null, name), el("span", "meta",
+      `${p.place} · ${p.dist.toFixed(1)} m · ${p.engaged ? "with him" : "not engaged"}${p.level ? " · match " + p.score.toFixed(2) : ""}${p.mouth != null ? " · mouth " + p.mouth.toFixed(2) : ""}`));
+    li.append(dot, who);
+    if (p.talking) li.append(el("span", "talking", "talking"));
+    return li;
+  }) : [el("li", "empty", sight ? "Nobody in view." : "—")]));
+
+  $("#stored").replaceChildren(...((state.people || []).length ? state.people.map((p) => {
+    const li = el("li");
+    const who = el("div", "who");
+    const b = el("b", null, p.name);
+    who.append(b, el("span", "role", p.role), el("span", "meta", `${p.prints} looks · since ${p.enrolled}`));
+    const forget = el("button", null, "Forget");
+    forget.onclick = async () => {
+      if (!confirm(`Forget ${p.name}? This deletes their stored face.`)) return;
+      await post("/forget", { id: p.id }); poll();
+    };
+    li.append(who, forget);
+    return li;
+  }) : [el("li", "empty", "Nobody yet. Enrol yourselves below.")]));
+}
+
+// The newest preview picture, 10 times a second while the tab is visible.
+let frameUrl = null;
+async function camLoop() {
+  if (state.seeing && !document.hidden) {
+    try {
+      const r = await fetch("/frame", { cache: "no-store" });
+      if (r.status === 200) {
+        const url = URL.createObjectURL(await r.blob());
+        $("#cam").src = url;
+        if (frameUrl) URL.revokeObjectURL(frameUrl);
+        frameUrl = url;
+        $("#nocam").hidden = true;
+      }
+    } catch { /* the server is restarting */ }
+  }
+  setTimeout(camLoop, 100);
+}
+
+async function poll() {
+  try { state = await (await fetch("/state")).json(); render(); }
+  catch { setStatus("Not running"); }
+}
+
+// ----- wiring -----
+$("#say").onsubmit = (e) => { e.preventDefault(); const t = $("#text"); if (t.value.trim()) say(t.value); t.value = ""; };
+document.querySelectorAll("[data-prefix]").forEach((b) => b.onclick = () => { const t = $("#text"); t.value = b.dataset.prefix; t.focus(); });
+$("#mic").onclick = () => say("/talk").then(() => setTimeout(poll, 300));
+$("#gate").onclick = () => say("/gate").then(() => setTimeout(poll, 300));
+$("#voice").onclick = () => say("/mute").then(() => setTimeout(poll, 300));
+$("#new").onclick = () => say("/new");
+$("#speaker").onchange = async (e) => {
+  const r = await post("/speaker", { id: e.target.value });
+  if (!r.ok) system(r.why, "error");
+  setTimeout(poll, 300);
+};
+$("#beep").onclick = async () => { const r = await post("/beep", {}); if (!r.ok) system(r.why, "error"); };
+$("#silence").onclick = () => say("/silence");
+$("#model").onchange = (e) => say("/model " + e.target.value).then(() => setTimeout(poll, 300));
+$("#show-senses").onchange = (e) => log.classList.toggle("no-senses", !e.target.checked);
+$("#enrol").onsubmit = async (e) => {
+  e.preventDefault();
+  const name = $("#enrol-name").value.trim();
+  if (!name) return;
+  const r = await post("/enrol", { name, creator: $("#enrol-creator").checked });
+  $("#enrol-msg").textContent = r.ok ? `Enrolling ${name}: look at the camera and turn your head a little…` : r.why;
+  if (r.ok) $("#enrol-name").value = "";
+};
+
+connect();
+poll();
+camLoop();
+setInterval(poll, 1000);
+</script>
+</body>
+</html>

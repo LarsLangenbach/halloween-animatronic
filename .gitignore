@@ -4,3 +4,5 @@ output/**/*.step
 __pycache__/
 .venv/
 output/ref/
+frank/.env
+output/frank/

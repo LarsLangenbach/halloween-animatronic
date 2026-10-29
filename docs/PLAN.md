@@ -4,7 +4,7 @@ Living plan for the mechanical skull, eyebrows and skin interfaces described in
 [BRIEF.md](BRIEF.md). It is updated whenever a milestone moves, a decision is
 made or an input arrives. The day-to-day record is [BUILD_LOG.md](BUILD_LOG.md).
 
-Plan version: v2, 2026-10-16 (re-based on Cogley's Robot Head α2.0.33, D14). Last updated 2026-10-28.
+Plan version: v2, 2026-10-16 (re-based on Cogley's Robot Head α2.0.33, D14). Last updated 2026-10-28. The conversational character (Frank) is defined in [CHARACTER.md](CHARACTER.md); his prompt and the software contract are in [frank/](../frank/).
 
 ## 1. Status
 
@@ -13,10 +13,10 @@ Plan version: v2, 2026-10-16 (re-based on Cogley's Robot Head α2.0.33, D14). La
 | M0 Inputs and foundations | — | **in progress**: Cogley STEP files in; printer known; coupon STL built, not yet printed | Both Cogley mechanisms in the repo and measured; servo models in; printer known; calibration coupon printed |
 | M1 Mechanical layout | §12 M1 | **re-opening for D14**: v1 done 2026-10-15 at 1.2× (D4). Cogley's head α2.0.33 is imported and fit-checked against our head; the layout moves onto his frame (§6, Re-base) | Both modules and the brows placed on his frame; every motion clear; the proportions decided (Q16) |
 | M2 Eyebrow prototype | §12 M2 | **switching to Cogley's brows (D15)**: our v1.1 is printed and becomes the bench backup. His 4-servo brows with flexible (TPU) brow bars come with his frame | Both brows bench-tested on MG90S servos through their full range; pull and travel measured under a silicone sample |
-| M3 Integrated skull | §12 M3 | **re-planned (D17)**: Cogley's head is built as he designed it, outer shell included; our skull pieces retire. Left for us: the neck mount, skin attachment points on his parts, and the fan's air path | Head printed and assembled; all servos move through their full range with no skin fitted; each servo can be swapped |
+| M3 Integrated skull | §12 M3 | **eyes and mouth working (team report, 2026-10-26)**; the whole head is being assembled. Re-planned (D17): Cogley's head is built as he designed it, outer shell included; our skull pieces retire. Left for us: the neck mount, skin attachment points on his parts, and the fan's air path | Head printed and assembled; all servos move through their full range with no skin fitted; each servo can be swapped |
 | M4 Snap attachment prototype | §12 M4 | not started | Snap size, adapter and pad chosen from measured pull-off and cycle tests on cast samples |
 | M5 Sculpting integration | §12 M5 | **mold base ready to print (D20)**: the face mask (v9) is printed and sculpted in clay; a printed base seats it face up for the plaster mold and later holds it as the silicone core ([PLASTER_MOLD.md](PLASTER_MOLD.md)) | Registered armature printed; datums and attachment coordinates handed to the sculptor |
-| M6 Silicone skin integration | §12 M6 | not started | First skin fitted and connected; attachment positions revised where needed |
+| M6 Silicone skin integration | §12 M6 | **skin cast; fitting started 2026-10-26** (team report). First public appearance: NightHack, San Francisco, 2026-10-30 | First skin fitted and connected; attachment positions revised where needed |
 | M7 Final mechanical validation | §12 M7 | not started | Every motion with the skin on, no collisions or overstretch; skin removable for service |
 | M8 Enclosure (added 2026-10-28, outside the brief's deliverables) | BRIEF §10 (fit inside a future enclosure) | **modelled, v1 (2026-10-29, D26)**: `cad/enclosure.py`, 11 thin prints plus two PETG sheets, about 27 printer-hours; `enclosure_check.py` passes (head, sheet, band, his parts, the jaw sweep, the bay, the bed); v0 (31 prints, 130 h) is in git at b0597cd | Base, cap, back column and sheet printed and fitted; the head bolted on its pedestal; the electronics in the base; the fan's air out through the base's slots |
 
