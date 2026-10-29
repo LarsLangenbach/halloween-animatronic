@@ -311,6 +311,7 @@ Two fixes came out of the vision testing:
 **Problems:** the eye limits in `eyes_mouthboard.py` are still Cogley's (LR 40–140, UD 60–140, TL 90–160, BL 90–30, TR 90–30, BR 90–140; lids shut at 90). They have not been measured on the team's build.
 
 **Next:** mark the faulty servo and replace it. Press 90 before fitting the new servo's horn, so the brow sits mid-travel. Then measure each eye servo's free range with the sliders and put the numbers in `eyes_mouthboard.py`.
+
 ## 2026-10-26 — Character — Frank's bible and system prompt; head reported working, skin going on
 
 **Done:**
