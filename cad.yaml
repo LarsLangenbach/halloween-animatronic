@@ -39,6 +39,7 @@ pipeline:
   - {script: sculpt_base, kind: build}   # M5: the wrap of Cogley's head (the mask clears it); sculpt_* superseded by the mask
   - {script: face_mask, kind: build}     # M5 D19: a man's face shell on the mechanism, to sculpt on
   - {script: mold_base, kind: build}     # M5: the printed base the clay-covered mask lies in, face up, for the plaster mold
+  - {script: enclosure, kind: build}     # M8: the canister (base, rings, column, cap, panels) and the neck (D23-D25)
   - {script: test_coupon, kind: build}
   - {script: assembly_check, kind: check, level: hard, pass: "^NO OVERLAPS$"}
   - {script: print_check, kind: check, level: soft, pass: "^PRINT CHECK OK$"}
@@ -49,6 +50,7 @@ pipeline:
   - {script: sculpt_check, kind: check, level: soft, pass: "^SCULPT OK$"}   # M5: sculpt base vs the skull
   - {script: service_check, kind: check, level: soft, pass: "^SERVICE OK$"} # M3: teardown paths, tool access
   - {script: mold_check, kind: check, level: soft, pass: "^MOLD OK$"}       # M5: mold base vs the mask: seat, no hooks, bed
+  - {script: enclosure_check, kind: check, level: soft, pass: "^ENCLOSURE OK$"}   # M8: head, sheet, his parts, the jaw sweep, the bay
 
 # Scripts in the source folder that check.py knows about but doesn't run
 # (the toolkit's own scripts are known already). Any other script gets a
@@ -80,14 +82,16 @@ parts:
   # supports under the inside of the shell where it curves round the temple
   brow_rig: {colour: [0.80, 0.78, 0.70], supports: true, assembly: false, print_rotate: [0, -90, 0]}   # supports under the shell's curve
   # M3 skull v0. Print poses are a first guess (split face on the bed); M3 optimises them.
-  skull_front_upper: {colour: [0.93, 0.89, 0.78], supports: true}
-  skull_front_lower: {colour: [0.88, 0.84, 0.72], supports: true, print_rotate: [180, 0, 0]}
-  skull_back_upper: {colour: [0.80, 0.76, 0.66], supports: true}
-  skull_back_lower: {colour: [0.75, 0.71, 0.62], supports: true, print_rotate: [180, 0, 0]}
-  skull_shelf: {colour: [0.55, 0.75, 0.75], supports: false}
-  skull_eye_strap: {colour: [0.55, 0.75, 0.75], supports: false, print_rotate: [180, 0, 0]}
-  skull_neck_plate: {colour: [0.45, 0.60, 0.70], supports: false}
-  skull_access_panel: {colour: [0.70, 0.66, 0.56], supports: true}
+  # Retired by D17 (Cogley's head is built as designed); still built and checked, but out of the
+  # assembly since 2026-10-28: the neck and the enclosure's pedestal (M8) now stand where its neck was.
+  skull_front_upper: {colour: [0.93, 0.89, 0.78], supports: true, assembly: false}
+  skull_front_lower: {colour: [0.88, 0.84, 0.72], supports: true, assembly: false, print_rotate: [180, 0, 0]}
+  skull_back_upper: {colour: [0.80, 0.76, 0.66], supports: true, assembly: false}
+  skull_back_lower: {colour: [0.75, 0.71, 0.62], supports: true, assembly: false, print_rotate: [180, 0, 0]}
+  skull_shelf: {colour: [0.55, 0.75, 0.75], supports: false, assembly: false}
+  skull_eye_strap: {colour: [0.55, 0.75, 0.75], supports: false, assembly: false, print_rotate: [180, 0, 0]}
+  skull_neck_plate: {colour: [0.45, 0.60, 0.70], supports: false, assembly: false}
+  skull_access_panel: {colour: [0.70, 0.66, 0.56], supports: true, assembly: false}
   sculpt_upper: {colour: [0.80, 0.62, 0.52], supports: false, assembly: false}        # solid: 3 walls, lightning infill
   sculpt_lower: {colour: [0.76, 0.58, 0.48], supports: false, assembly: false, print_rotate: [180, 0, 0]}
   sculpt_plate: {colour: [0.45, 0.45, 0.50], supports: false, assembly: false}
@@ -103,6 +107,40 @@ parts:
   mold_wall_top_L: {colour: [0.66, 0.64, 0.58], supports: false, assembly: false}
   mold_wall_top_R: {colour: [0.60, 0.58, 0.52], supports: false, assembly: false}
   mold_pry_wedge: {colour: [0.95, 0.55, 0.15], supports: false, assembly: false}   # print 8: loose, against the walls
+  # M8 enclosure (D23-D25). Walls and flat rings print as modelled (the lips and flanges on the bed,
+  # 45 deg chamfers under the inward flanges); the pedestal prints upside down, solid with sparse
+  # infill; the panels stand on a short edge so their slots print vertical; the column pieces stand.
+  enc_base_F: {colour: [0.55, 0.60, 0.66], supports: true}    # the speaker opening's 110 mm top edge
+  enc_base_L: {colour: [0.55, 0.60, 0.66], supports: false}
+  enc_base_B: {colour: [0.55, 0.60, 0.66], supports: true}    # the hatch opening's top edge
+  enc_base_R: {colour: [0.55, 0.60, 0.66], supports: false}
+  enc_ring_1: {colour: [0.62, 0.66, 0.72], supports: false}
+  enc_ring_2: {colour: [0.62, 0.66, 0.72], supports: false}
+  enc_ring_3: {colour: [0.62, 0.66, 0.72], supports: false}
+  enc_ring_4: {colour: [0.62, 0.66, 0.72], supports: false}
+  enc_tray: {colour: [0.45, 0.50, 0.56], supports: false}
+  enc_deck: {colour: [0.45, 0.50, 0.56], supports: false}
+  enc_pedestal: {colour: [0.60, 0.66, 0.72], supports: false, print_rotate: [180, 0, 0]}
+  enc_grille: {colour: [0.25, 0.28, 0.32], supports: false, print_rotate: [0, 90, 0]}
+  enc_hatch: {colour: [0.25, 0.28, 0.32], supports: false, print_rotate: [0, 90, 0]}
+  enc_column_R_lower: {colour: [0.35, 0.40, 0.45], supports: false}
+  enc_column_R_upper: {colour: [0.35, 0.40, 0.45], supports: false}
+  enc_column_L_lower: {colour: [0.35, 0.40, 0.45], supports: false}
+  enc_column_L_upper: {colour: [0.35, 0.40, 0.45], supports: false}
+  enc_capring_1: {colour: [0.62, 0.66, 0.72], supports: false}
+  enc_capring_2: {colour: [0.62, 0.66, 0.72], supports: false}
+  enc_capring_3: {colour: [0.62, 0.66, 0.72], supports: false}
+  enc_capring_4: {colour: [0.62, 0.66, 0.72], supports: false}
+  enc_cap_F: {colour: [0.55, 0.60, 0.66], supports: false}
+  enc_cap_L: {colour: [0.55, 0.60, 0.66], supports: false}
+  enc_cap_B: {colour: [0.55, 0.60, 0.66], supports: false}
+  enc_cap_R: {colour: [0.55, 0.60, 0.66], supports: false}
+  enc_captop_1: {colour: [0.62, 0.66, 0.72], supports: false}
+  enc_captop_2: {colour: [0.62, 0.66, 0.72], supports: false}
+  enc_captop_3: {colour: [0.62, 0.66, 0.72], supports: false}
+  enc_captop_4: {colour: [0.62, 0.66, 0.72], supports: false}
+  enc_lid: {colour: [0.45, 0.50, 0.56], supports: false}
+  neck: {colour: [0.80, 0.64, 0.30], supports: false}
 
 every_part: {watertight: hard, single_body: hard, fits_bed: soft}
 

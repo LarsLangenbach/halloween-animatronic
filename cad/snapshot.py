@@ -23,11 +23,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import cadkit as K  # noqa: E402
 
-STALE_S = 900              # s: images older than report.md by more than this are from an earlier run
+STALE_S = 3600             # s: images older than report.md by more than this are from an earlier run (a full run takes 43 min)
 SOURCES = ["views/views.png", "print_check.png", "layout/layout.png", "layout/layout_*.png",
            "layout/layout.md", "sweep/*.png", "sweep/sweep.md", "brow/*.png", "brow/brow.md",
            "studies/*.png", "studies/*.md", "skull/*.png", "skull/skull.md", "sculpt/*.png",
-           "sculpt/sculpt.md", "service/service.md", "mold/*.png"]
+           "sculpt/sculpt.md", "service/service.md", "mold/*.png", "enclosure/*.png", "enclosure/enclosure.md"]
 
 
 def main():

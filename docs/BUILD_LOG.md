@@ -29,6 +29,28 @@ Rules:
 
 ---
 
+## 2026-10-28 — M8 — Enclosure and neck modelled (v0)
+
+**Done:**
+- `cad/enclosure.py` builds the canister and the neck in the assembled pose, 31 prints, all inside the 256 bed: base wall quadrants (seams at 45/135/225/315) with the bottom lip, an inward top flange with a 51° chamfer under it, seam tabs (M3 insert one side, clearance the other), segmented vent slots in the side walls, the speaker opening in the front and the hatch opening in the back; deck ring quadrants (seams at 0/90/180/270, staggered from the walls) with the lower slit for the sheet, the lip the deck drops into and the column's foot inserts; the floor tray with the speaker saddles and the bank's rails; the deck disc; the solid pedestal (prints upside down); the grille and hatch panels (4 × M3 each from outside, the hatch with a lead notch); the back column in 2 × 2 pieces with forks the sheet's ends tuck into, lap tabs under both seams (radial screws from outside), a foot flange down into the deck ring, a top flange screwed from inside the cap, the centre rib; the cap's slit ring quadrants, cap wall quadrants with a flat front band for the webcam (lens hole Ø12, cradle stops), the cap top ring quadrants with the lid recess, the lid; the neck (foot with 4 × M4 inserts, Ø100 tube to z 70, hollow spine to z 170 with a 45° roof, notched for two of Cogley's ribs). The clear sheet and the bay's contents are reference shapes in `output/ref/enclosure/`.
+- `cad/enclosure_check.py`: the head's clearance to the sheet and cap, the sheet against every part, the neck against every one of Cogley's parts at rest, the jaw swept 0 to 35° against the neck, the bay's contents against the parts and each other, and every piece against the bed; a sheet of renders. In the pipeline (soft, `ENCLOSURE OK`), parts in `cad.yaml`.
+- The skull v0 pieces (retired, D17) are out of the assembly in `cad.yaml`: the neck and pedestal stand where its neck was.
+- Docs: PRINT_GUIDE (M8 table and print order), ASSEMBLY (the enclosure's assembly order), BOM (inserts and screws counted: 86 M3 inserts, 86 M3 screws in four lengths, 4 M4; about 3 kg PLA), PLAN (M8 status, D25 as modelled).
+
+**Numbers:** the ENC_* and NECK_* sections of params.py are new. Found by the checks on the way: the spine's top 190 → 170 (his nape members' undersides are at 171–176 over the spine's footprint; two ribs come down to z 150 at x ±32, so the spine is notched at |x| 29–41, y −117..−94); the chamfers 45° → 51° (`ENC_CHAMFER` 1.25; at 45° print_check flagged them); the vents in 20 mm segments (bridges of 20, not 145) and below the chamfers; the openings' tops at −72 (under the flange chamfer), their 110 mm bridges on supports; the tray Ø250 (the bed), so the bank sits at y' −68 and the buck under the pedestal, turned 90°; the webcam on the slit ring (z 416) with the band set in 9 so its corners clear the top flange's wedge.
+
+**Check:** fast checks on the enclosure alone: builder clean (31 watertight single bodies), `NO OVERLAPS`, `PRINT CHECK OK` (the 31 parts), `ENCLOSURE OK` (head 31.2 inside the sheet, crown 48.7 under the cap; the jaw clears the neck by 9.6 mm at 25° and 2.5 mm at 35°; no overlap with any of his parts, the spine's top 1.5 under the frame). Full run after the review fixes: `check: PASS  (0 hard failure(s), 12 warning(s), 2571 s)`; the 12 warnings are the sculpt base's old thin spots. A full run takes 43 min, 41 of them print_check.
+
+**Renders:** [process_images/2026-10-29_50_enclosure-v0](../process_images/2026-10-29_50_enclosure-v0/enclosure.png) (the enclosure sheet, the design views, the print check).
+
+**Review:** the cad-reviewer ran the full check on the first complete model and found five things, all fixed before the final run: the webcam cradle's three stops were loose bodies (now on a floor joined to the cap wall); the webcam lead's slot landed on the column's top flange (notched); the cap's column screws were unreachable in the written order (the slit ring now goes on first); the sheet blank omitted the forks' tucks (644 × 458, derived once as `ENC_SHEET_BLANK` and checked); the spine's top had no way in for the leads (a 40 × 16 opening). It also noted the bank does not pass the hatch (reach only) and that the tray comes out only with the column and cap off; both are in ASSEMBLY.md.
+
+**Decisions:** D23 and D25 as modelled. Three tessellation surprises worth remembering: the panels' slotted curved face and the cap's cut front band exported with dents and open edges at tolerance 0.05 (the shapes were valid); they export at 0.01.
+
+**Problems:** the webcam's tilt (10° down) is not modelled: the cradle holds it level. The spine's bolting into his frame and the inserts in his nape members are an assumption until the printed neck is offered up to the printed frame. The sizes of the bank, buck and boards are listing sizes.
+
+**Next:** print the neck and the pedestal first and offer them up to the head; then one base wall quadrant and one deck ring quadrant to prove the slit (with a strip of the PETG), the seam tabs and the flange screws; then the rest.
+
 ## 2026-10-28 — M8 — Enclosure concept: a printed canister round the head
 
 **Done:**

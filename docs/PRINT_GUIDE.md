@@ -73,6 +73,28 @@ The head the clay face is sculpted on: the skull's outside raised by 3 mm. Three
 
 Print them solid: PLA, 0.2 mm layers (0.28 is fine for speed), 3 walls, 4 top and bottom layers, lightning infill at 10 %. The estimates are rough; trust the slicer's. Assembly: [ASSEMBLY.md](ASSEMBLY.md#sculpt-base).
 
+## M8: enclosure and neck (modelled 2026-10-28, v0, not printed yet)
+
+The canister round the head (PLAN D23-D25): 31 prints, every one inside the 256 bed. Built by `cad/enclosure.py`; the sizes are in the print pose. All PLA. Sparse infill (15 %) and 3 walls everywhere; the flat rings and discs are thick and would be heavy solid.
+
+| Part | Qty | Size (print pose) | Orientation | Supports | Notes |
+|---|---|---|---|---|---|
+| enc_base_F / L / B / R | 4 | 240 × 89 × 98 | as modelled: bottom lip on the bed | no | the wall quadrants; the inward flange at the top has a 45° chamfer under it. F has the speaker opening, B the hatch opening, L and R the vent slots |
+| enc_ring_1..4 | 4 | 170 × 170 × 12 | as modelled: flat, slit up | no | deck ring quadrants: the sheet's lower slit, the lip the deck drops into, the column's foot inserts (3 and 4) |
+| enc_tray | 1 | 250 × 250 × 33 | as modelled: flat | no | the speaker saddles and the bank's rails stand up from it |
+| enc_deck | 1 | 239 × 239 × 8 | as modelled | no | M3 inserts go in from its underside |
+| enc_pedestal | 1 | 130 × 130 × 40 | upside down (top face on the bed) | no | solid model: let the slicer fill it (15 %); the bolt pockets open at the print's top |
+| enc_grille, enc_hatch | 2 | 96 tall standing on a short edge (126 × 15 footprint) | print_rotate [0, 90, 0] | no (brim) | the slots then print vertical; the hatch has the lead notch |
+| enc_column_R_lower / L_lower | 2 | 159 × 97 × 232 | standing, foot flange on the bed, with a brim | no | the lap tabs have 51° chamfers under them |
+| enc_column_R_upper / L_upper | 2 | 159 × 97 × 220 | standing, with a brim (bed contact is a 3 mm arc) | no | the wedge under the top flange prints without support |
+| enc_capring_1..4 | 4 | 170 × 170 × 16 | as modelled: slit face on the bed | no | the slit's roof bridges 1.4 mm; 4 has the webcam lead's slot |
+| enc_cap_F / L / B / R | 4 | 240 × 71 × 52 | as modelled: bottom flange on the bed | no | F has the flat front band with the lens hole and the webcam cradle |
+| enc_captop_1..4 | 4 | 170 × 170 × 12 | as modelled: flat, recess up | no | |
+| enc_lid | 1 | 239 × 239 × 8 | as modelled | no | vent slots, finger hole at the back |
+| neck | 1 | 100 × 105 × 170 | as modelled: foot on the bed | no | the spine's inside is roofed at 45°; the tube's top is open |
+
+Print order for a first fit: the neck and the pedestal (the head's mount, check the M4 pattern against the head), then one base wall quadrant and one deck ring quadrant (check the slit with a strip of the PETG sheet, the seam tab fit and the flange screws), then the rest.
+
 ## Suggested slicer settings
 
 | | Brackets, carriers | Bench rig | Coupon |

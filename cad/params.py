@@ -447,3 +447,103 @@ MOLD_FIT = 0.15                # clearance per side in the joints between the pi
 MOLD_TAB = (10.0, 16.0, 12.0)  # plate dovetails: neck width, head width, depth
 MOLD_TABS_X = (-22.0, -120.0, -285.0, -362.0)   # dovetails along X = 0, at these Y
 MOLD_TABS_Y = (55.0, 128.0)    # dovetails along the Y split, at these |X|
+
+# ---------------------------------------------------------------------------
+# Enclosure (M8, D23-D25): a printed canister round the head. cad/enclosure.py builds it,
+# enclosure_check.py checks it. The canister's axis is x 0, y ENC_AXIS_Y (the neck's axis);
+# every radius below is about that axis, every z is in the head frame (z 0 = the pedestal's
+# top = the neck's foot). Angles: 0 deg = +x, 90 deg = +y (the front).
+# ---------------------------------------------------------------------------
+ENC_AXIS_Y = SCULPT_NECK[2]        # -70
+ENC_SHEET_R = 150.0                # inside face of the clear sheet (D 300)
+ENC_SHEET_T = 1.0                  # 1 mm PETG (D24)
+ENC_SLIT_W = 1.4                   # the slits the sheet stands in: 0.2 clear each side
+ENC_SLIT_D = (6.0, 12.0)           # slit depth in the base's deck ring, in the cap's slit ring
+ENC_R_OUT = 170.0                  # outside of the rings and the column (D 340)
+ENC_WALL = 3.0                     # shell walls of the drum, the cap and the column
+ENC_WALL_SEAMS = (45.0, 135.0, 225.0, 315.0)   # the wall quadrants' seams; the flat rings' seams sit at 0/90/180/270
+ENC_FLANGE = 15.0                  # the walls' inward flanges (the flat rings screw to them), with a 45 deg chamfer under
+ENC_FLANGE_T = 6.0
+ENC_CHAMFER = 1.25                 # the chamfers under inward flanges rise this much per mm of reach (51 deg: clear of the 45 limit)
+ENC_BASE_Z = (-150.0, -52.0)       # base wall: bottom, top; the deck ring sits on it
+ENC_BOTTOM_LIP = (115.0, 8.0)      # the base wall's bottom lip: inner radius, thickness; the tray sits on it
+ENC_DECK_RING = (108.0, 12.0)      # deck ring (z -52..-40): inner radius (the lip under the deck disc), thickness
+ENC_DISC_D = 240.0                 # deck disc and lid disc: one print each (fits the 256 bed)
+ENC_DISC_T = 8.0                   # their thickness = the recess they drop into
+ENC_FIT = 0.3                      # clearance per side where a disc or a panel drops into a recess
+ENC_TRAY = (250.0, 8.0)            # floor tray: diameter (one print on the 256 bed), thickness; it rests on the bottom lip
+ENC_TRAY_SCREW_R = 121.0           # 4 x M3 down into inserts in the bottom lip, at the wall seams' angles
+ENC_PEDESTAL = (130.0, 110.0, 40.0)  # bottom dia, top dia, height: from the deck's top (z -40) to z 0; printed solid (sparse infill)
+ENC_PEDESTAL_SCREW_R = 58.0        # 4 x M3 up through the deck into inserts in the pedestal's bottom, at this radius
+ENC_BORE = 25.0                    # cable + air bore through the neck's foot, the pedestal and the deck
+ENC_WINDOW_TOP = 400.0             # underside of the cap's slit ring
+ENC_CAP_SLIT_RING = (140.0, 16.0)  # the cap's slit ring (z 400..416): inner radius (overhangs the sheet by 10), thickness
+ENC_CAP_WALL_Z = (416.0, 468.0)    # cap wall: bottom (on the slit ring), top (the top ring sits on it)
+ENC_CAP_TOP_RING = (108.0, 12.0)   # cap top ring (z 468..480): inner radius (the lip under the lid), thickness
+ENC_COLUMN_DEG = 120.0             # the back column's arc, centred on -y (270 deg)
+ENC_COLUMN_SPLIT_Z = 180.0         # the column prints in 2 wide x 2 tall pieces
+ENC_COLUMN_SEAM_DEG = 270.5        # the vertical seam, just off the 270 line so no two faces coincide; the rib covers it
+ENC_COLUMN_RIB = (8.0, 2.0)        # centre rib on the left piece over the vertical seam: width, proud of the skin
+ENC_COLUMN_FLANGE = 15.0           # the column's foot and top flanges reach in this far from the skin's inside
+ENC_COLUMN_LAP = (7.0, 12.0)       # lap tabs under the seams (radial screws from outside): thickness, width or height
+ENC_SHEET_TUCK = 8.0               # the sheet's ends slide this far into forks at the column's edges (the fork is 2 wider:
+                               # its slot is closed at the back, so the fork is one body)
+ENC_COLUMN_SCREWS_DEG = (232.0, 262.0, 278.0, 308.0)   # the foot and top flanges' screws, at radius ENC_R_OUT - 11
+_sheet_arc = 3.141592653589793 * (2 * ENC_SHEET_R + ENC_SHEET_T) * (360.0 - ENC_COLUMN_DEG) / 360.0   # 630.4 at the sheet's middle
+_sheet_tuck = ENC_SHEET_TUCK / ENC_R_OUT * (ENC_SHEET_R + ENC_SHEET_T / 2)   # 7.1: the forks' slots are cut by angle at the skin
+ENC_SHEET_BLANK = (int(round(_sheet_arc + 2 * _sheet_tuck - 1.0)), int((ENC_WINDOW_TOP + ENC_SLIT_D[1]) - (ENC_BASE_Z[1] + ENC_DECK_RING[1] - ENC_SLIT_D[0])))
+                               # 644 x 458: the blank to cut, 0.5 play at each fork's closed end
+ENC_TAB = (27.0, 8.0)              # wall seam tabs: radial reach from the skin's inside, thickness (M3 insert one side, clearance the other)
+ENC_VENT = (3.0, 7.0, 50.0, 20.0, 4.0)   # vent slots in the side walls: height, pitch, degrees of arc per group (centred on
+                               # 0 and 180 deg), segment length, web between segments (bridges of 20, not 145)
+ENC_VENT_Z = ((-130.0, -80.0), (426.0, 441.0))   # vent rows in the base and the cap: from, to (below the flange chamfers)
+ENC_GRILLE_OPEN = (110.0, 64.0, -104.0)  # the front wall's opening behind the speaker: chord, height, centre z (top at -72,
+                               # under the flange's chamfer; its 110 mm bridge needs support: cad.yaml)
+ENC_HATCH_OPEN = (110.0, 64.0, -104.0)   # the back wall's opening (the bank and the leads): the same
+ENC_PANEL = (126.0, 96.0, -102.0, 3.0)   # the panels over both openings: chord, height, centre z, thickness; 4 x M3 at the corners
+ENC_PANEL_SCREWS = (59.0, -146.0, -58.0)  # panel screw holes at +-x, and the two z (into the bottom lip and the top flange)
+ENC_PANEL_LEAD_NOTCH = (24.0, 8.0)  # notch in the hatch panel's bottom edge for the leads out
+ENC_WEBCAM = (94.0, 29.0, 24.0)    # ASSUMPTION: a Logitech C920-class body (w, h, d); the StreamCam is 58 x 48 x 66
+ENC_WEBCAM_Z = 432.5               # the lens: the body stands on a 2 mm floor (z 418) in a gap in the cap wall's bottom flange
+ENC_WEBCAM_HOLE = 12.0             # lens hole in the cap's flat front band
+ENC_WEBCAM_BAND = (104.0, 416.0, 447.0, 9.0)   # the flat band in the cap's front: width, z bottom, z top (where the top
+                               # flange's chamfer wedge starts), set in from the skin (9: the body's corners clear it)
+ENC_BANK = (161.0, 55.0, 50.0)     # ASSUMPTION (listing): UGREEN Nexode 145 W power bank
+ENC_BUCK = (85.0, 60.0, 28.0)      # ASSUMPTION (listing): ACEIRMC 20 A buck with its heatsink
+ENC_BOARD = (95.0, 65.0, 20.0)     # ASSUMPTION: a Cogley mouth board with its Pico
+ENC_SPEAKER = (74.0, 92.0)         # Sony SRS-XB12 (listing): diameter, length; lies along y at the front
+# where things sit on the tray, in axis coordinates (x, y - ENC_AXIS_Y) of each item's centre; the
+# tray's top is z -134. ASSUMPTION until the parts are in hand.
+ENC_LAYOUT = {"speaker": (0.0, 101.0, 0.0), "bank": (0.0, -68.0, 0.0), "buck": (0.0, 8.0, 90.0),
+              "board_1": (-75.0, 25.0, 90.0), "board_2": (75.0, 25.0, 90.0)}   # (x, y', turn about z): the
+                               # bank across the back, the buck under the pedestal, a board each side on end, the
+                               # speaker along y at the front; everything inside the tray's r 125 but the
+                               # speaker's front end (it rides on its saddles)
+ENC_SADDLE = (84.0, 4.0, 44.0, (60.0, 115.0))   # speaker saddle ribs: width (4.5 beside the seat), thickness, height, y' positions
+ENC_BANK_RAIL = (3.0, 12.0, 20.0)  # rails either side of the bank: thickness, height, shorter than the bank by
+ENC_LID_VENTS = (3.0, 120.0, 15.0, 7)   # lid vent slots: width, length (along x), pitch (along y), count
+ENC_LID_FINGER = (20.0, -95.0)     # finger hole in the lid: diameter, y'
+M3_INSERT_HOLE = 4.0               # ASSUMPTION: M3 x 4 heat-set insert (the coupon decides)
+M3_INSERT_DEPTH = 6.7
+M3_CLEAR = 3.4
+M3_HEAD = (6.0, 3.2)               # socket head counterbore: diameter, depth
+# Neck (D25): a tube on the pedestal, then a spine behind the jaw's swing into Cogley's frame's nape
+NECK_TUBE = (100.0, 4.0, 70.0)     # outer dia, wall, top z (the open jaw's lowest point is z 88, 82 at overtravel)
+NECK_FOOT_T = 12.0                 # foot with 4 x M4 inserts on NECK_BOLT_SQUARE, bolted up through the pedestal
+NECK_SPINE_Y = (-125.0, -95.0)     # the spine's y range in the head frame (the jaw's overtravel reaches y -92.5)
+NECK_SPINE_X = 40.0                # half width
+NECK_SPINE_TOP = 170.0             # just under the frame's nape members (measured from his mesh 2026-10-28: a cross member at
+                               # y -101..-95, x +-24, underside z 172; two side rails at x +-36..40, y -125..-98, underside
+                               # z 173..176). ASSUMPTION: 4 x M3 up into inserts heat-set into those members, shimmed
+NECK_SPINE_NOTCH = ((29.0, 41.0), (-117.0, -94.0), 148.0)   # two of his ribs come down through the spine's footprint
+                               # at x +-30..34, from z 169 (y -112) to 150 (y -95): notches (|x| range, y range, from z)
+NECK_SPINE_SCREWS = ((18.0, -98.0), (-18.0, -98.0), (36.0, -121.5), (-36.0, -121.5))   # (x, y) of the 4 x M3 up into the frame
+NECK_SPINE_WALL = 3.0              # hollow (the leads come down inside), with a 45 deg roof under its top plate
+NECK_SPINE_HOLLOW_STEP = (140.0, 26.0)   # above this z the hollow narrows to this half width, clear of the notches
+NECK_SPINE_TOP_T = 6.0
+NECK_SPINE_TOP_OPENING = (40.0, 16.0, -112.0)   # the leads' way in: an opening in the top plate, x width, y depth, centre y
+                               # (between the screws, under the open middle of his nape, where the frame is at z 224 and above)
+NECK_SPINE_JOIN_Z = (20.0, 70.0)   # the opening between the spine's inside and the tube's inside
+assert NECK_TUBE[2] < 82.0, "the neck tube must stay under the jaw's overtravel sweep (z 82)"
+assert NECK_SPINE_Y[1] < -92.5, "the spine must stay behind the jaw's overtravel sweep (y -92.5)"
+assert ENC_R_OUT <= 2 * 128.0, "a ring quadrant must fit the 256 bed"
