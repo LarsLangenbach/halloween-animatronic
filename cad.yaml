@@ -119,8 +119,8 @@ parts:
   enc_bottom_B: {colour: [0.45, 0.50, 0.56], supports: false, print_rotate: [0, 0, 45]}
   enc_tray: {colour: [0.45, 0.50, 0.56], supports: false}
   enc_pedestal: {colour: [0.60, 0.66, 0.72], supports: false, print_rotate: [180, 0, 0]}
-  enc_grille: {colour: [0.25, 0.28, 0.32], supports: false, print_rotate: [0, 90, 0]}
-  enc_hatch: {colour: [0.25, 0.28, 0.32], supports: false, print_rotate: [0, 90, 0]}
+  enc_grille: {colour: [0.25, 0.28, 0.32], supports: true, print_rotate: [90, 0, 0]}    # lying, inside face down: supports under the arch, the outside stays clean
+  enc_hatch: {colour: [0.25, 0.28, 0.32], supports: true, print_rotate: [-90, 0, 0]}
   neck: {colour: [0.80, 0.64, 0.30], supports: false}
 
 every_part: {watertight: hard, single_body: hard, fits_bed: soft}
