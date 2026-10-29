@@ -29,6 +29,74 @@ Rules:
 
 ---
 
+## 2026-10-28 — M8 — Enclosure concept: a printed canister round the head
+
+**Done:**
+- The human wants the display case printed, not bought: a round canister like a sci-fi specimen tube (reference picture in the session), with a printed base and top, a clear sheet standing in slits in both, a hollow base for the power and the boards, the head mounted on the base, and a printed, opaque back that hides the mechanism's rear. `cad/studies/enclosure_concept.py` draws the idea to scale around the sculpt wrap and the face mask: side section, front view and plan view, with the numbers in `enclosure_concept.md` beside it.
+- Concept (D23): axis on the neck's axis (y −70). Sheet Ø300 inside, 1 mm rolled PETG or polycarbonate, 240° of the circle (blank 630 × 458), in a 6 deep slit in the base and a 12 deep slit in the cap. Rings Ø340 outside, each in 4 quadrants (170 × 170 boxes), with a Ø240 deck disc and lid disc printed whole. Base 118 tall with a 96 mm bay; window 440; cap 80; overall 638. A 120° back column, 2 wide × 2 tall prints with a centre rib over the seam, hides the rear hatch and ties the cap to the base. A pedestal Ø130 to Ø110 × 40 on the deck takes the neck's 4 × M4 (50 square) and the Ø25 cable and air bore; the fan's air goes out through the base's slots. The head clears the sheet by 31 at the face, 33 behind and 47 at the ears; the crown is 49 under the cap.
+- No lights in the enclosure (human): the room is lit. The LED ring under the cap's lip is dropped, and the camera is a plain module, not NoIR with IR LEDs.
+- Camera (the human asked for a hiding place): in the cap's front band at z 425, the lens flush behind a Ø8 hole among the cap's vent slots, tilted 10° down at a standing visitor; the board sits in a pocket in the front cap quadrant and its cable runs round the cap ring and down the hollow back column to the base. That height is about the visitor's eye level on a table; the base front would look up at 40°. Not inside the head: the eyes are now plain (D22) and move, and the skin covers everything else.
+
+- Camera named: a Logitech 1080p webcam (taken as a C920-class bar, 94 × 29 × 24, 78°, fixed 1.5 m USB lead). It sits in a cradle against the cap's front wall, lens behind a Ø12 hole (a Ø8 hole would clip its view: the lens is a few mm behind its glass). Its two mics hear through the vent slots, so no mic in the base.
+- Base contents settled (human; the Head Power Wiring doc on claude.ai, 2026-10-26): the power box (UGREEN 145 W power bank or the JUYOON 140 W charger, PD trigger at 20 V, 20 A buck at 5.30 V, fuses, WAGO buses, 1000 µF) and the two mouth boards, all on the floor tray. The laptop stays outside: Board 1's micro-USB and the webcam's USB lead leave through a hatch at the back of the base under the column's foot, where the bank is reached too. The sheet is 1 mm clear PETG (D24, our choice). Size fixed at Ø340 × 638.
+- Speaker in the base after all (human): nothing ordered yet. First pick was a Dayton ND65-4 driver with a PAM8403 amp; the human has no time to solder, so a ready-made speaker. The Anker S330 speakerphone was too dear, the Amazon Basics pair was the fallback, and in the end the human uses the Sony SRS-XB12 already at home: a Ø74 × 92 cylinder on its side in a cradle at the front of the tray, driver end at a snap-out grille panel (about 110 × 84) in the base's front wall, which also gives access to its buttons and aux socket (the human wants the sound out of the front, through a grille); 3.5 mm aux lead from the laptop, charged from the bank's USB-A port. Aux, not Bluetooth: its delay would put the voice behind the mouth. To test: plays while charging; auto standby after about 15 min of silence (keep a faint sound playing if so).
+
+- Neck (the human asked how a head with no neck and a swinging jaw sits on the pedestal): Cogley's frame is the head's only fixed structure; the jaw hangs from it and swings in front. Measured from his parts in our frame: frame's lowest bar z 134.6 (x ±34, y −84..−74), nape ribs down to z 135 at the sides; jaw at rest y −75..10, z 106..182; open 25° y −85, z 88; overtravel 35° y −92.5, z 82. Proposal (D25): a Ø100 column on the pedestal to z 70, then a 30 × 80 spine at y −125..−95 up to z 190 bolted into the nape ribs; the skin's neck stub covers it from z 40. The head is bolted, not balanced; the canister's weight and Ø340 footprint hold it.
+
+**Renders:** [process_images/2026-10-28_49_enclosure-concept-neck-spine](../process_images/2026-10-28_49_enclosure-concept-neck-spine/studies_enclosure_concept.png) (earlier versions: [48, front grille](../process_images/2026-10-28_48_enclosure-concept-front-grille/studies_enclosure_concept.png), [47, speaker by the hatch](../process_images/2026-10-28_47_enclosure-concept-sony-xb12/studies_enclosure_concept.png), [46, Amazon Basics pair](../process_images/2026-10-28_46_enclosure-concept-cheap-speakers/studies_enclosure_concept.png), [45, Anker speakerphone](../process_images/2026-10-28_45_enclosure-concept-usb-speaker/studies_enclosure_concept.png), [44, soldered driver](../process_images/2026-10-28_44_enclosure-concept-speaker/studies_enclosure_concept.png), [43, no speaker](../process_images/2026-10-28_43_enclosure-concept-power-box/studies_enclosure_concept.png), [39, no camera](../process_images/2026-10-28_39_enclosure-concept/studies_enclosure_concept.png), [40, with an LED ring](../process_images/2026-10-28_40_enclosure-concept-camera/studies_enclosure_concept.png), [41, no lights](../process_images/2026-10-28_41_enclosure-concept-no-lights/studies_enclosure_concept.png), [42, webcam](../process_images/2026-10-28_42_enclosure-concept-webcam/studies_enclosure_concept.png)).
+
+**Decisions:** D23 proposed and sized (the printed canister, Ø340 × 638); D24 (1 mm clear PETG sheet); D25 proposed (the neck spine, Q17). Q5 closed (no bought jar). Q19, Q20 and Q21 opened and answered the same day (base contents; sheet; a Logitech 1080p webcam on the laptop outside).
+
+**Problems:** the neck spine (D25) is a drawing, not a model yet; where exactly it bolts into the nape ribs comes from his frame's mesh when it is modelled. The bay's contents are listing sizes, not measured; the webcam model is assumed C920-class. PLAN D18 says three boards; the wiring doc (newer) has two.
+
+**Next:** model the base, cap, column, pedestal and webcam cradle in build123d (`cad/enclosure.py`) with a check against the head at every pose; measure the bank, buck and boards when they arrive and put them in params.py.
+
+## 2026-10-28 — M3 — Eyes shut when the animation stops
+
+**Done:**
+- `eye_anim.py`: `rest()` (what STOP EYES sends) now centres the eyes with the lids at the saved SHUT pose, the same eye pose as NEUTRAL FACE. It used to leave them open. Checked against `eye_poses.json`: LLL 84, LLR 67, CUR 160, CLR 130, CUL 30, CLL 105.
+
+**Problems:** Cogley's `neutral()` in `eyes_mouthboard.py` is his "Open Eye" command and still opens the lids, and his "Closed Eye" (`calibrate()`) sends 90 to every servo, which on the team's build is not shut. Both wait for the measured poses to go into that file.
+
+## 2026-10-27 — M3 — Eyes alive: random look-around and blinking
+
+**Done:**
+- `firmware/eye_anim.py`: a random idle animation for the EyeMech. The eyes make small shifts, glances and returns to centre with eased moves, and the lids blink about 18 times a minute (simulated over 10 min), with some double and slow blinks and a blink on some big glances. The top lids follow the gaze up and down (UD_UP = +1 assumes a higher UD angle looks up, as in Cogley's `eyes.py`). The lids move only between their saved SHUT and OPEN angles. It uses only `random`, so it can also run in MicroPython.
+- `servo_controls.py`: an EYES ALIVE / STOP EYES button runs it at 50 Hz through the slider link. New buttons save the eye sliders as the lids' SHUT pose, the lids' OPEN pose or the eyes' CENTRE, in `firmware/eye_poses.json`. NEUTRAL FACE now uses the saved shut and centre angles for the eyes, in place of 90.
+- Tested with a stand-in serial port: the animation drives only GP8–GP13, the lid angles stay between shut and open, and stop, NEUTRAL FACE and close all work.
+
+**Physical:** the human set the eye poses on the sliders (now the defaults and in `eye_poses.json`): shut CUR 160, CUL 30, CLR 130, CLL 105; open CUR 128, CUL 118, CLR 160, CLL 31; centre LLL 84, LLR 67. Each lid opens the way Cogley's `eyes.py` does (top right and bottom left down, the other two up). The right eye's shut angles sit at the ends of their sliders, far from Cogley's 90, so those horns sit well off his angle. A second "Lids SHUT" save by mistake stored a near-open pose; it was put back by hand from the screenshot.
+
+**Next:** run EYES ALIVE and check that the top lids rise when the eyes look up (otherwise set UD_UP = -1).
+
+## 2026-10-27 — M4 — Neutral face for fitting the skin
+
+**Done:**
+- `servo_controls.py` has a NEUTRAL FACE button: eyes straight ahead, lids shut, brows level, one servo every 150 ms. It first sent 90 to every servo (Cogley's `neutral()` and `Brows.py`). The eyes now use the measured shut and centre angles (entry above); the brows stay at 90.
+- The mouth neutral was set by eye in `lip_tester.py` (mouth board, COM8) and saved to `LARS 9001/HeadTest/cogley_neutral.json`: LUL 90, LUR 90, LLL 55, LLR 78, CUL 90, CUR 80, CLL 120, CLR 70. The tongue is at 130 (down) and the jaw is at 0.00 (closed), with the jaw width at 40. TalkingHead.py now rests the lips and corners on these angles, in place of 90 for the lips and his narrow pose for the corners (CLL 90 → 120, CLR 90 → 70).
+
+**Physical:** the human called this the perfect neutral (eyes closed, mouth closed) for working out the skin attachment. The eyes' shut and centre angles are in the entry above.
+
+**Problems:**
+- The mouth board's own start-up and `rest` pose (`cogley_mouth_main.py` REST: jaw closed, tongue down, his narrow corners, lips unpowered) is not this neutral. After a power-up, "All to neutral" in `lip_tester.py` sets it.
+- The slider window raised a SerialException on close after the eye board's USB was pulled: `close()` sends "off" to every servo and the port was gone. The window had to be killed. It does no harm, but `close()` should ignore a missing port.
+
+**Next:** check that the brows sit level at 90.
+
+## 2026-10-26 — M3 — Slider bench test: JR brow good, the JL brow servo is faulty
+
+**Done:**
+- Slider window (`servo_controls.py`) run on the bench board's Pico 2 at COM9, with `pico_servo_ctl.py` as `main.py`.
+- Eye socket labels checked against the silkscreen in Cogley's mouth board PCB file (`ProDoc_Mouth Board_2025-04-16.epro`): JL, JR, LUL, LUR, LLL, LLR, CUL, CUR, CLL, CLR, TON, EXA in one row, each socket marked S / + / −. The eyes use LLL (left/right), LLR (up/down), CUL (bottom lid, head's right), CUR (top lid, head's right), CLL (bottom lid, head's left), CLR (top lid, head's left).
+
+**Physical:**
+- The brow on JR (right outer, GP5) runs well.
+- The brow servo on JL (left outer, GP4) turns far less than JR for the same command, and not at all from 90 toward 0. With the horn off, the bare shaft still turned only a little. With the JL and JR plugs swapped, the weak servo stayed weak on the JR socket and the good one ran fully on the JL socket. The fault is in that servo, not the board, the socket or the code.
+
+**Problems:** the eye limits in `eyes_mouthboard.py` are still Cogley's (LR 40–140, UD 60–140, TL 90–160, BL 90–30, TR 90–30, BR 90–140; lids shut at 90). They have not been measured on the team's build.
+
+**Next:** mark the faulty servo and replace it. Press 90 before fitting the new servo's horn, so the brow sits mid-travel. Then measure each eye servo's free range with the sliders and put the numbers in `eyes_mouthboard.py`.
+
 ## 2026-10-25 — M3 — EyeMech and brow servos on the bench: electronics work, horns slip on the shafts
 
 **Done:**
@@ -43,7 +111,8 @@ Rules:
 - **The horns hold the shaft by a press fit only.** Each printed horn has a plain round shaft hole with no teeth, 2.9 mm deep, and a Ø2.6 hole behind it for the screw. The servo's splines have to cut into the plastic. The screw only keeps the horn on and cannot stop it turning. The horns come joined to their parts (print-in-place): the 4 lid horns to the lid sets, the up/down horn to the Y-axis set, the left/right horn to X-axis part B.
 - **Size A was printed without his fit test.** A and B differ only in those 6 horns: shaft hole Ø4.92 (A) or Ø4.72 (B). Every other part is identical. His `Testing Plate.3mf` (the servo sizing plate, 3.6 mm thick like a horn) has one hole of each size, to try on a real servo before choosing.
 - Manual step 2.13's sides: its pictures call x < 0 the head's left, but PLAN §4 has +x as the head's left. The socket for each servo position is unaffected. Which side Cogley's code means by L/R in TL/TR/BL/BR is still unconfirmed; the lid directions will show it once the horns grip.
-- **Mouth (same evening, mouth board on COM8, `HeadTest/cogley_mouth_main.py`):** the jaw ran backwards (slider toward open closed it, smoothly). That is the symptom of JL and JR on each other's sockets. The manual puts every "L" mouth servo (JL, LUL, LLL, CUL, CLL) at x < 0, which is the head's right in our frame. If the mouth was plugged by the manual, its sides are mirrored, and the lip and corner pairs are swapped too. The jaw was still reported backwards after the plug swap was suggested (whether the plugs were swapped is not recorded), so the board now turns the jaw the other way in software (`JAW_DIR = -1`, command `jawdir`), matching the plugs as they are now. Whether the lip and corner pairs are swapped is checked against his poses (lips_up should raise every lip). Until that is known, the manual's side labels stay as they are.
+- **Mouth (same evening, mouth board on COM8, `HeadTest/cogley_mouth_main.py`):** the jaw ran backwards (slider toward open closed it, smoothly). That is the symptom of JL and JR on each other's sockets. The manual puts every "L" mouth servo (JL, LUL, LLL, CUL, CLL) at x < 0, which is the head's right in our frame. If the mouth was plugged by the manual, its sides are mirrored, and the lip and corner pairs are swapped too. The jaw was still reported backwards after the plug swap was suggested (whether the plugs were swapped is not recorded), so the board now turns the jaw the other way in software (`JAW_DIR = -1`, command `jawdir`), matching the plugs as they are now. Whether the lip and corner pairs are swapped is checked against his poses (lips_up should raise every lip). Until that is known, the manual's side labels stay as they are. **Lower lips:** LLL was dead and LLR barely moved; their plugs were on each other's sockets. The team swapped them back (2026-10-26). That is the second mouth pair found mirrored. After that, both plugs had been put on the wrong way round (no power, silent); once turned round, LLL still barely moved. One of its M2 tab screws in the jaw base had stripped, so the servo rocked. The team refitted its horn and hot-glued the servo body. It moves fully now. **To do:** re-set or replace that M2 insert and screw it down properly.
+- TalkingHead's lips barely showed next to the jaw; they now move ×2 of the planned shapes (`--lip-gain`, default 2).
 - The mouth board's jaw width is now a setting (`jawdeg`, default his 40°, capped at 70°), with a "Jaw width" slider and pose buttons in `HeadTest/lip_tester.py`. The CAD sweep only covers the jaw up to 35°.
 - `output/plates/` now also has his `eyemech_e3.2_MG90s_B_cogley.3mf`, `eyemech_e3.2_servo_sizing_plate_cogley.3mf` and the assembly guide PDF (all public on his EyeMech_Epsilon GitHub, CC BY-NC-SA 4.0).
 

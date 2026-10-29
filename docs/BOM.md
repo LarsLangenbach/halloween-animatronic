@@ -125,3 +125,18 @@ The skin silicone is **Smooth-On Dragon Skin FX-Pro** (PLAN D21, chosen 2026-10-
 | Item | Qty | Notes |
 |---|---|---|
 | 7 mm sew-on snap, both halves | 4 for the brows (+ the lips, M4) | Which product (Q8)? Caliper both halves before M4 starts. |
+
+## Enclosure (M8, concept of 2026-10-28; PLAN D23, D24)
+
+The power box and the boards in the base are in the Head Power Wiring doc (claude.ai, 2026-10-26); this lists what the enclosure adds.
+
+| Item | Qty | Status | Notes |
+|---|---|---|---|
+| Clear PETG sheet, 1 mm (0.040 in), 24 × 36 in | 1 | [buy] | The window: a 630 × 458 blank rolled into the slits (D24). Not acrylic: it cracks at this bend. |
+| Sony SRS-XB12 Bluetooth speaker with 3.5 mm aux | 1 | [have] | Ø74 × 92, 243 g. On its side in a printed cradle at the front of the tray, driver end at the snap-out grille panel in the base's front; buttons and aux reached by pulling the panel. Aux from the laptop, not Bluetooth (delay). Charge from the bank's USB-A port by its micro-USB lead. Test at home: plays on aux while charging; auto standby after about 15 min of silence. |
+| 3.5 mm male-to-male audio lead, 1.5 m | 1 | [confirm] | Laptop headphone jack to the speaker, through the back hatch. |
+| USB-A to micro-USB lead, 0.3 m | 1 | [confirm] | Bank to the speaker's charge socket. |
+| Logitech 1080p webcam | 1 | [have] | In the cap's front band, lens behind a Ø12 hole; its own 1.5 m USB lead goes down the column to the laptop. |
+| M3 heat-set inserts and M3 × 8 screws for the ring quadrants, discs, column and hatch | about 40 + 40 | [confirm] | Counted when the parts are modelled. |
+| Rubber feet, 20 mm | 4 | [buy] | Under the base. |
+| PLA | about 3 kg | [confirm] | Two rings of 4 quadrants, two discs, a tray, the column in 4, the pedestal; estimate, trust the slicer. |
