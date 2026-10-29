@@ -1,8 +1,9 @@
 """
 Live servo control from the PC (servo_controls.py, mouth_controls.py). Runs on the Pico as main.py.
 Reads lines "<GP pin> <angle>" or "<GP pin> off" from the USB serial port and drives that
-servo; 0..180 deg -> 500..2500 us, and -9..189 is allowed (400..2600 us) for a lid that needs the
-last few degrees (2026-10-29). Every servo is loose (no pulses) until it gets a command.
+servo; 0..180 deg -> 500..2500 us, and -27..207 is allowed (200..2800 us) for a lid that needs the
+last few degrees (2026-10-29: -9..189 was not far enough for the left eye's top lid). Past the
+servo's own stop it only buzzes. Every servo is loose (no pulses) until it gets a command.
 "off" sets the pulse to 0 instead of deinit(): pins share PWM slices in pairs (GP10/GP11 and
 so on), and deinit() would stop the other servo of the pair too.
 """
@@ -30,7 +31,7 @@ while True:
             pwm[p].duty_ns(0)
         continue
     try:
-        a = max(-9.0, min(189.0, float(parts[1])))   # -9..189: 400..2600 us, a little past the usual ends
+        a = max(-27.0, min(207.0, float(parts[1])))   # -27..207: 200..2800 us, past the usual ends
     except ValueError:
         continue
     if p not in pwm:

@@ -29,6 +29,18 @@ Rules:
 
 ---
 
+## 2026-10-29 — M3 — Lid sliders widened to −27..207; new eye poses, only the top lids blink
+
+**Done:** the human found the left eye's top lid (as seen from the front: CLR, GP13) could open further with its slider at 189, the end. The four lid sliders in `servo_controls.py` now run −27..207, and `pico_servo_ctl.py` allows −27..207 (200..2800 µs); it was copied to the Pico 2 as `main.py` with mpremote and checked on the board.
+
+Then the human set new open and closed eyes on the sliders and asked for only the top lids to blink, the bottom lids still. `eye_anim.py` has `MOVE_BOTTOM_LIDS = False`: the bottom lids hold their OPEN angle through blinks, the wake-up and the gaze follow. `servo_controls.py`'s default poses are the new ones, and LIDS WIDER leaves a lid alone when its SHUT and OPEN match. Five simulated minutes of EYES ALIVE: CUL 170 and CLL 101 throughout, CUR 35..185, CLR 68..196.
+
+**Numbers:** `eye_poses.json` (MEASURED 2026-10-29, the human's screenshots): OPEN CUR 35, CLR 196 (was 128, 160); SHUT CUR 185, CLR 68 (was 160, 130); the bottom lids CUL 170, CLL 101 in both (CLL chosen by the human from the closed screenshot). The human then saw the right eye's top lid (as seen from the front) open much further than the left: it travelled 150° against 128°. Its OPEN went 35 → 57, so both top lids travel 128° on their mirrored linkages. At that pose a servo stalled, buzzing (most likely CLR at 196, which is 2678 µs, past where it had run quietly at 189). Both top lids' OPEN was backed off 10° towards shut: CUR 67, CLR 186 (2567 µs), 118° of travel each. The stall was stopped by reopening the slider window, whose soft reset leaves every servo loose. Equal travel still left the two eyes open by different amounts (the horns sit differently on their splines), so the human matched them by eye and saved: SHUT CUR 186, CLR 112; OPEN CUR 101, CLR 186 (85° and 74° of travel); the bottom lids CUL 182, CLL 86 in both, so they still hold still.
+
+**Physical:** past the servo's own stop a lid only buzzes; then Loose it, and if it still needs to go further, move the horn by a few teeth instead.
+
+**Next:** run EYES ALIVE on the head and watch the blinks; LID_REST (0.85) keeps the resting top lids a little short of OPEN so they can rise when the eyes look up.
+
 ## 2026-10-29 — M3 — Lid sliders to the servos' ends; EYES OPEN and LIDS WIDER buttons
 
 **Done:**

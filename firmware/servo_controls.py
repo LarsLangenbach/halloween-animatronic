@@ -26,17 +26,17 @@ from eye_anim import BOTTOM_LIDS, LR, TOP_LIDS, UD, EyeAnim
 PORT = sys.argv[1] if len(sys.argv) > 1 else "COM9"
 
 # (label, socket, GP pin, slider low, slider high). Eyes: Cogley's limits from eyes.py for the
-# gaze; the lids get -9..189 (2026-10-29: the lids needed to go further than 30..160; the Pico
-# program stretches the pulses to 400..2600 us for that);
-# go slowly near the ends and Loose a lid that buzzes against its stop). Brows: the full range;
-# his Brows.py uses only 80..100, which barely shows on the team's brows (bench 2026-10-26).
+# gaze; the lids get -27..207 (2026-10-29: the lids needed to go further than 30..160, then the
+# left eye's top lid further than 189; the Pico program stretches the pulses to 200..2800 us for
+# that; go slowly near the ends and Loose a lid that buzzes against its stop). Brows: the full
+# range; his Brows.py uses only 80..100, which barely shows on the team's brows (bench 2026-10-26).
 SERVOS = [
     ("Both eyes: left / right", "LLL", 8, 40, 140),
     ("Both eyes: up / down", "LLR", 9, 60, 140),
-    ("Eye on your RIGHT: top lid", "CUR", 11, -9, 189),
-    ("Eye on your RIGHT: bottom lid", "CUL", 10, -9, 189),
-    ("Eye on your LEFT: top lid", "CLR", 13, -9, 189),
-    ("Eye on your LEFT: bottom lid", "CLL", 12, -9, 189),
+    ("Eye on your RIGHT: top lid", "CUR", 11, -27, 207),
+    ("Eye on your RIGHT: bottom lid", "CUL", 10, -27, 207),
+    ("Eye on your LEFT: top lid", "CLR", 13, -27, 207),
+    ("Eye on your LEFT: bottom lid", "CLL", 12, -27, 207),
     ("Brow on your LEFT: outer", "JL", 4, 0, 180),
     ("Brow on your RIGHT: outer", "JR", 5, 0, 180),
     ("Brow on your LEFT: inner", "LUL", 6, 0, 180),
@@ -46,13 +46,13 @@ WIGGLE = 20   # deg each way for the Wiggle button
 LIDS = TOP_LIDS + BOTTOM_LIDS
 GAZE = (LR, UD)
 
-# Eye poses on the team's build, set on the sliders (MEASURED 2026-10-27). The pose buttons
-# save all three to eye_poses.json, which overrides these. Never guess an OPEN pose: a wrong
-# one could drive a lid into its stop.
+# Eye poses on the team's build, set on the sliders (MEASURED 2026-10-29; the bottom lids have
+# one angle, as only the top lids blink). The pose buttons save all three to eye_poses.json,
+# which overrides these. Never guess an OPEN pose: a wrong one could drive a lid into its stop.
 POSES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "eye_poses.json")
 POSES = {
-    "shut": {"CUR": 160, "CUL": 30, "CLR": 130, "CLL": 105},
-    "open": {"CUR": 128, "CUL": 118, "CLR": 160, "CLL": 31},
+    "shut": {"CUR": 186, "CUL": 182, "CLR": 112, "CLL": 86},
+    "open": {"CUR": 101, "CUL": 182, "CLR": 186, "CLL": 86},
     "centre": {"LLL": 84, "LLR": 67},
 }
 if os.path.exists(POSES_FILE):
@@ -189,8 +189,9 @@ def neutral_face():
 
 
 def lid_dir(socket):
-    """+1 or -1: which way a lid's slider goes to open it, from the saved poses."""
-    return 1 if POSES["open"].get(socket, 90) >= POSES["shut"].get(socket, 90) else -1
+    """+1 or -1: which way a lid's slider goes to open it, from the saved poses (0 if they match)."""
+    o, s = POSES["open"].get(socket, 90), POSES["shut"].get(socket, 90)
+    return (o > s) - (o < s)
 
 
 def eyes_open():
