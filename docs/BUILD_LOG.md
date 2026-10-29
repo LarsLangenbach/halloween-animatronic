@@ -29,6 +29,16 @@ Rules:
 
 ---
 
+## 2026-10-29 — M3 — Lid sliders to the servos' ends; EYES OPEN and LIDS WIDER buttons
+
+**Done:**
+- `servo_controls.py`: the four lid sliders ran 30..160 and the lids needed to go further. They now run −9..189, and `pico_servo_ctl.py` (copied to the Pico as `main.py`) allows −9..189, stretching the pulses to 400..2600 µs. Two new buttons: EYES OPEN (the saved OPEN pose, eyes centred, no blinking) and LIDS WIDER +10 (every lid 10° further open from where its slider is, each in its own opening direction from the saved poses).
+- `eye_poses.json`'s SHUT pose had been saved with the lids open (CUR 131, CLR 158 against open 128, 160), so EYES ALIVE had no blink travel. The pose measured on 2026-10-27 was put back (CUR 160, CUL 30, CLR 130, CLL 105); the wrong file is kept in the session's scratchpad.
+
+**Physical:** a lower lid stopped moving at the end of its range: the servo's own stop. Past that only re-seating the horn helps (lift the lever off the spline, move it two or three teeth, refit; then save SHUT and OPEN again). On the human's right-hand eye LIDS WIDER moved nothing; the checks to do are whether those two sliders move (if not, the servo is at its end), whether the servo buzzes (at its stop) or is silent (lever off its peg, or plugged into another socket).
+
+**Next:** the human's answer on that eye; re-save SHUT and OPEN after any horn move.
+
 ## 2026-10-29 — M8 — Enclosure redesigned to print in a day (v1)
 
 **Done:**
@@ -38,9 +48,9 @@ Rules:
 
 **Numbers:** ENC_* rewritten (`ENC_R_OUT` 170 → 146, `ENC_SHEET_R` 150 → 138.2, lips 1.8 × 8, rims 2 × 10, plates 1.6, cap top 1.2); the head's clearance 31 → 19 at the face, 21 at the nape; the sheet blank 891 × 477 (a full tube) and the band 928 × 109 derived in params.
 
-**Check:** fast checks on the enclosure: builder clean (11 watertight bodies), `NO OVERLAPS`, `PRINT CHECK OK`, `ENCLOSURE OK`. Full `check.py`: see below.
+**Check:** `check: PASS  (0 hard failure(s), 18 warning(s), 2837 s)`. Twelve warnings are the sculpt base's old thin spots; six are `fits_bed` on the halves (288 × 144 and 292 × 146 as modelled), which check.py measures before the 45° print turn: in the print pose they span 246 and 249, and print_check and enclosure_check pass them.
 
-**Renders:** `output/check/enclosure/enclosure.png` (snapshot after the full run).
+**Renders:** [process_images/2026-10-29_51_enclosure-v1](../process_images/2026-10-29_51_enclosure-v1/enclosure.png) (the enclosure sheet, the design views, the print check, and `studies_neck_mount.png`: how the head attaches, cut at the midline, with every screw).
 
 **Decisions:** D26 (the one-day version); D23 and D25 stand, D24 extended (lips instead of slits, a second sheet).
 
