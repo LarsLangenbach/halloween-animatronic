@@ -107,39 +107,20 @@ parts:
   mold_wall_top_L: {colour: [0.66, 0.64, 0.58], supports: false, assembly: false}
   mold_wall_top_R: {colour: [0.60, 0.58, 0.52], supports: false, assembly: false}
   mold_pry_wedge: {colour: [0.95, 0.55, 0.15], supports: false, assembly: false}   # print 8: loose, against the walls
-  # M8 enclosure (D23-D25). Walls and flat rings print as modelled (the lips and flanges on the bed,
-  # 45 deg chamfers under the inward flanges); the pedestal prints upside down, solid with sparse
-  # infill; the panels stand on a short edge so their slots print vertical; the column pieces stand.
-  enc_base_F: {colour: [0.55, 0.60, 0.66], supports: true}    # the speaker opening's 110 mm top edge
-  enc_base_L: {colour: [0.55, 0.60, 0.66], supports: false}
-  enc_base_B: {colour: [0.55, 0.60, 0.66], supports: true}    # the hatch opening's top edge
-  enc_base_R: {colour: [0.55, 0.60, 0.66], supports: false}
-  enc_ring_1: {colour: [0.62, 0.66, 0.72], supports: false}
-  enc_ring_2: {colour: [0.62, 0.66, 0.72], supports: false}
-  enc_ring_3: {colour: [0.62, 0.66, 0.72], supports: false}
-  enc_ring_4: {colour: [0.62, 0.66, 0.72], supports: false}
+  # M8 enclosure v1 (D23-D26): eleven thin prints plus two PETG sheets. The halves turn 45 deg on the
+  # bed (a half of D 292 spans 249). The cap halves and the pedestal print upside down (their lips,
+  # skirt, stops and flange then stand up); the rings and the tray print as modelled (lips and rims
+  # up); the panels stand on a short edge so their slots print vertical. Nothing needs support.
+  enc_cap_F: {colour: [0.55, 0.60, 0.66], supports: false, print_rotate: [180, 0, 45]}
+  enc_cap_B: {colour: [0.55, 0.60, 0.66], supports: false, print_rotate: [180, 0, 45]}
+  enc_top_F: {colour: [0.62, 0.66, 0.72], supports: false, print_rotate: [0, 0, 45]}
+  enc_top_B: {colour: [0.62, 0.66, 0.72], supports: false, print_rotate: [0, 0, 45]}
+  enc_bottom_F: {colour: [0.45, 0.50, 0.56], supports: false, print_rotate: [0, 0, 45]}
+  enc_bottom_B: {colour: [0.45, 0.50, 0.56], supports: false, print_rotate: [0, 0, 45]}
   enc_tray: {colour: [0.45, 0.50, 0.56], supports: false}
-  enc_deck: {colour: [0.45, 0.50, 0.56], supports: false}
   enc_pedestal: {colour: [0.60, 0.66, 0.72], supports: false, print_rotate: [180, 0, 0]}
   enc_grille: {colour: [0.25, 0.28, 0.32], supports: false, print_rotate: [0, 90, 0]}
   enc_hatch: {colour: [0.25, 0.28, 0.32], supports: false, print_rotate: [0, 90, 0]}
-  enc_column_R_lower: {colour: [0.35, 0.40, 0.45], supports: false}
-  enc_column_R_upper: {colour: [0.35, 0.40, 0.45], supports: false}
-  enc_column_L_lower: {colour: [0.35, 0.40, 0.45], supports: false}
-  enc_column_L_upper: {colour: [0.35, 0.40, 0.45], supports: false}
-  enc_capring_1: {colour: [0.62, 0.66, 0.72], supports: false}
-  enc_capring_2: {colour: [0.62, 0.66, 0.72], supports: false}
-  enc_capring_3: {colour: [0.62, 0.66, 0.72], supports: false}
-  enc_capring_4: {colour: [0.62, 0.66, 0.72], supports: false}
-  enc_cap_F: {colour: [0.55, 0.60, 0.66], supports: false}
-  enc_cap_L: {colour: [0.55, 0.60, 0.66], supports: false}
-  enc_cap_B: {colour: [0.55, 0.60, 0.66], supports: false}
-  enc_cap_R: {colour: [0.55, 0.60, 0.66], supports: false}
-  enc_captop_1: {colour: [0.62, 0.66, 0.72], supports: false}
-  enc_captop_2: {colour: [0.62, 0.66, 0.72], supports: false}
-  enc_captop_3: {colour: [0.62, 0.66, 0.72], supports: false}
-  enc_captop_4: {colour: [0.62, 0.66, 0.72], supports: false}
-  enc_lid: {colour: [0.45, 0.50, 0.56], supports: false}
   neck: {colour: [0.80, 0.64, 0.30], supports: false}
 
 every_part: {watertight: hard, single_body: hard, fits_bed: soft}

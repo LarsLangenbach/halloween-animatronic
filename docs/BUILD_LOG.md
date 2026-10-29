@@ -29,6 +29,38 @@ Rules:
 
 ---
 
+## 2026-10-29 — M8 — Enclosure redesigned to print in a day (v1)
+
+**Done:**
+- The human has two P2S printers and under 24 hours; v0's 31 prints were about 130 printer-hours. v1 (`cad/enclosure.py`, D26) is eleven thin prints plus two 1 mm PETG sheets, about 27 printer-hours: cap halves (1.2 mm top, ribs, vents, a 40 mm skirt, two hanging lips for the window's top edge, three stops for the webcam, seam walls), deck halves (1.6 mm plate round the pedestal, the window's lower lip, a rim the base's band wraps, ribs, the lead slot), bottom ring halves (a narrow plate with the band's lower rim and four ears to the tray), the tray (ribs, bosses, speaker saddles, bank rails), a D 90 pedestal tube with an inward flange, the two panels (built from bars), and the neck (walls 2 to 2.5 mm). The halves turn 45° on the bed (a D 292 half spans 249). The window is one clear tube, the back see-through (the human dropped the column); the base's wall is a painted PETG band between the rims.
+- `enclosure_check.py` follows: the band is checked like the sheet, the bed test uses the print pose, the renders are redrawn. `cad.yaml` lists the eleven parts; the 24 superseded v0 print files are removed.
+- Found and fixed on the way: the bank and buck collided with a conical pedestal (now a D 90 tube; the bay laid out round it, the boards on the bank, the bank and buck riding on the tray's ribs); the cap's flat facet cut through the window (the webcam now hangs inside the window and looks out through it); the speaker's belly sat on a rib (the saddles lift it 6.5); a D 2.6 self-tapping hole in a 3 mm rib left 0.2 mm walls (bosses, set 0.5 inside the tray's edge: tangent to it they broke the mesh); a slotted curved panel tessellated with dents again (built from bars instead); the tray's radial ribs now sit 0.5 under the ring ribs (coplanar tops broke the mesh).
+
+**Numbers:** ENC_* rewritten (`ENC_R_OUT` 170 → 146, `ENC_SHEET_R` 150 → 138.2, lips 1.8 × 8, rims 2 × 10, plates 1.6, cap top 1.2); the head's clearance 31 → 19 at the face, 21 at the nape; the sheet blank 891 × 477 (a full tube) and the band 928 × 109 derived in params.
+
+**Check:** fast checks on the enclosure: builder clean (11 watertight bodies), `NO OVERLAPS`, `PRINT CHECK OK`, `ENCLOSURE OK`. Full `check.py`: see below.
+
+**Renders:** `output/check/enclosure/enclosure.png` (snapshot after the full run).
+
+**Decisions:** D26 (the one-day version); D23 and D25 stand, D24 extended (lips instead of slits, a second sheet).
+
+**Problems:** the bank's rails, the boards' standoffs and the power box's fixing are tape and assumption; the webcam looks through 1 mm of PETG; the spine's bolting into his frame is still an assumption.
+
+**Next:** print the neck and the pedestal first and offer them up to the head; the tray and bottom rings next; then the rest. Buy the two PETG sheets, paint, M3 screws and nuts.
+
+## 2026-10-29 — M3 — Mouth sliders: set the mouth's open and closed angles by hand
+
+**Done:**
+- `firmware/mouth_controls.py`: a slider window for the mouth board's eleven servos (jaw, lips, corners, tongue), the mouth's counterpart of `servo_controls.py`. Under the sliders a table of Cogley's poses from `MouthMaster.py` (mouth closed and open, lips rest, down and up, tongue down and up, corners narrow and wide, smile, frown), each with GO (eases the servos to the pose over 0.4 s) and SAVE (stores the sliders as that pose). Saved poses go to `firmware/mouth_poses.json`, keyed as his `poses` dict, so they can be pasted into a team copy of his program. REST FACE sends his start-up pose plus the lips at rest, one group every 300 ms; OPEN / CLOSE x3 chews between the saved OPEN and CLOSED. The port `demo` runs it without a Pico, and `demo --selftest` presses every button and checks the saved file.
+- `firmware/pico_servo_ctl.py`: drives GP4–GP15 (was GP4–GP13), for the tongue on GP14. It has to be copied to the Pico again as `main.py`.
+- `firmware/README.md`: the mouth window.
+
+**Check:** no CAD change. SELFTEST_RESULT
+
+**Problems:** Cogley's L and R for the mouth servos are not matched to the face's sides yet. Which of his angles fit our horns is unknown until the mouth is on the bench; the sliders run 20..160, 20° past his angles each way, so go slowly near the ends and Loose a servo that buzzes. The eye window (`servo_controls.py`, EYES ALIVE) is still uncommitted from 2026-10-28.
+
+**Next:** plug the mouth servos into the mouth board, find CLOSED (teeth just together, no servo buzzing) and OPEN (the jaw's stop) on the two jaw sliders and SAVE them; then the lips and corners; then put the saved angles into a team copy of `MouthMaster.py`.
+
 ## 2026-10-28 — M8 — Enclosure and neck modelled (v0)
 
 **Done:**

@@ -1,32 +1,23 @@
 """
-Enclosure (M8, D23-D25): a printed canister round the head, and the neck that stands the
-head in it. Everything is modelled in the assembled pose in the head frame.
+Enclosure (M8, D23-D26), v1: a canister round the head that prints in a day, and the neck that
+stands the head in it. Everything is modelled in the assembled pose in the head frame.
 
-The canister, bottom to top (axis x 0, y ENC_AXIS_Y):
-  enc_base_{F,L,B,R}   base wall quadrants (seams at 45/135/225/315): the 3 mm skin, the bottom lip
-                       the tray sits on, an inward flange at the top (45 deg chamfer under it) the deck
-                       ring screws to, seam tabs (M3 insert one side, clearance the other), vent slots
-                       in the side walls, the speaker opening in the front, the hatch opening in the back
-  enc_ring_{1..4}      deck ring quadrants (seams at 0/90/180/270): a flat annulus with the lower slit
-                       for the sheet, the lip the deck disc drops into, the column's foot inserts
-  enc_tray             floor tray: the power bank's rails, the speaker's saddle; 4 ears to the lip
-  enc_deck             deck disc, drops into the ring; the bore and the pedestal's screw holes
-  enc_pedestal         the collar under the neck: 4 x M4 up into the neck's foot; printed upside down, solid
-  enc_grille, enc_hatch  the two panels over the openings, 4 x M3 each from outside
-  enc_column_{R,L}_{lower,upper}   the opaque back column, 120 deg, in 2 x 2 prints: forks at its edges
-                       the sheet's ends tuck into, lap tabs under the seams (radial screws from
-                       outside), a foot flange screwed down into the deck ring, a top flange screwed
-                       up into the cap's slit ring, the centre rib on the left pieces
-  enc_capring_{1..4}   the cap's slit ring (z 400..416), 4 quadrants: the upper slit, the column's
-                       screws, the webcam lead's slot
-  enc_cap_{F,L,B,R}    cap wall quadrants: skin, flanges top and bottom, seam tabs, vents, the flat
-                       front band with the webcam's lens hole and its cradle
-  enc_captop_{1..4}    cap top ring with the lid's recess
-  enc_lid              lid disc with vent slots and a finger hole
-  neck                 the neck: a foot with 4 x M4 inserts, a tube to z 70 under the jaw's swing, and a
-                       hollow spine behind the jaw up into Cogley's frame's nape
-Not printed, written to output/ref/enclosure/: the clear sheet (a 240 deg shell) and the boxes of
-what lives in the base, for the checks and renders.
+Eleven prints (thin plates with ribs; the big areas are two PETG sheets):
+  enc_cap_{F,B}      the cap in two halves (split on the y = 0 line): a 1.2 mm top with ribs and vent
+                     slots, a 40 mm skirt, two lips under it that make the window's upper channel, the
+                     flat front facet with the webcam's lens hole and its stops, seam walls (2 x M3 + nut)
+  enc_top_{F,B}      the deck in two halves: a 1.6 mm plate from the pedestal out to a rim the base's
+                     PETG band wraps (M3 + nut through both), the window's lower lip on top, ribs, seam
+                     walls, the webcam lead's slot (B)
+  enc_bottom_{F,B}   the bottom ring halves: a plate on the tray's outer rib (4 x M3 self-tapping) with
+                     the band's lower rim
+  enc_tray           the floor: the pedestal, the speaker's saddles, the bank's rails and the rings stand on it
+  enc_pedestal       a hollow cone from the tray up to z 0, 4 x M4 up into the neck's foot; printed upside down
+  enc_grille, enc_hatch  the panels over the two openings cut in the band, 4 x M3 + nut each
+  neck               the neck: a foot with 4 x M4 inserts, a tube to z 70 under the jaw's swing, a hollow
+                     spine behind the jaw up under Cogley's frame's nape (D25)
+Not printed, written to output/ref/enclosure/: the window sheet (a full tube), the base's band, the
+boxes of what lives in the base, the webcam.
 
 Run:  python cad/enclosure.py   -> output/stl/enc_*.stl, neck.stl, output/ref/enclosure/*.stl
 """
@@ -51,27 +42,23 @@ BIG = 1000.0
 
 AY = P.ENC_AXIS_Y
 R_OUT = P.ENC_R_OUT
-WALL = P.ENC_WALL
-R_IN = R_OUT - WALL                       # 167: the skins' inside
-R_FL = R_IN - P.ENC_FLANGE + WALL         # 155: the flanges' inner radius
-SLIT = (P.ENC_SHEET_R - (P.ENC_SLIT_W - P.ENC_SHEET_T) / 2,
-        P.ENC_SHEET_R + P.ENC_SHEET_T + (P.ENC_SLIT_W - P.ENC_SHEET_T) / 2)   # 149.8 .. 151.2
-BASE_Z0, BASE_Z1 = P.ENC_BASE_Z           # -150, -52
-RING_Z1 = BASE_Z1 + P.ENC_DECK_RING[1]    # -40: the deck ring's top = the window's floor
-LIP_T = P.ENC_BOTTOM_LIP[1]
-TRAY_TOP = BASE_Z0 + LIP_T + P.ENC_TRAY[1]   # -134
-CAP_Z0 = P.ENC_WINDOW_TOP                 # 400
-CAPRING_Z1 = CAP_Z0 + P.ENC_CAP_SLIT_RING[1]   # 416
-CAPWALL_Z0, CAPWALL_Z1 = P.ENC_CAP_WALL_Z      # 416, 468
-CAPTOP_Z1 = CAPWALL_Z1 + P.ENC_CAP_TOP_RING[1]  # 480
-COL_Z0, COL_Z1 = RING_Z1, CAP_Z0          # -40 .. 400
-COL_A0 = 270.0 - P.ENC_COLUMN_DEG / 2     # 210
-COL_A1 = 270.0 + P.ENC_COLUMN_DEG / 2     # 330
-WALL_QUADS = {"R": (-45.0, 45.0), "F": (45.0, 135.0), "L": (135.0, 225.0), "B": (225.0, 315.0)}
-RING_QUADS = {"1": (0.0, 90.0), "2": (90.0, 180.0), "3": (180.0, 270.0), "4": (270.0, 360.0)}
-INS_R, INS_D = P.M3_INSERT_HOLE / 2, P.M3_INSERT_DEPTH
-LEAD_SLOT_DEG = (286.0, 294.0)             # the webcam lead's slot: through the cap's slit ring and the column's top flange
+LIP_T, LIP_H = P.ENC_LIP
+LIP_RI, LIP_RO = P.ENC_LIP_R                 # inner lip's inner radius, outer lip's inner radius
+RIM_T, RIM_H = P.ENC_RIM
+RIM_R = P.ENC_BAND_R - RIM_T                 # 142: the rims' inner radius
+PLATE_T = P.ENC_PLATE_T
+RIB_T, RIB_H = P.ENC_RIB
+SEAM_T, SEAM_H = P.ENC_SEAM_WALL
+FIT = P.ENC_FIT
+TRAY_Z0 = P.ENC_TRAY_Z
+TRAY_TOP = TRAY_Z0 + P.ENC_TRAY[1]           # -147.5
+RIB_TOP = TRAY_TOP + P.ENC_TRAY_RIBS[0][2]   # -141.5: the rings and the pedestal's flange stand on the tray's ribs
+TOP_Z = P.ENC_TOP_Z                          # -40
+CAP_Z = P.ENC_CAP_Z                          # 440
+CAP_TOP = CAP_Z + P.ENC_CAP_T
 CLR_R = P.M3_CLEAR / 2
+HALVES = {"F": (0.0, 180.0), "B": (180.0, 360.0)}
+LEAD_SLOT_DEG = 270.0
 
 
 # ---------------------------------------------------------------------------
@@ -110,46 +97,9 @@ def radial_cyl(rad, a, r0, r1, z):
     return Pos(0, 0, z) * Rot(0, 0, a) * Rot(0, 90, 0) * Pos(0, 0, r0) * Cylinder(rad, r1 - r0, align=(C, C, MN))
 
 
-def tangent_cyl(rad, r, a, z, t0, t1):
-    """A cylinder along the tangent (increasing angle) through (r, a, z), from t0 to t1 along it."""
-    x, y, _ = at(r, a)
-    return Pos(x, y, z) * Rot(0, 0, a + 90.0) * Rot(0, 90, 0) * Pos(0, 0, t0) * Cylinder(rad, t1 - t0, align=(C, C, MN))
-
-
-def tangent_box(r0, r1, a, t0, t1, z0, z1):
-    """A box between radii r0..r1 across the seam line at angle a, t0..t1 along the tangent, z0..z1."""
-    rc, tc = (r0 + r1) / 2, (t0 + t1) / 2
-    return (Rot(0, 0, a) * Pos(rc, tc, (z0 + z1) / 2)
-            * Box(r1 - r0, t1 - t0, z1 - z0))
-
-
-def seam_tabs(a0, a1, z0, z1, hole_zs, r_in=None):
-    """The tabs of the quadrant a0..a1: inserts on its a1 face, clearance on its a0 face."""
-    r1 = R_IN + 1.0                              # the tabs bite 1 mm into the skin
-    r0 = R_IN - P.ENC_TAB[0] if r_in is None else r_in
-    t = P.ENC_TAB[1]
-    rc = (r0 + r1) / 2
-    add = tangent_box(r0, r1, a1, -t, 0.0, z0, z1) + tangent_box(r0, r1, a0, 0.0, t, z0, z1)
-    cut = None
-    for z in hole_zs:
-        h = tangent_cyl(INS_R, rc, a1, z, -INS_D, EPS) + tangent_cyl(CLR_R, rc, a0, z, -EPS, t + EPS)
-        cut = h if cut is None else cut + h
-    return add, cut
-
-
-def slots_arc(a_centre, zs, r0, r1):
-    """Horizontal vent slots through a wall at the heights zs: a group `arc` degrees wide, in segments."""
-    h, _, arc, seg, web = P.ENC_VENT
-    seg_deg, web_deg = np.degrees(seg / R_OUT), np.degrees(web / R_OUT)
-    n = int((arc + web_deg) // (seg_deg + web_deg))
-    a_start = a_centre - (n * seg_deg + (n - 1) * web_deg) / 2
-    out = None
-    for z in zs:
-        for i in range(n):
-            a0 = a_start + i * (seg_deg + web_deg)
-            s = ring(r0, r1, z - h / 2, z + h / 2) & wedge(a0, a0 + seg_deg)
-            out = s if out is None else out + s
-    return out
+def ycyl(rad, x, y0, y1, z):
+    """A cylinder along y at (x, z), from y0 to y1."""
+    return Pos(x, y0, z) * Rot(-90, 0, 0) * Cylinder(rad, y1 - y0, align=(C, C, MN))
 
 
 def chord_box(r_mid, w, z0, z1, a=90.0, depth=40.0):
@@ -157,112 +107,140 @@ def chord_box(r_mid, w, z0, z1, a=90.0, depth=40.0):
     return Rot(0, 0, a) * Pos(r_mid, 0, (z0 + z1) / 2) * Box(depth, w, z1 - z0)
 
 
-def quadrant_holes(angles, r, rad, z0, z1):
+def radial_ribs(angles, r0, r1, z0, h):
     out = None
     for a in angles:
-        h = vcyl(rad, r, a, z0, z1)
-        out = h if out is None else out + h
+        rib = Rot(0, 0, a) * Pos((r0 + r1) / 2, 0, z0) * Box(r1 - r0, RIB_T, h, align=(C, C, MN))
+        out = rib if out is None else out + rib
     return out
 
 
-def flange_angles(a0, a1):
-    """The two screw positions of the wall flange in the quadrant a0..a1 (20 deg in from each seam)."""
-    return (a0 + 20.0, a1 - 20.0)
-
-
-def in_quad(a, a0, a1):
-    return a0 <= (a - a0) % 360.0 + a0 < a1
+def seam_walls(half, x_ranges, z0, h, hole_xs, up=True):
+    """Walls along the y = 0 seam on this half's side, `h` tall from z0 (up or down), with M3 holes along y."""
+    sy = 1 if half == "F" else -1
+    zb = z0 if up else z0 - h
+    add = None
+    for x0, x1 in x_ranges:
+        w = Pos((x0 + x1) / 2, sy * SEAM_T / 2, zb) * Box(x1 - x0, SEAM_T, h, align=(C, C, MN))
+        add = w if add is None else add + w
+    cut = None
+    for x in hole_xs:
+        c = ycyl(CLR_R, x, -SEAM_T - 1, SEAM_T + 1, zb + h / 2)
+        cut = c if cut is None else cut + c
+    return add, cut
 
 
 # ---------------------------------------------------------------------------
-# base wall quadrants
+# the cap halves
 # ---------------------------------------------------------------------------
-def base_wall_full():
-    lip_r = P.ENC_BOTTOM_LIP[0]
-    ft = P.ENC_FLANGE_T
-    prof = [(lip_r, BASE_Z0), (R_OUT, BASE_Z0), (R_OUT, BASE_Z1), (R_FL, BASE_Z1), (R_FL, BASE_Z1 - ft),
-            (R_IN, BASE_Z1 - ft - P.ENC_CHAMFER * (R_IN - R_FL)), (R_IN, BASE_Z0 + LIP_T), (lip_r, BASE_Z0 + LIP_T)]
-    s = rz_solid(prof)
-    # vents in the side walls (0 and 180 deg)
-    zs = np.arange(P.ENC_VENT_Z[0][0], P.ENC_VENT_Z[0][1], P.ENC_VENT[1])
-    s -= slots_arc(0.0, zs, R_IN - 1, R_OUT + 1) + slots_arc(180.0, zs, R_IN - 1, R_OUT + 1)
-    # the speaker's opening in the front, the hatch in the back
-    w, h, zc = P.ENC_GRILLE_OPEN
-    s -= chord_box(R_IN + WALL / 2, w, zc - h / 2, zc + h / 2, 90.0)
-    w, h, zc = P.ENC_HATCH_OPEN
-    s -= chord_box(R_IN + WALL / 2, w, zc - h / 2, zc + h / 2, 270.0)
-    # the panels' screw inserts: radial from the skin, into the bottom lip and the top flange
-    for a in (90.0, 270.0):
-        for sx in (-1, 1):
-            for z in P.ENC_PANEL_SCREWS[1:]:
-                x = sx * P.ENC_PANEL_SCREWS[0]
-                # the hole at chord position x on the skin at angle a: its own radial line
-                ah = a + np.degrees(np.arcsin(x / R_OUT)) * (1 if a == 90.0 else -1)
-                s -= radial_cyl(INS_R, ah, R_OUT - INS_D, R_OUT + 1, z)
-    # the flange's insert holes for the deck ring, from the top
-    for a0, a1 in WALL_QUADS.values():
-        for a in flange_angles(a0, a1):
-            s -= vcyl(INS_R, R_OUT - 8.0, a, BASE_Z1 - INS_D, BASE_Z1 + 1)
-    # the tray ears' inserts in the bottom lip, at the wall seams
-    for a in P.ENC_WALL_SEAMS:
-        s -= vcyl(INS_R, P.ENC_TRAY_SCREW_R, a, BASE_Z0 + LIP_T - INS_D, BASE_Z0 + LIP_T + 1)
+def cap_full():
+    s = cyl(R_OUT, CAP_Z, CAP_TOP)                                           # the top plate
+    s += ring(R_OUT - P.ENC_PLATE_T, R_OUT, P.ENC_WINDOW_TOP, CAP_Z + EPS)      # the skirt (1.6)
+    s += ring(LIP_RI, LIP_RI + LIP_T, CAP_Z - LIP_H, CAP_Z + EPS)               # the channel's lips, hanging
+    s += ring(LIP_RO, LIP_RO + LIP_T, CAP_Z - LIP_H, CAP_Z + EPS)
+    s += radial_ribs((30.0, 60.0, 120.0, 150.0, 210.0, 240.0, 300.0, 330.0), 20.0, LIP_RI - 1.0, CAP_Z - RIB_H, RIB_H + EPS)
+    # vent slots, a group at the front and one at the back
+    vw, vl, vp, n = P.ENC_CAP_VENTS
+    for sy in (-1, 1):
+        for i in range(n):
+            y = sy * (70.0 + i * vp)
+            s -= Pos(0, y, CAP_Z - 1) * Box(vl, vw, P.ENC_CAP_T + 2, align=(C, C, MN))
+    # the webcam hangs under the top inside the window (taped), looking out through the clear sheet: three stops
+    w, h, d = P.ENC_WEBCAM
+    yi = P.ENC_WEBCAM_Y                                                      # the body's front face
+    for sx in (-1, 1):
+        s += Pos(sx * (w / 2 + FIT + 1.5), yi - d / 2, CAP_Z - h - 1.0) * Box(3.0, d, h + 1.0 + EPS, align=(C, C, MN))
+    s += Pos(0, yi - d - FIT - 1.5, CAP_Z - h - 1.0) * Box(w, 3.0, h + 1.0 + EPS, align=(C, C, MN))
     return s
 
 
-def base_walls():
-    full = base_wall_full()
+def cap_halves():
+    full = cap_full()
     out = {}
-    for name, (a0, a1) in WALL_QUADS.items():
-        piece = full & wedge(a0, a1)
-        add, cut = seam_tabs(a0, a1, BASE_Z0 + LIP_T, BASE_Z1 - P.ENC_FLANGE_T - 6.0, (-128.0, -101.0, -74.0))
-        piece = piece + add - cut
-        out[f"enc_base_{name}"] = piece
+    for half, (a0, a1) in HALVES.items():
+        s = full & wedge(a0, a1)
+        add, cut = seam_walls(half, ((-LIP_RI + 1.0, LIP_RI - 1.0),), CAP_Z + EPS, SEAM_H, (-120.0, -70.0, 70.0, 120.0), up=False)
+        s = s + add - cut
+        out[f"enc_cap_{half}"] = s
     return out
 
 
 # ---------------------------------------------------------------------------
-# deck ring quadrants, tray, deck, pedestal
+# the deck (top ring) halves and the bottom ring halves
 # ---------------------------------------------------------------------------
-def deck_ring_full():
-    r_lip, t = P.ENC_DECK_RING
-    z0, z1 = BASE_Z1, RING_Z1
-    rec = P.ENC_DISC_D / 2 + P.ENC_FIT
-    d = P.ENC_SLIT_D[0]
-    prof = [(r_lip, z0), (R_OUT, z0), (R_OUT, z1), (SLIT[1], z1), (SLIT[1], z1 - d), (SLIT[0], z1 - d), (SLIT[0], z1),
-            (rec, z1), (rec, z1 - P.ENC_DISC_T), (r_lip, z1 - P.ENC_DISC_T)]
-    s = rz_solid(prof)
-    # screws down into the wall flanges
-    for a0, a1 in WALL_QUADS.values():
-        for a in flange_angles(a0, a1):
-            s -= vcyl(CLR_R, R_OUT - 8.0, a, z0 - 1, z1 + 1) + vcyl(P.M3_HEAD[0] / 2, R_OUT - 8.0, a, z1 - P.M3_HEAD[1], z1 + 1)
-    # the deck's screws up through the lip
-    for a in P.ENC_WALL_SEAMS:
-        s -= vcyl(CLR_R, 114.0, a, z0 - 1, z1 + 1)
-    # the column's foot: inserts from the top
-    for a in P.ENC_COLUMN_SCREWS_DEG:
-        s -= vcyl(INS_R, R_OUT - 11.0, a, z1 - INS_D, z1 + 1)
+def top_full():
+    r_in, r_rim = P.ENC_TOP_RING
+    s = ring(r_in, r_rim + EPS, TOP_Z - PLATE_T, TOP_Z)                       # the plate
+    s += ring(RIM_R, P.ENC_BAND_R, TOP_Z - PLATE_T, TOP_Z + RIM_H)              # the rim the band wraps
+    s += ring(LIP_RI, LIP_RI + LIP_T, TOP_Z - EPS, TOP_Z + LIP_H)                 # the window's lower lip
+    s += radial_ribs((22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5), r_in + 6.0, LIP_RI - 1.0, TOP_Z - EPS, RIB_H + EPS)
+    for a in P.ENC_BAND_SCREWS_DEG:                                          # M3 + nut through the rim and the band
+        s -= radial_cyl(CLR_R, a, RIM_R - 1.0, P.ENC_BAND_R + 1.0, TOP_Z + P.ENC_BAND_SCREW_Z)
+    sw, sr0, sr1 = P.ENC_LEAD_SLOT                                           # the webcam lead's slot, at the back
+    s -= Rot(0, 0, LEAD_SLOT_DEG) * Pos((sr0 + sr1) / 2, 0, TOP_Z - PLATE_T - 1) * Box(sr1 - sr0, sw, PLATE_T + 2, align=(C, C, MN))
     return s
 
 
-def deck_rings():
-    full = deck_ring_full()
-    return {f"enc_ring_{n}": full & wedge(a0, a1) for n, (a0, a1) in RING_QUADS.items()}
+def top_halves():
+    full = top_full()
+    r_in, r_rim = P.ENC_TOP_RING
+    out = {}
+    for half, (a0, a1) in HALVES.items():
+        s = full & wedge(a0, a1)
+        add, cut = seam_walls(half, ((-LIP_RI + 1.0, -r_in - 0.5), (r_in + 0.5, LIP_RI - 1.0)), TOP_Z - EPS, SEAM_H, (-100.0, 100.0))
+        out[f"enc_top_{half}"] = s + add - cut
+    return out
 
 
+def bottom_full():
+    r_in, r_rim = P.ENC_BOTTOM_RING
+    z0 = RIB_TOP
+    s = ring(r_in, r_rim + EPS, z0, z0 + PLATE_T)
+    s += ring(RIM_R, P.ENC_BAND_R, z0, z0 + PLATE_T + RIM_H)
+    ear_r, ear_w = P.ENC_BOTTOM_EAR
+    for a in P.ENC_EARS_DEG:                                                 # ears down onto the tray's outer rib, M3 self-tapping
+        s += Rot(0, 0, a) * Pos((ear_r + r_in + 1.0) / 2, 0, z0) * Box(r_in + 1.0 - ear_r, ear_w, PLATE_T, align=(C, C, MN))
+        s -= vcyl(CLR_R, P.ENC_TRAY_RIBS[0][0] + 1.0, a, z0 - 1, z0 + PLATE_T + 1)   # the bosses sit 0.5 inside the tray's edge
+    for a in P.ENC_BAND_SCREWS_DEG:
+        s -= radial_cyl(CLR_R, a, RIM_R - 1.0, P.ENC_BAND_R + 1.0, z0 + PLATE_T + P.ENC_BAND_SCREW_Z)
+    return s
+
+
+def bottom_halves():
+    full = bottom_full()
+    r_in, r_rim = P.ENC_BOTTOM_RING
+    out = {}
+    for half, (a0, a1) in HALVES.items():
+        s = full & wedge(a0, a1)
+        add, cut = seam_walls(half, ((-r_rim + 0.5, -r_in - 0.5), (r_in + 0.5, r_rim - 0.5)), RIB_TOP + PLATE_T - EPS, SEAM_H, (-139.0, 139.0))
+        out[f"enc_bottom_{half}"] = s + add - cut
+    return out
+
+
+# ---------------------------------------------------------------------------
+# tray, pedestal, panels
+# ---------------------------------------------------------------------------
 def tray():
     d, t = P.ENC_TRAY
-    z0 = BASE_Z0 + LIP_T
-    s = cyl(d / 2, z0, z0 + t)
-    for a in P.ENC_WALL_SEAMS:
-        s -= vcyl(CLR_R, P.ENC_TRAY_SCREW_R, a, z0 - 1, z0 + t + 1)
-        s -= vcyl(P.M3_HEAD[0] / 2, P.ENC_TRAY_SCREW_R, a, z0 + t - P.M3_HEAD[1], z0 + t + 1)
-    # speaker saddle: two ribs across x with a round seat
-    sw, st, sh, ys = P.ENC_SADDLE
+    s = cyl(d / 2, TRAY_Z0, TRAY_TOP)
+    for r0, rt, rh in P.ENC_TRAY_RIBS:
+        s += ring(r0, r0 + rt, TRAY_TOP - EPS, TRAY_TOP + rh)
+    (r0, rt, rh), (q0, qt, qh) = P.ENC_TRAY_RIBS
+    for a in P.ENC_EARS_DEG:                                                 # self-tapping M3: the bottom rings' ears, in bosses
+        s += vcyl(P.ENC_BOSS_D / 2, r0 + 1.0, a, TRAY_TOP - EPS, TRAY_TOP + rh)
+        s -= vcyl(P.M3_SELF_TAP / 2, r0 + 1.0, a, TRAY_TOP + rh - 7.0, TRAY_TOP + rh + 1)
+    for a in (45.0, 135.0, 225.0, 315.0):                                    # self-tapping M3: the pedestal's flange, in bosses
+        s += vcyl(P.ENC_BOSS_D / 2, q0 + qt / 2, a, TRAY_TOP - EPS, TRAY_TOP + qh)
+        s -= vcyl(P.M3_SELF_TAP / 2, q0 + qt / 2, a, TRAY_TOP + qh - 7.0, TRAY_TOP + qh + 1)
+    s += radial_ribs((0.0, 90.0, 180.0, 270.0), q0 + qt - 1.5, r0 + 1.5, TRAY_TOP - EPS, rh - 0.5)   # 1.5 into both ring ribs, 0.5 lower (no coplanar tops)
+    # speaker saddles: two ribs along y (the speaker lies along x at the front) with a round seat
+    sw, st, sh, xs, lift = P.ENC_SADDLE
     sr = P.ENC_SPEAKER[0] / 2 + 0.5
-    zc = z0 + t + sr + 1.0                       # the speaker's axis
-    for y in ys:
-        rib = Pos(0, y, z0 + t - EPS) * Box(sw, st, sh + EPS, align=(C, C, MN))
-        rib -= Pos(0, y, zc) * Rot(90, 0, 0) * Cylinder(sr, st + 2)
+    _, sy, _ = P.ENC_LAYOUT["speaker"]
+    zc = TRAY_TOP + lift + sr                                                # the speaker's axis
+    for x in xs:
+        rib = Pos(x, sy, TRAY_TOP - EPS) * Box(st, sw, sh + EPS, align=(C, C, MN))
+        rib -= Pos(x, sy, zc) * Rot(0, 90, 0) * Cylinder(sr, st + 2)
         s += rib
     # the bank's rails
     bx, by, _ = P.ENC_LAYOUT["bank"]
@@ -270,247 +248,57 @@ def tray():
     rt, rh, shorter = P.ENC_BANK_RAIL
     for sy in (-1, 1):
         y = by + sy * (bw / 2 + 0.5 + rt / 2)
-        s += Pos(bx, y, z0 + t - EPS) * Box(bl - shorter, rt, rh + EPS, align=(C, C, MN))
-    return s
-
-
-def deck():
-    d, t = P.ENC_DISC_D - 2 * P.ENC_FIT, P.ENC_DISC_T
-    z1 = RING_Z1
-    s = cyl(d / 2, z1 - t, z1)
-    s -= cyl(P.ENC_BORE / 2, z1 - t - 1, z1 + 1)
-    for a in P.ENC_WALL_SEAMS:                   # M3 inserts from below (screws up through the ring's lip)
-        s -= vcyl(INS_R, 114.0, a, z1 - t - 1, z1 - t + INS_D)
-    for a in (45.0, 135.0, 225.0, 315.0):        # M3 up into the pedestal
-        s -= vcyl(CLR_R, P.ENC_PEDESTAL_SCREW_R, a, z1 - t - 1, z1 + 1)
-    sq = P.NECK_BOLT_SQUARE / 2
-    for sx in (-1, 1):                           # reach the M4 heads in the pedestal from below
-        for sy in (-1, 1):
-            s -= cyl(5.0, z1 - t - 1, z1 + 1, sx * sq, sy * sq)
+        s += Pos(bx, y, TRAY_TOP - EPS) * Box(bl - shorter, rt, rh + EPS, align=(C, C, MN))
     return s
 
 
 def pedestal():
-    d0, d1, h = P.ENC_PEDESTAL
-    z0 = RING_Z1
-    s = Pos(0, 0, z0) * Cone(d0 / 2, d1 / 2, h, align=(C, C, MN))
-    s -= cyl(P.ENC_BORE / 2, z0 - 1, z0 + h + 1)
+    r = P.ENC_PEDESTAL / 2
+    wall = P.ENC_PEDESTAL_WALL
+    z0 = RIB_TOP
+    s = cyl(r, z0, 0.0)
+    s -= cyl(r - wall, z0 - 1, -P.ENC_PEDESTAL_TOP_T)
+    s -= cyl(P.ENC_BORE / 2, -P.ENC_PEDESTAL_TOP_T - 1, 1.0)
     sq = P.NECK_BOLT_SQUARE / 2
-    cb_depth = h - 12.0                          # the top plate under the bolt heads stays 12 thick
     for sx in (-1, 1):
         for sy in (-1, 1):
-            x, y = sx * sq, sy * sq
-            s -= cyl(P.M4_CLEAR / 2, z0 - 1, z0 + h + 1, x, y)
-            s -= cyl(P.SCULPT_PLATE_CBORE[0] / 2, z0 - 1, z0 + cb_depth, x, y)
+            s -= cyl(P.M4_CLEAR / 2, -P.ENC_PEDESTAL_TOP_T - 1, 1.0, sx * sq, sy * sq)
+    reach, ft = P.ENC_PEDESTAL_FLANGE
+    s += ring(r - wall - reach, r - wall + 0.5, z0, z0 + ft)                    # the bottom flange, inward, on the tray's inner rib
+    s += rz_solid([(r - wall - reach, z0 + ft - EPS), (r - wall + 0.5, z0 + ft - EPS),
+                   (r - wall + 0.5, z0 + ft - EPS + 1.25 * (reach + 0.5))])      # 51 deg wedge over it: printable upside down
+    (q0, qt, qh) = P.ENC_TRAY_RIBS[1]
     for a in (45.0, 135.0, 225.0, 315.0):
-        s -= vcyl(INS_R, P.ENC_PEDESTAL_SCREW_R, a, z0 - 1, z0 + INS_D)
+        s -= vcyl(CLR_R, q0 + qt / 2, a, z0 - 1, z0 + ft + reach + 2)
     return s
 
 
-# ---------------------------------------------------------------------------
-# panels
-# ---------------------------------------------------------------------------
 def panel(a, lead_notch=False):
+    """A slotted curved panel built from bars (a curved face with eleven holes tessellates with dents)."""
     w, h, zc, t = P.ENC_PANEL
-    s = ring(R_OUT + P.ENC_FIT, R_OUT + P.ENC_FIT + t, zc - h / 2, zc + h / 2) & chord_box(R_OUT, w, zc - h / 2 - 1, zc + h / 2 + 1, a, 60.0)   # a fit off the skin
-    if lead_notch:                               # first, and deep: cut last it dented the panel between two slots (OCC)
+    r0 = P.ENC_BAND_R + 0.3 + P.ENC_SHEET_T + FIT           # off the band (which has 0.3 play on its rims)
+    z_lo, z_hi = zc - h / 2, zc + h / 2
+    rail = 13.0                                              # the side rails' width (the slots are w - 26 long)
+
+    def bar(z0, z1, width):
+        return ring(r0, r0 + t, z0, z1) & chord_box(r0, width, z0 - 1, z1 + 1, a, 60.0)
+
+    slot_zs = list(np.arange(z_lo + 14.0, z_hi - 12.0, P.ENC_VENT[1]))
+    s = bar(z_lo, slot_zs[0] - 1.5, w)                         # the bottom band
+    s += bar(slot_zs[-1] + 1.5, z_hi, w)                       # the top band
+    for z0, z1 in zip(slot_zs[:-1], slot_zs[1:]):             # the bars between the slots
+        s += bar(z0 + 1.5 - EPS, z1 - 1.5 + EPS, w - 2 * rail + 1.0)
+    for sx in (-1, 1):                                         # the side rails
+        s += (ring(r0, r0 + t, z_lo, z_hi) & chord_box(r0, w, z_lo - 1, z_hi + 1, a, 60.0)
+              - chord_box(r0, w - 2 * rail, z_lo - 1, z_hi + 1, a, 60.0)) & wedge(a - 30.0, a + 30.0) if sx == 1 else s
+    if lead_notch:
         nw, nh = P.ENC_PANEL_LEAD_NOTCH
-        s -= chord_box(R_OUT, nw, zc - h / 2 - 20.0, zc - h / 2 + nh, a, 60.0)
-    # grille slots
-    for z in np.arange(zc - h / 2 + 14.0, zc + h / 2 - 12.0, P.ENC_VENT[1]):
-        s -= chord_box(R_OUT, w - 26.0, z - 1.5, z + 1.5, a, 60.0)
+        s -= chord_box(r0, nw, z_lo - 20.0, z_lo + nh, a, 60.0)
     for sx in (-1, 1):
         for z in P.ENC_PANEL_SCREWS[1:]:
             x = sx * P.ENC_PANEL_SCREWS[0]
-            ah = a + np.degrees(np.arcsin(x / R_OUT)) * (1 if a == 90.0 else -1)
-            s -= radial_cyl(CLR_R, ah, R_OUT - 2, R_OUT + t + 1, z)
-    return s
-
-
-# ---------------------------------------------------------------------------
-# the back column
-# ---------------------------------------------------------------------------
-def column_pieces():
-    fork_deg = np.degrees((P.ENC_SHEET_TUCK + 2.0) / R_OUT)
-    slot_deg = np.degrees(P.ENC_SHEET_TUCK / R_OUT)
-    lap_t, lap_w = P.ENC_COLUMN_LAP
-    lap_deg = np.degrees(lap_w / R_OUT)
-    fl = P.ENC_COLUMN_FLANGE
-    r_fl = R_IN - fl                             # 152
-    r_fork = SLIT[0] - 4.0                       # 145.8: the fork reaches inside the sheet
-    zs = P.ENC_COLUMN_SPLIT_Z
-    skin = ring(R_IN, R_OUT, COL_Z0, COL_Z1)
-    out = {}
-    seam = P.ENC_COLUMN_SEAM_DEG
-    for side, (a0, a1) in (("R", (COL_A0, seam)), ("L", (seam, COL_A1))):
-        for level, (z0, z1) in (("lower", (COL_Z0, zs)), ("upper", (zs, COL_Z1))):
-            s = skin & wedge(a0, a1, z0, z1)
-            # fork at the column's outer edge: a block the sheet's end slides into
-            fa = (COL_A0, COL_A0 + fork_deg) if side == "R" else (COL_A1 - fork_deg, COL_A1)
-            fork = ring(r_fork, R_IN + 1.0, z0, z1) & wedge(*fa)
-            sa = (COL_A0 - 1.0, COL_A0 + slot_deg) if side == "R" else (COL_A1 - slot_deg, COL_A1 + 1.0)   # open at the sheet's side
-            fork -= ring(SLIT[0], SLIT[1], z0 - 1, z1 + 1) & wedge(*sa)
-            s += fork
-            if level == "lower":
-                # foot flange, screwed down into the deck ring
-                if side == "R":                                    # R's reaches under its lap tab, a fit under the L skin
-                    flange = (ring(r_fl, R_IN + 1.0, COL_Z0, COL_Z0 + 6.0) & wedge(a0, seam - 0.05)
-                              + ring(r_fl, R_IN - P.ENC_FIT, COL_Z0, COL_Z0 + 6.0) & wedge(seam - 0.5, seam + lap_deg + 0.05))
-                else:
-                    flange = ring(r_fl, R_IN + 1.0, COL_Z0, COL_Z0 + 6.0) & wedge(seam + lap_deg + 0.1, a1)
-                s += flange
-                for a in P.ENC_COLUMN_SCREWS_DEG:
-                    if in_quad(a, a0, a1):
-                        s -= vcyl(CLR_R, R_OUT - 11.0, a, COL_Z0 - 1, COL_Z0 + 7.0)
-                # lap tab under the horizontal seam (the upper piece's skin sits over it), chamfered under
-                la = (a0 + fork_deg + 0.1, seam - 1.05) if side == "R" else (a0 + lap_deg + 0.1, a1 - fork_deg - 0.1)   # clear of the forks and the vertical tab
-                fit = P.ENC_FIT
-                tab = rz_solid([(R_IN - lap_t, zs - lap_w), (R_IN + 1.0, zs - lap_w), (R_IN + 1.0, zs), (R_IN - fit, zs),
-                                (R_IN - fit, zs + lap_w), (R_IN - lap_t, zs + lap_w)]) & wedge(*la)   # under the upper skin: a fit
-                ch = P.ENC_CHAMFER * (lap_t + 1.5)
-                tab -= rz_solid([(R_IN - lap_t - 1, zs - lap_w - 1), (R_IN - lap_t - 1, zs - lap_w - 1 + ch),
-                                 (R_IN + 0.5, zs - lap_w - 1)]) & wedge(a0 - 1, a1 + 1)   # chamfer under
-                s += tab
-                for a in (a0 + 18.0, a1 - 18.0):                   # the upper piece's screws into it
-                    s -= radial_cyl(INS_R, a, R_IN - lap_t - 1, R_IN + 1, zs + lap_w / 2)
-            else:
-                # the skin's screw holes into the lower piece's lap tab
-                for a in (a0 + 18.0, a1 - 18.0):
-                    s -= radial_cyl(CLR_R, a, R_IN - 1, R_OUT + 1, zs + lap_w / 2)
-                # top flange with inserts (screwed from inside the cap, down through the slit ring)
-                zb = COL_Z1 - 10.0 - P.ENC_CHAMFER * (R_IN - r_fl)           # a wedge under the flange: 51 deg from the skin
-                prof = rz_solid([(r_fl, COL_Z1 - 10.0), (R_IN + 1.0, COL_Z1 - 10.0), (R_IN + 1.0, COL_Z1), (r_fl, COL_Z1)])
-                prof += rz_solid([(R_IN + 1.0, zb), (R_IN + 1.0, COL_Z1 - 10.0 + 0.5), (r_fl, COL_Z1 - 10.0 + 0.5)])
-                if side == "R":                                    # past the seam: a fit under the L skin
-                    flange = (prof & wedge(a0, seam - 0.05)
-                              + (prof - ring(R_IN - P.ENC_FIT, R_OUT + 2, COL_Z0 - 1, COL_Z1 + 1)) & wedge(seam - 0.5, seam + lap_deg + 0.05))
-                else:
-                    flange = prof & wedge(seam + lap_deg + 0.1, a1)
-                    flange -= ring(r_fl - 2.0, R_IN - 0.5, COL_Z0 - 1, COL_Z1 + 1) & wedge(*LEAD_SLOT_DEG)   # the webcam lead drops through
-                s += flange
-                for a in P.ENC_COLUMN_SCREWS_DEG:
-                    if in_quad(a, a0, a1):
-                        s -= vcyl(INS_R, R_OUT - 11.0, a, COL_Z1 - INS_D, COL_Z1 + 1)
-            if side == "R":
-                # vertical lap tab past the centre seam (the left piece's skin sits over it)
-                zt0 = z0 + (6.0 if level == "lower" else 0.0)
-                zt1 = z1 - (10.0 if level == "upper" else 0.0)
-                tab = (ring(R_IN - lap_t, R_IN + 1.0, zt0, zt1) & wedge(seam - 1.0, seam - 0.05)
-                       + ring(R_IN - lap_t, R_IN - P.ENC_FIT, zt0, zt1) & wedge(seam - 0.5, seam + lap_deg))   # a fit under the L skin
-                s += tab
-                for z in np.linspace(zt0 + 25.0, zt1 - 25.0, 3):
-                    s -= radial_cyl(INS_R, seam + lap_deg * 0.6, R_IN - lap_t - 1, R_IN + 1, z)
-            else:
-                zt0 = z0 + (6.0 if level == "lower" else 0.0)
-                zt1 = z1 - (10.0 if level == "upper" else 0.0)
-                for z in np.linspace(zt0 + 25.0, zt1 - 25.0, 3):
-                    s -= radial_cyl(CLR_R, seam + lap_deg * 0.6, R_IN - 1, R_OUT + 1, z)
-                rw, rp = P.ENC_COLUMN_RIB
-                rib_deg = np.degrees(rw / 2 / R_OUT)
-                s += ring(R_OUT - EPS, R_OUT + rp, z0, z1) & wedge(270.0 - rib_deg, 270.0 + rib_deg)
-            out[f"enc_column_{side}_{level}"] = s
-    return out
-
-
-# ---------------------------------------------------------------------------
-# the cap
-# ---------------------------------------------------------------------------
-def capring_full():
-    r_in, t = P.ENC_CAP_SLIT_RING
-    z0, z1 = CAP_Z0, CAPRING_Z1
-    d = P.ENC_SLIT_D[1]
-    prof = [(r_in, z0), (SLIT[0], z0), (SLIT[0], z0 + d), (SLIT[1], z0 + d), (SLIT[1], z0), (R_OUT, z0),
-            (R_OUT, z1), (r_in, z1)]
-    s = rz_solid(prof)
-    for a in P.ENC_COLUMN_SCREWS_DEG:            # down into the column's top flange, heads counterbored from above
-        s -= vcyl(CLR_R, R_OUT - 11.0, a, z0 - 1, z1 + 1) + vcyl(P.M3_HEAD[0] / 2, R_OUT - 11.0, a, z1 - 6.0, z1 + 1)
-    for a0, a1 in WALL_QUADS.values():           # inserts for the cap wall's bottom flange
-        for a in flange_angles(a0, a1):
-            s -= vcyl(INS_R, R_OUT - 8.0, a, z1 - INS_D, z1 + 1)
-    s -= ring(r_fl_cap(), R_IN - 1.0, z0 - 1, z1 + 1) & wedge(*LEAD_SLOT_DEG)   # the webcam lead's slot into the column
-    return s
-
-
-def r_fl_cap():
-    return R_IN - P.ENC_COLUMN_FLANGE + 1.0
-
-
-def cap_rings():
-    full = capring_full()
-    return {f"enc_capring_{n}": full & wedge(a0, a1) for n, (a0, a1) in RING_QUADS.items()}
-
-
-def cap_wall_full():
-    ft = P.ENC_FLANGE_T
-    z0, z1 = CAPWALL_Z0, CAPWALL_Z1
-    prof = [(R_FL, z0), (R_OUT, z0), (R_OUT, z1), (R_FL, z1), (R_FL, z1 - ft), (R_IN, z1 - ft - P.ENC_CHAMFER * (R_IN - R_FL)),
-            (R_IN, z0 + ft), (R_FL, z0 + ft)]
-    s = rz_solid(prof)
-    zs = np.arange(P.ENC_VENT_Z[1][0], P.ENC_VENT_Z[1][1], P.ENC_VENT[1])
-    s -= slots_arc(0.0, zs, R_IN - 1, R_OUT + 1) + slots_arc(180.0, zs, R_IN - 1, R_OUT + 1)
-    # the flat front band: the skin is cut away and a flat plate set in, closed above by a 45 deg lip
-    bw, bz0, bz1, setin = P.ENC_WEBCAM_BAND
-    yb = R_OUT - setin                           # the plate's outer face
-    s -= Pos(0, R_OUT + 5.0, (bz0 + bz1) / 2) * Box(bw, 2 * (R_OUT + 5.0 - yb) + 2 * EPS, bz1 - bz0 + 2 * EPS)
-    w, h, d = P.ENC_WEBCAM
-    yi = yb - WALL - P.ENC_FIT                   # the body's front face
-    gy0, gy1 = yi - d - 8.0, yb - WALL                                 # up to the plate's inner face
-    s -= Pos(0, (gy0 + gy1) / 2, z0 - 1.0) * Box(bw, gy1 - gy0, ft + 1.0 + EPS, align=(C, C, MN))   # a gap in the bottom flange for the body
-    s += Pos(0, yb - WALL / 2, (bz0 + bz1) / 2) * Box(bw + 6.0, WALL, bz1 - bz0 + EPS) & cyl(R_OUT - EPS, bz0 - 1, bz1 + 1)
-    lip = Plane.YZ * Polygon((yb - WALL, bz1 - 2.0), (R_OUT - EPS, z1), (yb - WALL, z1))   # the slope is the underside, 49 deg
-    s += (Pos(-(bw + 6.0) / 2, 0, 0) * extrude(lip, bw + 6.0)) & cyl(R_OUT - EPS, bz0 - 1, z1 + 1)
-    s -= Pos(0, yb - 2.0, P.ENC_WEBCAM_Z) * Rot(90, 0, 0) * Cylinder(P.ENC_WEBCAM_HOLE / 2, 2 * setin + 10.0)
-    # the webcam's cradle: a 2 mm floor across the gap (joined to the plate and the flange's edges), the body on it
-    # against the plate's inside, three stops standing on the floor
-    s += Pos(0, (gy0 + gy1 + 1.0) / 2, z0) * Box(bw + 2.0, gy1 - gy0 + 1.0, 2.0, align=(C, C, MN))
-    for sx in (-1, 1):
-        s += Pos(sx * (w / 2 + P.ENC_FIT + 1.5), yi - d / 2, z0 + 2.0 - EPS) * Box(3.0, d, 22.0, align=(C, C, MN))
-    s += Pos(0, yi - d - P.ENC_FIT - 1.5, z0 + 2.0 - EPS) * Box(w, 3.0, 22.0, align=(C, C, MN))
-    # screws: the bottom flange down into the slit ring, the top ring down into the top flange
-    for a0, a1 in WALL_QUADS.values():
-        for a in flange_angles(a0, a1):
-            s -= vcyl(CLR_R, R_OUT - 8.0, a, z0 - 1, z0 + ft + 1) + vcyl(P.M3_HEAD[0] / 2, R_OUT - 8.0, a, z0 + ft - P.M3_HEAD[1], z0 + ft + 1)
-            s -= vcyl(INS_R, R_OUT - 8.0, a, z1 - INS_D, z1 + 1)
-    return s
-
-
-def cap_walls():
-    full = cap_wall_full()
-    out = {}
-    for name, (a0, a1) in WALL_QUADS.items():
-        piece = full & wedge(a0, a1)
-        add, cut = seam_tabs(a0, a1, CAPWALL_Z0, CAPWALL_Z1 - P.ENC_FLANGE_T - 6.0, (432.0, 452.0))
-        out[f"enc_cap_{name}"] = piece + add - cut
-    return out
-
-
-def captop_full():
-    r_lip, t = P.ENC_CAP_TOP_RING
-    z0, z1 = CAPWALL_Z1, CAPTOP_Z1
-    rec = P.ENC_DISC_D / 2 + P.ENC_FIT
-    prof = [(r_lip, z0), (R_OUT, z0), (R_OUT, z1), (rec, z1), (rec, z1 - P.ENC_DISC_T), (r_lip, z1 - P.ENC_DISC_T)]
-    s = rz_solid(prof)
-    for a0, a1 in WALL_QUADS.values():
-        for a in flange_angles(a0, a1):
-            s -= vcyl(CLR_R, R_OUT - 8.0, a, z0 - 1, z1 + 1) + vcyl(P.M3_HEAD[0] / 2, R_OUT - 8.0, a, z1 - P.M3_HEAD[1], z1 + 1)
-    return s
-
-
-def cap_tops():
-    full = captop_full()
-    return {f"enc_captop_{n}": full & wedge(a0, a1) for n, (a0, a1) in RING_QUADS.items()}
-
-
-def lid():
-    d, t = P.ENC_DISC_D - 2 * P.ENC_FIT, P.ENC_DISC_T
-    z1 = CAPTOP_Z1
-    s = cyl(d / 2, z1 - t, z1)
-    vw, vl, vp, n = P.ENC_LID_VENTS
-    for i in range(n):
-        y = (i - (n - 1) / 2) * vp
-        s -= Pos(0, y, z1 - t / 2) * Box(vl, vw, t + 2)
-    fd, fy = P.ENC_LID_FINGER
-    s -= cyl(fd / 2, z1 - t - 1, z1 + 1, 0.0, fy)
+            ah = a + np.degrees(np.arcsin(x / r0)) * (1 if a == 90.0 else -1)
+            s -= radial_cyl(CLR_R, ah, r0 - 2, r0 + t + 1, z)
     return s
 
 
@@ -550,8 +338,8 @@ def neck():
     for sx in (-1, 1):
         s -= Pos(sx * (nx0 + nx1) / 2, (ny0 + ny1) / 2 - AY, nz) * Box(nx1 - nx0, ny1 - ny0, top - nz + 1, align=(C, C, MN))
     # the leads' way in: an opening in the top plate, through the roof into the hollow
-    ow, od, oy = P.NECK_SPINE_TOP_OPENING
-    s -= Pos(0, oy - AY, top - 30.0) * Box(ow, od, 31.0, align=(C, C, MN))
+    ow, od_, oy = P.NECK_SPINE_TOP_OPENING
+    s -= Pos(0, oy - AY, top - 30.0) * Box(ow, od_, 31.0, align=(C, C, MN))
     # ASSUMPTION: 4 x M3 through the top plate up into inserts in the frame's nape members
     for x, y in P.NECK_SPINE_SCREWS:
         s -= cyl(CLR_R, top - tt - 1, top + 1, x, y - AY)
@@ -563,21 +351,19 @@ def neck():
 # ---------------------------------------------------------------------------
 def ref_parts():
     out = {}
-    tuck_deg = np.degrees((P.ENC_SHEET_TUCK - 0.5) / R_OUT)      # the forks' slots are cut by angle at the skin
-    out["sheet"] = ring(P.ENC_SHEET_R, P.ENC_SHEET_R + P.ENC_SHEET_T, RING_Z1 - P.ENC_SLIT_D[0],
-                        CAP_Z0 + P.ENC_SLIT_D[1]) & wedge(COL_A1 - tuck_deg, COL_A0 + 360.0 + tuck_deg)   # into both forks
-    zt = TRAY_TOP
+    out["sheet"] = ring(P.ENC_SHEET_R, P.ENC_SHEET_R + P.ENC_SHEET_T, TOP_Z, P.ENC_SHEET_TOP)
+    out["band"] = ring(P.ENC_BAND_R + 0.3, P.ENC_BAND_R + 0.3 + P.ENC_SHEET_T, RIB_TOP + PLATE_T, TOP_Z + RIM_H)
     for name, (x, y, turn) in P.ENC_LAYOUT.items():
+        lift = P.ENC_LAYOUT_Z.get(name, 0.0)
         if name == "speaker":
             dia, ln = P.ENC_SPEAKER
-            out[name] = Pos(x, y, zt + dia / 2 + 1.0) * Rot(90, 0, 0) * Cylinder(dia / 2, ln)
+            out[name] = Pos(x, y, TRAY_TOP + P.ENC_SADDLE[4] + dia / 2 + 0.5) * Rot(0, 0, turn) * Rot(90, 0, 0) * Cylinder(dia / 2, ln)   # in its seat
         else:
             size = {"bank": P.ENC_BANK, "buck": P.ENC_BUCK}.get(name, P.ENC_BOARD)
-            out[name] = Pos(x, y, zt + EPS) * Rot(0, 0, turn) * Box(*size, align=(C, C, MN))
+            out[name] = Pos(x, y, TRAY_TOP + EPS + lift) * Rot(0, 0, turn) * Box(*size, align=(C, C, MN))
     w, h, d = P.ENC_WEBCAM
-    yb = R_OUT - P.ENC_WEBCAM_BAND[3]
-    yi = yb - WALL - P.ENC_FIT
-    out["webcam"] = Pos(0, yi - d / 2, P.ENC_WEBCAM_Z - h / 2 + 0.0) * Box(w, d, h, align=(C, C, MN))
+    yi = P.ENC_WEBCAM_Y
+    out["webcam"] = Pos(0, yi - d / 2, CAP_Z - 1.0 - h) * Box(w, d, h, align=(C, C, MN))
     return out
 
 
@@ -588,14 +374,12 @@ def shift(d):
 
 def parts():
     out = {}
-    for fn in (base_walls, deck_rings, column_pieces, cap_rings, cap_walls, cap_tops):
+    for fn in (cap_halves, top_halves, bottom_halves):
         out.update(fn())
     out["enc_tray"] = tray()
-    out["enc_deck"] = deck()
     out["enc_pedestal"] = pedestal()
     out["enc_grille"] = panel(90.0)
     out["enc_hatch"] = panel(270.0, lead_notch=True)
-    out["enc_lid"] = lid()
     out["neck"] = neck()
     return shift(out)
 
@@ -606,10 +390,8 @@ def main():
         if not shp.is_valid:
             print(f"FAIL  {name}: not a valid solid")
             ok = False
-        if name in ("enc_grille", "enc_hatch", "enc_cap_F"):   # slotted or cut curved faces: at 0.05 the tessellation dents or opens them
-            ok &= K.write_stl(shp, name, tolerance=0.01, angular_tolerance=0.05)
-        else:
-            ok &= K.write_stl(shp, name)
+        fine = name in ("enc_grille", "enc_hatch", "enc_cap_F", "enc_cap_B", "enc_tray")   # slotted or cut curved faces tessellate badly at 0.05
+        ok &= K.write_stl(shp, name, tolerance=0.01 if fine else 0.05, angular_tolerance=0.05 if fine else 0.2)
     rdir = os.path.join(G.ref_dir(), "enclosure")
     os.makedirs(rdir, exist_ok=True)
     refs = shift(ref_parts())

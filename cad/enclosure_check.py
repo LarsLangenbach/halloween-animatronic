@@ -36,12 +36,8 @@ S = P.HEAD_SCALE
 AY = P.ENC_AXIS_Y
 SEED = 7
 JAW_PARTS = ("JawBase", "JawLink", "Part 33", "Part 22")
-NAMES = ["enc_base_F", "enc_base_L", "enc_base_B", "enc_base_R", "enc_ring_1", "enc_ring_2", "enc_ring_3", "enc_ring_4",
-         "enc_tray", "enc_deck", "enc_pedestal", "enc_grille", "enc_hatch",
-         "enc_column_R_lower", "enc_column_R_upper", "enc_column_L_lower", "enc_column_L_upper",
-         "enc_capring_1", "enc_capring_2", "enc_capring_3", "enc_capring_4",
-         "enc_cap_F", "enc_cap_L", "enc_cap_B", "enc_cap_R", "enc_captop_1", "enc_captop_2", "enc_captop_3", "enc_captop_4",
-         "enc_lid", "neck"]
+NAMES = ["enc_cap_F", "enc_cap_B", "enc_top_F", "enc_top_B", "enc_bottom_F", "enc_bottom_B", "enc_tray", "enc_pedestal",
+         "enc_grille", "enc_hatch", "neck"]
 
 
 def to_mf(mesh):
@@ -119,24 +115,26 @@ def main():
     clear = P.ENC_SHEET_R - r[i]
     crown = V[:, 2].max()
     md += [f"- Head about the axis: widest r {r[i]:.1f} at ({V[i, 0]:.0f}, {V[i, 1]:.0f}, {V[i, 2]:.0f}); "
-           f"{clear:.1f} inside the sheet (D {2 * P.ENC_SHEET_R:.0f}). Crown z {crown:.1f}, {P.ENC_WINDOW_TOP - crown:.1f} under the cap."]
+           f"{clear:.1f} inside the sheet (D {2 * P.ENC_SHEET_R:.0f}). Crown z {crown:.1f}, {P.ENC_CAP_Z - crown:.1f} under the cap."]
     if clear < 10.0:
         issues.append(f"head within {clear:.1f} of the sheet (want >= 10)")
-    if P.ENC_WINDOW_TOP - crown < 10.0:
-        issues.append(f"crown within {P.ENC_WINDOW_TOP - crown:.1f} of the cap (want >= 10)")
+    if P.ENC_CAP_Z - crown < 10.0:
+        issues.append(f"crown within {P.ENC_CAP_Z - crown:.1f} of the cap (want >= 10)")
 
-    # 2. the sheet overlaps nothing
-    sheet = refs.get("sheet")
-    if sheet is not None:
+    # 2. the sheet and the band overlap nothing
+    for ref_name, blank in (("sheet", P.ENC_SHEET_BLANK), ("band", P.ENC_BAND_BLANK)):
+        sheet = refs.get(ref_name)
+        if sheet is None:
+            continue
         for n, m in parts.items():
             v = overlap_volume(sheet, m)
             if v > 1.0:
-                issues.append(f"the sheet runs {v:.0f} mm3 into {n}")
+                issues.append(f"the {ref_name} runs {v:.0f} mm3 into {n}")
         b = sheet.bounds
-        md.append(f"- Sheet: {b[1][2] - b[0][2]:.0f} tall, z {b[0][2]:.0f}..{b[1][2]:.0f}; "
-                  f"blank {P.ENC_SHEET_BLANK[0]} x {P.ENC_SHEET_BLANK[1]} mm (the arc plus the forks' slots, 0.5 play at each end).")
-        if abs((b[1][2] - b[0][2]) - P.ENC_SHEET_BLANK[1]) > 0.5:
-            issues.append(f"the sheet is {b[1][2] - b[0][2]:.0f} tall but the blank says {P.ENC_SHEET_BLANK[1]}")
+        md.append(f"- {ref_name.capitalize()}: {b[1][2] - b[0][2]:.0f} tall, z {b[0][2]:.0f}..{b[1][2]:.0f}; "
+                  f"blank {blank[0]} x {blank[1]} mm (a full tube, 20 overlap, 1 play in height).")
+        if abs((b[1][2] - b[0][2]) - 1.0 - blank[1]) > 0.6:
+            issues.append(f"the {ref_name} is {b[1][2] - b[0][2]:.0f} tall but the blank says {blank[1]} (+1)")
 
     # 3. the neck against Cogley's head at rest
     neck = parts.get("neck")
@@ -183,8 +181,8 @@ def main():
 
     # 5. what lives in the base and the cap
     md += ["", "## What lives in the base and the cap", ""]
-    items = {n: m for n, m in refs.items() if n != "sheet"}
-    deck_under = P.ENC_BASE_Z[1]                 # -52: the deck ring's underside
+    items = {n: m for n, m in refs.items() if n not in ("sheet", "band")}
+    deck_under = P.ENC_TOP_Z - P.ENC_PLATE_T     # the deck's underside
     for n, m in items.items():
         b = m.bounds
         for pn, pm in parts.items():
@@ -208,9 +206,16 @@ def main():
 
     # 6. bed fit
     bed = K.printer()["bed"]
-    md += ["", "## Pieces on the bed", "", "| part | x | y | z |", "|---|---|---|---|"]
+    table = K.parts_table()
+    md += ["", "## Pieces on the bed (in the print pose)", "", "| part | x | y | z |", "|---|---|---|---|"]
     for n, m in parts.items():
-        e = m.extents
+        pm = m.copy()
+        for axis, deg in enumerate(table.get(n, {}).get("print_rotate", [0, 0, 0])):
+            if deg:
+                ax = [0, 0, 0]
+                ax[axis] = 1
+                pm.apply_transform(trimesh.transformations.rotation_matrix(np.radians(deg), ax))
+        e = pm.extents
         md.append(f"| {n} | {e[0]:.0f} | {e[1]:.0f} | {e[2]:.0f} |")
         if sorted(e)[2] > bed[2] or sorted(e)[1] > bed[1] or sorted(e)[0] > bed[0]:
             issues.append(f"{n} ({e[0]:.0f} x {e[1]:.0f} x {e[2]:.0f}) does not fit the bed")
@@ -230,11 +235,9 @@ def main():
     return 0
 
 
-COLOURS = {"base": (0.55, 0.60, 0.66), "ring": (0.62, 0.66, 0.72), "tray": (0.45, 0.50, 0.56), "deck": (0.45, 0.50, 0.56),
-           "pedestal": (0.60, 0.66, 0.72), "grille": (0.25, 0.28, 0.32), "hatch": (0.25, 0.28, 0.32),
-           "column": (0.35, 0.40, 0.45), "capring": (0.62, 0.66, 0.72), "cap": (0.55, 0.60, 0.66),
-           "captop": (0.62, 0.66, 0.72), "lid": (0.45, 0.50, 0.56), "neck": (0.80, 0.64, 0.30)}
-REF_COLOURS = {"sheet": (0.55, 0.80, 0.95), "speaker": (0.85, 0.85, 0.85), "bank": (0.96, 0.76, 0.48),
+COLOURS = {"cap": (0.55, 0.60, 0.66), "top": (0.62, 0.66, 0.72), "bottom": (0.45, 0.50, 0.56), "tray": (0.45, 0.50, 0.56),
+           "pedestal": (0.60, 0.66, 0.72), "grille": (0.25, 0.28, 0.32), "hatch": (0.25, 0.28, 0.32), "neck": (0.80, 0.64, 0.30)}
+REF_COLOURS = {"sheet": (0.55, 0.80, 0.95), "band": (0.30, 0.33, 0.38), "speaker": (0.85, 0.85, 0.85), "bank": (0.96, 0.76, 0.48),
                "buck": (0.97, 0.86, 0.63), "board_1": (0.62, 0.83, 0.62), "board_2": (0.62, 0.83, 0.62),
                "webcam": (0.15, 0.15, 0.15)}
 
@@ -266,25 +269,23 @@ def render(parts, refs, heads, his, out_dir):
     c = (b[0] + b[1]) / 2
     sc = 0.55 * float(max(b[1] - b[0]))
     everything = list(parts)
-    no_sheet_front = [n for n in everything]
     tiles = []
-    tiles.append(("front, with the sheet", RV.render(actors(everything, ("sheet",)), c, (0, 1, 0), (0, 0, 1), sc)))
-    tiles.append(("3/4 from the front right", RV.render(actors(everything, ("sheet",)), c, (-0.8, 1.0, 0.3), (0, 0, 1), sc)))
-    tiles.append(("from the back: the column", RV.render(actors(everything, ("sheet",)), c, (0, -1, 0.1), (0, 0, 1), sc)))
-    tiles.append(("left side, sheet off", RV.render(actors(no_sheet_front), c, (1, 0, 0), (0, 0, 1), sc)))
-    base_names = [n for n in everything if n.startswith(("enc_base", "enc_ring", "enc_tray", "enc_grille", "enc_hatch"))]
+    tiles.append(("front, with the sheet and the band", RV.render(actors(everything, ("sheet", "band")), c, (0, 1, 0), (0, 0, 1), sc)))
+    tiles.append(("3/4 from the front right", RV.render(actors(everything, ("sheet", "band")), c, (-0.8, 1.0, 0.3), (0, 0, 1), sc)))
+    tiles.append(("from the back (see-through)", RV.render(actors(everything, ("sheet", "band")), c, (0, -1, 0.1), (0, 0, 1), sc)))
+    tiles.append(("left side, sheet and band off", RV.render(actors(everything), c, (1, 0, 0), (0, 0, 1), sc)))
+    base_names = [n for n in everything if n.startswith(("enc_bottom", "enc_tray", "enc_grille", "enc_hatch", "enc_pedestal"))]
     bc = np.array([0.0, AY, -95.0])
     tiles.append(("base from above, deck off: the bay", RV.render(actors(base_names, ("speaker", "bank", "buck", "board_1", "board_2"), head=False),
                                                                  bc, (0.2, 0.3, 1.0), (0, 1, 0), 200.0)))
-    tiles.append(("base, deck and pedestal, 3/4", RV.render(actors(base_names + ["enc_deck", "enc_pedestal"], (), head=False),
-                                                           bc, (0.8, 1.0, 0.5), (0, 0, 1), 200.0)))
-    cap_names = [n for n in everything if n.startswith(("enc_cap", "enc_lid"))]
-    cc = np.array([0.0, AY, 440.0])
-    tiles.append(("cap from below: slit ring, webcam", RV.render(actors(cap_names, ("webcam",), head=False), cc, (0.2, 0.4, -1.0), (0, 1, 0), 200.0)))
-    tiles.append(("cap from the front, lid off", RV.render(actors([n for n in cap_names if n != "enc_lid"], ("webcam",), head=False),
-                                                         cc, (0.3, 1.0, 0.5), (0, 0, 1), 200.0)))
+    tiles.append(("base with the deck and the band, 3/4", RV.render(actors(base_names + ["enc_top_F", "enc_top_B"], ("band",), head=False),
+                                                                   bc, (0.8, 1.0, 0.5), (0, 0, 1), 200.0)))
+    cap_names = [n for n in everything if n.startswith("enc_cap")]
+    cc = np.array([0.0, AY, 420.0])
+    tiles.append(("cap from below: lips, ribs, webcam", RV.render(actors(cap_names, ("webcam",), head=False), cc, (0.2, 0.4, -1.0), (0, 1, 0), 200.0)))
+    tiles.append(("cap from the front", RV.render(actors(cap_names, ("webcam",), head=False), cc, (0.3, 1.0, 0.5), (0, 0, 1), 200.0)))
     nc = np.array([0.0, AY - 30.0, 110.0])
-    tiles.append(("neck and pedestal with Cogley's mouth and frame", RV.render(actors(["neck", "enc_pedestal", "enc_deck"], (), head=False, his_groups={"mouth", "frame"}),
+    tiles.append(("neck and pedestal with Cogley's mouth and frame", RV.render(actors(["neck", "enc_pedestal", "enc_top_F", "enc_top_B"], (), head=False, his_groups={"mouth", "frame"}),
                                                                              nc, (1.0, 0.3, 0.2), (0, 0, 1), 160.0)))
     if "neck" in parts:
         jaw = [m for n, _, _, m in his if any(n.startswith(j) for j in JAW_PARTS)]
@@ -292,13 +293,12 @@ def render(parts, refs, heads, his, out_dir):
         acts = actors(["neck", "enc_pedestal"], (), head=False, his_groups={"frame"})
         acts.append(RV.surface_actor(L.poly(jm), (0.85, 0.35, 0.30)))
         tiles.append((f"jaw open {P.JAW_OPEN_DEG:.0f} deg against the neck, from the left", RV.render(acts, nc, (1.0, 0.0, 0.0), (0, 0, 1), 140.0)))
-    col = [n for n in everything if n.startswith("enc_column")]
-    tiles.append(("column pieces from inside (forks, laps, flanges)", RV.render(actors(col, (), head=False),
-                                                                             np.array([0.0, AY - 120.0, 180.0]), (0.0, 1.0, 0.2), (0, 0, 1), 260.0)))
+    tiles.append(("deck halves from above: lip, rim, ribs, lead slot", RV.render(actors(["enc_top_F", "enc_top_B"], (), head=False),
+                                                                           np.array([0.0, AY, -40.0]), (0.1, 0.2, 1.0), (0, 1, 0), 170.0)))
     return L.sheet(tiles, out_dir, "enclosure", cols=4, header_lines=[
-        f"Enclosure M8: D {2 * P.ENC_R_OUT:.0f} canister, window D {2 * P.ENC_SHEET_R:.0f}, z {P.ENC_BASE_Z[0]:.0f}..{P.ENC_CAP_WALL_Z[1] + P.ENC_CAP_TOP_RING[1]:.0f}; "
+        f"Enclosure M8 v1: D {2 * P.ENC_R_OUT:.0f} canister, window D {2 * P.ENC_SHEET_R:.0f}, z {P.ENC_TRAY_Z:.0f}..{P.ENC_CAP_Z + P.ENC_CAP_T:.0f}; "
         f"the neck spine (D25) behind the jaw",
-        "walls and rings in quadrants, the column in 2 x 2; the sheet (blue) is a reference shell, not a print"])
+        "11 thin prints; the window sheet (blue) and the base's band (dark) are PETG, not prints"])
 
 
 if __name__ == "__main__":
