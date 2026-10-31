@@ -394,16 +394,25 @@ def main():
 
     writer = None
     if args.head:
-        import mouth
-        writer = mouth.Mouth(args.head)
-        print(f"Head: mouth board on {writer.port} ({writer.program}).")
+        try:
+            import mouth
+            writer = mouth.Mouth(args.head, eyes=False)   # the engine is the eyes: no gaze.py beside it
+            print(f"Head: mouth board on {writer.port} ({writer.program}).")
+        except (ImportError, OSError, Exception) as e:  # the page still comes up, drawn only
+            print(f"\nNO HEAD: {type(e).__name__}: {e}\n"
+                  "  pyserial missing: run with  uv run --no-project --with pyserial --with numpy ...\n"
+                  "  no board: plug the mouth board's USB in, or give its port: --head /dev/cu.usbmodemXXXX\n"
+                  "  port busy: close the slider windows, web.py or chat.py first (or use the body server's\n"
+                  "  socket://127.0.0.1:8811)\n"
+                  "Carrying on without the head: the face is drawn only.\n")
+            writer = None
     Engine = load_engine(args.stand_in)
     engine = Engine(writer=writer)
     engine.start()
     server, preview = serve(engine, args.port, writer.port if writer else None)
     kind = "the stand-in engine" if isinstance(engine, StandIn) else "the engine"
     print(f"\nFrank's face ({kind}, {'the head on' if writer else 'no servos'}) is at "
-          f"http://localhost:{server.server_address[1]}  (Ctrl+C here to stop)\n"
+          f"http://127.0.0.1:{server.server_address[1]}  (Ctrl+C here to stop)\n"
           f"Talk feeds his voice through {preview.hook}.")
     try:
         while True:
