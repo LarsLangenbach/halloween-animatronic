@@ -45,7 +45,7 @@ export function mount(el) {
   const prompt = els.prompt = h("textarea", { rows: 3, placeholder: "he hears a terrible pun, groans, then can't help smiling",
     onkeydown: e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) generate(); } });
   els.gen = h("button", { class: "primary", onclick: generate }, "animate");
-  els.genState = h("span", { class: "small muted" }, S.robots.key ? "Claude writes it in about 10 s, then it plays" : "no key in frank/.env: only the examples play");
+  els.genState = h("span", { class: "small muted" }, S.robots.online ? "online the examples below play; new prompts run in the laptop app" : S.robots.key ? "Claude writes it in about 10 s, then it plays" : "no key in frank/.env: only the examples play");
   const examples = S.library.filter(a => a.source === "example" && a.prompt).map(a =>
     h("button", { class: "chip", onclick: () => { prompt.value = a.prompt; generate(); } }, a.prompt));
   const promptCard = h("div", { class: "card" },

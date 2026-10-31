@@ -120,7 +120,7 @@ async function main() {
   for (const b of document.querySelectorAll(".steps button")) b.onclick = () => go(b.dataset.step);
   S.robots = await get("/s/robots");
   S.meta = await get("/engine/meta");
-  $("key-pill").textContent = S.robots.key ? "claude: on" : "claude: no key";
+  $("key-pill").textContent = S.robots.online ? "online: examples only" : S.robots.key ? "claude: on" : "claude: no key";
   $("key-pill").className = S.robots.key ? "pill" : "pill warn";
   await loadLibrary();
   let saved = null;

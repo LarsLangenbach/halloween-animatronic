@@ -46,8 +46,10 @@ export function mount(el) {
     h("h2", {}, "upload your cad"),
     h("div", { class: "big" }, "Another animatronic"),
     h("p", { class: "muted" }, "The onboarding tool converts the CAD, asks what the files don't say, and lets you click the mechanism together: each horn, the parts it turns, each link. That gives the twin, the limits and the servo map."),
-    h("label", { class: "inline" }, "name ", name), drop, input, list, msg,
-    h("div", { class: "row", style: { marginTop: "auto" } }, next));
+    ...(S.robots.online
+      ? [h("p", { class: "warnt" }, "Uploading CAD runs in the laptop app (studio/app.py): converting STEP needs build123d, which a browser can't run. Here, try it with Frank.")]
+      : [h("label", { class: "inline" }, "name ", name), drop, input, list, msg,
+         h("div", { class: "row", style: { marginTop: "auto" } }, next)]));
 
   const others = S.robots.others.length ? h("div", { class: "card" },
     h("div", { class: "card-h" }, h("h2", {}, "robots already onboarded")),

@@ -118,21 +118,26 @@ class Runtime:
     def stop(self):
         self.running = False
 
+    def step(self):
+        """One tick: the voice, the mouth, the player, the engine, the boards, then the hooks.
+        The ticker calls it here; in the browser (studio/online) the page does, 50 times a second."""
+        with self.lock:
+            now = time.monotonic()
+            try:
+                B.tick()
+            except Exception as e:      # the face never stops for a bug
+                print(f"tick: {type(e).__name__}: {e}")
+            for f in list(self.on_tick):
+                try:
+                    f(now)
+                except Exception as e:
+                    print(f"tick hook: {type(e).__name__}: {e}")
+
     def _run(self):
         period = 1.0 / HZ
         nxt = time.monotonic()
         while self.running:
-            with self.lock:
-                now = time.monotonic()
-                try:
-                    B.tick()
-                except Exception as e:      # the face never stops for a bug
-                    print(f"tick: {type(e).__name__}: {e}")
-                for f in list(self.on_tick):
-                    try:
-                        f(now)
-                    except Exception as e:
-                        print(f"tick hook: {type(e).__name__}: {e}")
+            self.step()
             nxt += period
             time.sleep(max(0.0, nxt - time.monotonic()))
             if nxt < time.monotonic() - 0.5:   # fell far behind (a breakpoint, a sleep): catch up
