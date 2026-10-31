@@ -167,7 +167,7 @@ def start_face(chat, port=None, face=True, still_eyes=False, editor=8820):
         writer = mouth.Mouth(port, log=lambda **k: chat.write(event="mouth", **k),
                              eyes=not face and not still_eyes)
         print(f"{DIM}Mouth on {writer.port} ({writer.program}).{OFF}")
-    chat.engine = None
+    chat.engine = chat.face_api = None
     if face:
         from engine import Engine
         chat.engine = Engine(writer=writer, log=lambda **k: chat.write(event="face", **k)).start()
@@ -177,10 +177,13 @@ def start_face(chat, port=None, face=True, still_eyes=False, editor=8820):
             chat.engine.gaze.pause()
         print(f"{DIM}Face engine on ({'the head' if writer else 'no head: preview only'}); "
               f"eyes {chat.engine.gaze.state}.{OFF}")
-        if editor:  # the engine's editor page, live on this session (frank/engine/preview.py)
+        # The editor's routes on this engine (frank/engine/preview.py): web.py's page asks for
+        # them under /engine/, and the editor page serves them on its own port.
+        from engine import preview as engine_page
+        chat.face_api = engine_page.Api(chat.engine, head=writer.port if writer else None, live=True)
+        if editor:  # the engine's editor page, live on this session
             try:
-                from engine import preview as engine_page
-                engine_page.serve(chat.engine, editor, head=writer.port if writer else None, live=True)
+                engine_page.serve(chat.engine, editor, api=chat.face_api)
                 print(f"{DIM}Face editor, live: http://127.0.0.1:{editor}{OFF}")
             except OSError as e:
                 print(f"{DIM}(no face editor on {editor}: {e}; is preview.py still running?){OFF}")

@@ -5,11 +5,16 @@ Frank in the browser: a page on this laptop to watch him and talk to him.
     then open http://localhost:8800
 
 Everything still runs here in Python, through chat.py's Chat: the camera, the microphone,
-the voice and the brain. The page (web.html) shows what his camera sees with the faces
-marked, who is in view, and the conversation as it happens: what he hears, what he says,
-the face he makes and what his senses report. It has his switches too: type to him,
-microphone, voice, a new conversation, the brain, a silence, a note, feedback, enrolling
-someone and forgetting people. The terminal shows what chat.py always shows.
+the voice and the brain. The page (web.html) shows him as the 3D body twin (perform/body.py
+on 8810, when it runs), what his camera sees with the faces marked, and the conversation as
+it happens: what he hears, what he says, the face he makes and what his senses report. Its
+side panel has who is in view and who is remembered, the face engine's buttons (the face
+editor's emotion map, tags, states, events, visitor pad and fake voice, asked for under
+/engine/) and
+its readouts (mood, tag weights, joints, the last 10 s, its decisions). It has his switches
+too: type to him, microphone, voice, a new conversation, the brain, the speaker, a silence,
+a note, feedback, enrolling someone and forgetting people. The terminal shows what chat.py
+always shows.
 
     --talk        microphone on from the start   --mute       no voice
     --no-see      no camera                      --video F    a clip instead of the camera
@@ -133,13 +138,20 @@ def handler(chat, hub, people):
             elif path == "/frame":  # the newest preview picture; the page asks 10 times a second
                 jpeg = chat.eyes.jpeg if chat.eyes else None
                 self._send(200, jpeg, "image/jpeg") if jpeg else self._send(204, b"", "image/jpeg")
-            elif path == "/face":  # the face engine's joints, face and state; the page asks 15 times a second
-                engine = getattr(chat, "engine", None)
-                self._json(engine.snapshot() if engine else {})
-            elif path == "/face_draw.js":
-                self._send(200, (HERE / "engine" / "face_draw.js").read_bytes(), "text/javascript; charset=utf-8")
+            elif path.startswith("/engine/"):  # the face engine: /engine/meta, /engine/snapshot (15 a second)
+                self._engine(path, None)
             else:
                 self._send(404, b"not found", "text/plain")
+
+        def _engine(self, path, body):
+            """The face editor's routes (engine/preview.py's Api) under /engine/; 404 with no engine."""
+            api = getattr(chat, "face_api", None)
+            sub = path[len("/engine"):]
+            answer = (api.get(sub) if body is None else api.post(sub, body)) if api else None
+            if answer is None:
+                return self._send(404, b"no face engine" if not api else b"not found", "text/plain")
+            from engine.preview import clean
+            self._json(clean(answer[1]), answer[0])
 
         def do_POST(self):
             if not self._local() or self.headers.get("X-Frank") != "1":
@@ -148,7 +160,11 @@ def handler(chat, hub, people):
                 body = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
             except json.JSONDecodeError:
                 return self._json(dict(ok=False, why="bad request"), 400)
-            if self.path == "/say":  # a line to Frank, or a chat.py command (/new, /talk, ...)
+            if not isinstance(body, dict):
+                return self._json(dict(ok=False, why="bad request"), 400)
+            if self.path.startswith("/engine/"):  # a tag, state, event, the visitor pad, the fake voice
+                self._engine(self.path, body)
+            elif self.path == "/say":  # a line to Frank, or a chat.py command (/new, /talk, ...)
                 text = str(body.get("text", "")).strip()
                 if text and text.split()[0] not in ("/quit", "/exit", "/q"):
                     chat.events.put(("typed", text))

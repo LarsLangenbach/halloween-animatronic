@@ -4,110 +4,284 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Frank</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23020704'/%3E%3Cpath d='M9 1 3 9h4l-1 6 6-8H8z' fill='%237cf0a0'/%3E%3C/svg%3E">
 <style>
+  /* A green-phosphor terminal: one green on black, inverse video for labels and what is on,
+     amber for "busy", red for trouble and for the emotion map's steered point. */
   :root {
-    --bg: #0b0f0d; --panel: #121815; --panel-2: #18201c; --line: #25302a;
-    --text: #e6ece8; --muted: #8fa198; --faint: #5f6f67;
-    --accent: #9fe07a; --accent-ink: #0b0f0d;
-    --frank: #15241a; --frank-line: #2c4a33; --visitor: #1b2228; --visitor-line: #2c3944;
-    --known: #7ee08a; --possible: #f0b44c; --stranger: #7fb6ff; --far: #5f6f67;
-    --warn: #f0b44c; --danger: #ff6b5e;
-    --radius: 12px;
+    --bg: #020704; --panel: #040b06; --panel-2: #08150c;
+    --fg: #7cf0a0; --hi: #d4ffe2; --dim: #4f9a6b; --faint: #24492f; --line: #2b6542; --ink: #021006;
+    --warn: #ffc857; --danger: #ff5a4a; --cyan: #5ad1e6;
+    --known: #7cf0a0; --possible: #ffc857; --stranger: #5ad1e6; --far: #3a6e4c;
+    --c1: #7cf0a0; --c2: #d4ffe2; --c3: #ffc857; --c4: #5ad1e6;
+    --mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", Consolas, "Courier New", monospace;
+    --header: 50px; --footer: 30px;
     color-scheme: dark;
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
   html, body { margin: 0; height: 100%; }
-  body { background: var(--bg); color: var(--text); font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; }
+  body { background: var(--bg); color: var(--fg); font: 13px/1.5 var(--mono); }
+  ::selection { background: var(--fg); color: var(--ink); }
   button, input, select { font: inherit; color: inherit; }
-  button { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
-  button:hover { border-color: var(--faint); }
-  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-  .toggle[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
-  input[type="text"], input:not([type]), select { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
-  .muted { color: var(--muted); }
-  .small { font-size: 13px; }
+  :focus-visible { outline: 1px dashed var(--hi); outline-offset: 2px; }
+  a { color: var(--hi); }
+  .dim { color: var(--dim); }
+  .small { font-size: 12px; }
+  time { font-variant-numeric: tabular-nums; }
+  kbd { font: inherit; color: var(--hi); }
+  kbd::before { content: "["; } kbd::after { content: "]"; }
 
-  .top { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;
-         padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 2; }
-  .brand { display: flex; align-items: center; gap: 10px; }
-  .logo { font-weight: 800; letter-spacing: .18em; font-size: 18px; color: var(--accent); }
-  .pill { border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-size: 13px; color: var(--muted); white-space: nowrap; }
-  .pill.on { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); font-weight: 600; }
-  .pill.busy { color: var(--warn); border-color: var(--warn); }
-  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .controls label { display: flex; gap: 6px; align-items: center; color: var(--muted); font-size: 13px; }
+  /* ----- controls ----- */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 30px; padding: 0 10px;
+         background: var(--bg); border: 1px solid var(--line); border-radius: 0; cursor: pointer;
+         text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+  .btn:hover { border-color: var(--fg); background: var(--panel-2); }
+  .btn:disabled { color: var(--faint); border-color: var(--faint); background: var(--bg); cursor: default; }
+  .btn.sm { height: 26px; padding: 0 8px; font-size: 12px; }
+  .btn.quiet { border-color: transparent; }
+  .btn.quiet:hover { border-color: var(--line); }
+  .btn.danger:hover { color: var(--danger); border-color: var(--danger); }
+  .btn.on, .toggle[aria-pressed="true"] { background: var(--fg); border-color: var(--fg); color: var(--ink); }
+  .btn.on kbd, .toggle[aria-pressed="true"] kbd { color: var(--ink); }
+  .btn.flash { background: var(--hi); border-color: var(--hi); color: var(--ink); }
+  input[type="text"], select { height: 30px; padding: 0 8px; background: var(--bg); color: var(--hi); border: 1px solid var(--line); border-radius: 0; }
+  input[type="text"]:focus, select:focus { outline: none; border-color: var(--fg); }
+  input[type="text"]::placeholder { color: var(--dim); }
+  input[type="checkbox"] { appearance: none; width: 13px; height: 13px; margin: 0; border: 1px solid var(--fg); background: var(--bg); cursor: pointer; flex: none; }
+  input[type="checkbox"]:checked { background: var(--fg); box-shadow: inset 0 0 0 2px var(--bg); }
+  input[type="range"] { accent-color: var(--fg); width: 110px; }
+  .check { display: inline-flex; align-items: center; gap: 6px; color: var(--dim); text-transform: uppercase; font-size: 12px; cursor: pointer; user-select: none; }
 
-  .grid { display: grid; grid-template-columns: minmax(340px, 560px) minmax(0, 1fr); gap: 16px; padding: 16px;
-          height: calc(100vh - 62px); }
-  .col { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
-  .left { overflow-y: auto; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
-  .card-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0; font-weight: 600; }
+  /* ----- header and the key bar ----- */
+  .top { position: sticky; top: 0; z-index: 10; min-height: var(--header); display: flex; flex-wrap: wrap; align-items: center;
+         justify-content: space-between; gap: 8px 16px; padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--bg); }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo { background: var(--fg); color: var(--ink); font-weight: 700; letter-spacing: .32em; padding: 2px 6px 2px 10px; }
+  .mode { border: 1px solid var(--line); padding: 2px 8px; color: var(--dim); text-transform: uppercase; white-space: nowrap; }
+  .mode .txt { color: var(--fg); }
+  .mode.on { background: var(--fg); border-color: var(--fg); color: var(--ink); }
+  .mode.on .txt { color: var(--ink); }
+  .mode.busy { border-color: var(--warn); color: var(--warn); }
+  .mode.busy .txt { color: var(--warn); }
+  .mode.busy .txt::after { content: "_"; animation: blink 1s steps(1) infinite; }
+  .mode.bad { border-color: var(--danger); color: var(--danger); }
+  .mode.bad .txt { color: var(--danger); }
+  @keyframes blink { 50% { opacity: 0; } }
+  .controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; position: relative; }
+  .keys { position: sticky; bottom: 0; z-index: 10; height: var(--footer); display: flex; align-items: center; gap: 20px; padding: 0 14px;
+          border-top: 1px solid var(--line); background: var(--bg); color: var(--dim); font-size: 12px; white-space: nowrap; overflow: hidden; }
+  .keys kbd { margin-right: 5px; }
 
-  .cam { position: relative; aspect-ratio: 16 / 9; background: #000; border-radius: 8px; overflow: hidden; }
+  .popover { position: absolute; right: 0; top: calc(100% + 8px); width: 330px; max-width: calc(100vw - 28px); z-index: 20;
+             display: flex; flex-direction: column; gap: 14px; padding: 12px; background: var(--bg); border: 1px solid var(--fg);
+             box-shadow: 5px 5px 0 var(--faint); }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field > .label { font-size: 12px; color: var(--dim); text-transform: uppercase; }
+  .field .row { display: flex; gap: 6px; }
+  .field .row select { flex: 1; min-width: 0; }
+  .seg { display: flex; }
+  .seg button { flex: 1; height: 28px; border: 1px solid var(--line); background: var(--bg); color: var(--dim); cursor: pointer; text-transform: uppercase; font-size: 12px; }
+  .seg button + button { border-left: 0; }
+  .seg button[aria-pressed="true"] { background: var(--fg); border-color: var(--fg); color: var(--ink); font-weight: 700; }
+  .links { display: flex; gap: 16px; flex-wrap: wrap; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 12px; text-transform: uppercase; }
+
+  /* ----- layout: Frank | the conversation | the side panel ----- */
+  .app { display: grid; gap: 10px; padding: 10px; height: calc(100vh - var(--header) - var(--footer));
+         grid-template-columns: minmax(340px, 1.1fr) minmax(360px, 1fr) minmax(320px, 400px);
+         grid-template-areas: "stage chat side"; }
+  .card { background: var(--panel); border: 1px solid var(--line); min-width: 0; }
+  .card-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 38px; padding: 5px 10px;
+            border-bottom: 1px solid var(--line); }
+  h2 { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; background: var(--fg); color: var(--ink); padding: 1px 8px; white-space: nowrap; }
+  h3 { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 0 8px;
+       font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--hi); }
+  h3 .note { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--dim); font-size: 11.5px; text-align: right; }
+
+  /* ----- Frank: the 3D twin and his camera ----- */
+  .stage-col { grid-area: stage; display: flex; flex-direction: column; gap: 10px; min-height: 0; min-width: 0; }
+  .stage { position: relative; flex: 1; min-height: 280px; overflow: hidden; background: #000; }
+  .stage iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+  .crt::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+                background: repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0, 0, 0, .22) 2px 3px); }
+  body.phosphor .stage iframe, body.phosphor .cam img { filter: grayscale(1) sepia(1) hue-rotate(78deg) saturate(2.4) brightness(.95) contrast(1.15); }
+  .twin-off { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+              padding: 20px; text-align: center; color: var(--dim);
+              background-image: radial-gradient(var(--faint) 1px, transparent 1.3px); background-size: 4px 4px; }
+  .twin-off > * { background: var(--bg); }
+  .twin-off b { background: var(--fg); color: var(--ink); padding: 2px 10px; letter-spacing: .2em; }
+  .twin-off span { padding: 2px 6px; }
+  .twin-off code { display: block; max-width: 100%; overflow-x: auto; white-space: nowrap; font: 12px var(--mono); color: var(--hi);
+                   border: 1px solid var(--line); padding: 5px 10px; user-select: all; }
+  .twin-off code::before { content: "> "; color: var(--dim); }
+  .chipbox { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; background: var(--bg); border: 1px solid var(--line);
+             font-size: 12px; text-transform: uppercase; white-space: nowrap; color: var(--fg); text-decoration: none; }
+  a.chipbox:hover, button.chipbox:hover { border-color: var(--fg); }
+  button.chipbox { cursor: pointer; }
+  button.chipbox[aria-pressed="true"] { background: var(--fg); border-color: var(--fg); color: var(--ink); }
+  .chipbox.inv { background: var(--fg); border-color: var(--fg); color: var(--ink); }
+  .chipbox.steer { background: var(--danger); border-color: var(--danger); color: var(--ink); }
+  .chipbox .k { color: var(--dim); }
+  .stage .top-r { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; z-index: 1; }
+  .stage .bottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; display: flex; align-items: flex-end; justify-content: space-between;
+                   gap: 8px; padding: 30px 8px 8px; pointer-events: none; background: linear-gradient(transparent, rgba(0, 0, 0, .85)); }
+  .stage .bottom > div { display: flex; gap: 6px; flex-wrap: wrap; }
+  .led { width: 7px; height: 7px; background: var(--faint); flex: none; }
+  .inv .led { background: var(--ink); }
+  .led.thinking, .led.speaking { animation: blink 1s steps(1) infinite; }
+  .led.interrupted, .led.error { background: var(--danger) !important; }
+  .stage .bottom .mood { display: flex; flex: none; flex-wrap: nowrap; gap: 8px; }
+  .mood span { display: inline-flex; align-items: center; gap: 4px; }
+  .meter { position: relative; width: 36px; height: 6px; background: repeating-linear-gradient(90deg, var(--faint) 0 1px, transparent 1px 3px); }
+  .meter::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--dim); }
+  .meter i { position: absolute; top: 0; bottom: 0; background: var(--hi); }
+
+  .cam-card { flex: none; }
+  .cam-card .card-h { border-bottom: 0; }
+  .cam-card .body { padding: 0 10px 10px; }
+  .cam-card.folded .body, .cam-card.off .body, .cam-card.off .fold { display: none; }
+  .cam { position: relative; aspect-ratio: 16 / 9; max-height: 32vh; margin: 0 auto; background: #000; border: 1px solid var(--line); overflow: hidden; }
   .cam img { width: 100%; height: 100%; object-fit: contain; display: block; }
   .cam img:not([src]) { visibility: hidden; }
-  .nocam { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); text-align: center;
-           padding: 24px; background: rgba(0, 0, 0, .78); line-height: 1.5; }
-  .nocam.problem { color: var(--warn); }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip { font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; color: var(--muted); }
+  .nocam { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; padding: 20px; text-align: center; color: var(--dim);
+           background: rgba(0, 0, 0, .85); text-transform: uppercase; font-size: 12px; }
+  .nocam.problem { color: var(--warn); text-transform: none; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+  .chip { font-size: 11px; border: 1px solid var(--line); padding: 0 5px; color: var(--dim); text-transform: uppercase; white-space: nowrap; }
+  .chip.ok { color: var(--fg); border-color: var(--line); }
   .chip.warn { color: var(--warn); border-color: var(--warn); }
   .chip.danger { color: var(--danger); border-color: var(--danger); }
-  .chip.ok { color: var(--known); border-color: #2f5a37; }
+  .fold { width: 26px; padding: 0; }
+  .cam-card.folded .fold .arrow { display: inline-block; transform: rotate(-90deg); }
 
-  .rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-  .rows li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--panel-2); border-radius: 8px; }
-  .rows .empty { color: var(--faint); background: none; padding: 4px 0; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
-  .who { flex: 1; min-width: 0; }
-  .who b { font-weight: 600; }
-  .who .meta { display: block; font-size: 13px; color: var(--muted); }
-  .talking { font-size: 12px; color: var(--accent); animation: pulse 1s ease-in-out infinite; }
-  @keyframes pulse { 50% { opacity: .35; } }
-  .role { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; margin-left: 6px; }
-  .enrol { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
-  .enrol input:not([type]) { flex: 1; min-width: 120px; }
-  .enrol label { color: var(--muted); font-size: 13px; display: flex; gap: 4px; align-items: center; }
-
-  .convo { display: flex; flex-direction: column; min-height: 0; }
-  .log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px 2px 8px; min-height: 200px; }
+  /* ----- the conversation: a transcript ----- */
+  .chat { grid-area: chat; display: flex; flex-direction: column; min-height: 0; }
+  .log { flex: 1; min-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 9px; padding: 10px 12px; }
   .log.no-senses .sense { display: none; }
-  .msg { max-width: 82%; padding: 9px 12px; border-radius: 12px; border: 1px solid; }
-  .msg .head { font-size: 12px; color: var(--muted); margin-bottom: 3px; display: flex; gap: 8px; align-items: baseline; }
-  .msg .head b { color: var(--text); font-weight: 600; }
-  .frank { align-self: flex-start; background: var(--frank); border-color: var(--frank-line); }
-  .frank .head b { color: var(--accent); }
-  .visitor { align-self: flex-end; background: var(--visitor); border-color: var(--visitor-line); }
-  .msg .tag { display: inline-block; font-size: 12px; color: var(--accent); border: 1px solid var(--frank-line); border-radius: 999px; padding: 0 7px; margin: 0 4px 2px 0; vertical-align: 1px; }
-  .msg .call { display: block; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); margin-top: 4px; }
-  .msg .foot { font-size: 12px; color: var(--faint); margin-top: 5px; }
-  .msg.cut { border-style: dashed; }
-  .msg.cut .foot::before { content: "interrupted · "; color: var(--warn); }
-  .sense, .sys, .divider { font-size: 13px; color: var(--muted); align-self: stretch; }
-  .sense { padding-left: 10px; border-left: 2px solid var(--line); }
-  .sense .react { color: var(--accent); margin-left: 6px; font-size: 12px; }
-  .sys.tool { color: var(--text); }
+  .log:empty::before { content: "NOTHING SAID YET. TYPE BELOW, OR SWITCH THE MIC ON."; margin: auto; color: var(--dim); }
+  .msg { padding: 1px 0 2px 10px; border-left: 2px solid var(--line); overflow-wrap: anywhere; }
+  .msg .head { display: flex; gap: 8px; align-items: baseline; font-size: 11.5px; color: var(--dim); text-transform: uppercase; margin-bottom: 1px; }
+  .msg .head b { font-weight: 700; padding: 0 5px; }
+  .frank { border-left-color: var(--fg); }
+  .frank .head b { background: var(--fg); color: var(--ink); }
+  .visitor { border-left-color: var(--hi); color: var(--hi); }
+  .visitor .head b { border: 1px solid var(--hi); color: var(--hi); padding: 0 4px; }
+  .msg .tag { display: inline-block; font-size: 11px; color: var(--dim); border: 1px solid var(--dim); padding: 0 4px; margin: 0 5px 2px 0;
+              text-transform: uppercase; vertical-align: 1px; line-height: 1.35; }
+  .msg .call { display: block; color: var(--dim); font-size: 12px; margin-top: 2px; }
+  .msg .call::before { content: "$ "; }
+  .msg .foot { font-size: 11px; color: var(--faint); margin-top: 2px; }
+  .msg.cut { border-left-style: dashed; }
+  .msg.cut .foot::before { content: "INTERRUPTED · "; color: var(--warn); }
+  .sense { padding-left: 10px; border-left: 2px dotted var(--faint); color: var(--dim); font-size: 12px; }
+  .sense::before { content: "* "; }
+  .sense .react { color: var(--fg); margin-left: 6px; text-transform: uppercase; font-size: 11px; }
+  .sys { color: var(--dim); font-size: 12px; }
+  .sys::before { content: "-- "; }
+  .sys.tool { color: var(--hi); }
   .sys.error { color: var(--danger); }
-  .ignored { align-self: flex-end; max-width: 82%; font-size: 13px; color: var(--faint); text-align: right; }
-  .ignored q { font-style: italic; color: var(--muted); }
+  .sys.error::before { content: "!! "; }
+  .ignored { color: var(--faint); font-size: 12px; padding-left: 12px; }
+  .ignored q { color: var(--dim); }
   .ignored q::before, .ignored q::after { content: '"'; }
-  .divider { text-align: center; color: var(--faint); margin: 6px 0; }
-  .unprompted { align-self: flex-start; font-size: 12px; color: var(--faint); margin-bottom: -6px; }
-  .hearing { color: var(--muted); font-style: italic; padding: 6px 2px; border-top: 1px dashed var(--line); }
-  .say { display: flex; gap: 8px; margin-top: 8px; }
-  .say input { flex: 1; }
-  .say button { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
-  .say-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
-  .say-tools button { font-size: 13px; padding: 4px 10px; }
-  time { font-variant-numeric: tabular-nums; }
+  .ignored div::before { content: "(ignored) "; }
+  .divider { display: flex; align-items: center; gap: 10px; color: var(--dim); font-size: 11.5px; text-transform: uppercase; margin: 4px 0; }
+  .divider::before, .divider::after { content: ""; flex: 1; border-top: 1px dashed var(--line); }
+  .unprompted { color: var(--faint); font-size: 11.5px; text-transform: uppercase; margin-bottom: -6px; }
+  .hearing { margin: 0 12px; padding: 6px 0; border-top: 1px dashed var(--line); color: var(--warn); font-size: 12.5px; }
+  .hearing .txt::after { content: "_"; animation: blink 1s steps(1) infinite; }
+  .compose { padding: 8px 10px 10px; border-top: 1px solid var(--line); }
+  .composer { display: flex; align-items: center; border: 1px solid var(--line); background: var(--bg); padding-left: 10px; }
+  .composer:focus-within { border-color: var(--fg); }
+  .composer .prompt { color: var(--fg); margin-right: 8px; }
+  .composer input { flex: 1; min-width: 0; height: 34px; padding: 0; border: 0; background: none; outline: none; color: var(--hi); caret-color: var(--fg); }
+  .composer .btn { height: 34px; border: 0; border-left: 1px solid var(--line); }
+  .composer .btn:hover { background: var(--fg); color: var(--ink); }
+  .tools { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 6px; }
+  .tools .hint { margin-left: auto; font-size: 11.5px; color: var(--dim); }
 
-  @media (max-width: 980px) {
-    .grid { grid-template-columns: 1fr; height: auto; }
-    .left { overflow: visible; }
-    .log { height: 60vh; flex: none; }
+  /* ----- the side panel ----- */
+  .side { grid-area: side; display: flex; flex-direction: column; min-height: 0; }
+  .tabs { display: flex; border-bottom: 1px solid var(--line); }
+  .tab { flex: 1; height: 38px; border: 0; border-right: 1px solid var(--line); background: none; color: var(--dim); cursor: pointer;
+         text-transform: uppercase; letter-spacing: .06em; }
+  .tab:last-child { border-right: 0; }
+  .tab:hover { color: var(--fg); }
+  .tab kbd { color: inherit; }
+  .tab[aria-selected="true"] { background: var(--fg); color: var(--ink); font-weight: 700; }
+  .tab .count::before { content: "("; } .tab .count::after { content: ")"; }
+  .panel { flex: 1; min-height: 0; overflow-y: auto; padding: 0 12px 12px; }
+  .group { padding: 12px 0; border-bottom: 1px dashed var(--line); }
+  .group:last-child { border-bottom: 0; }
+  .off-note { padding: 14px 0; color: var(--dim); }
+
+  .rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+  .rows li { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border: 1px solid var(--line); background: var(--bg); }
+  .rows .empty { color: var(--dim); border: 0; background: none; padding: 2px 0; }
+  .avatar { width: 24px; height: 24px; flex: none; display: grid; place-items: center; font-weight: 700; color: var(--ink); background: var(--far); }
+  .who { flex: 1; min-width: 0; }
+  .who b { font-weight: 700; color: var(--hi); }
+  .who .meta { display: block; font-size: 11.5px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .role { font-size: 10.5px; text-transform: uppercase; color: var(--dim); border: 1px solid var(--line); padding: 0 4px; margin-left: 6px; }
+  .talking { font-size: 11px; color: var(--fg); text-transform: uppercase; animation: blink 1s steps(1) infinite; }
+  .enrol { display: flex; gap: 6px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  .enrol input[type="text"] { flex: 1; min-width: 120px; }
+  .enrol-msg { margin: 6px 0 0; font-size: 12px; color: var(--dim); }
+
+  .buttons { display: flex; flex-wrap: wrap; gap: 5px; }
+  .buttons.tags { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .buttons .btn { height: 28px; font-size: 12px; padding: 0 8px; }
+  .buttons.tags .btn { justify-content: flex-start; }
+  .buttons .btn kbd { color: var(--dim); }
+  .buttons .btn.on kbd, button.chipbox[aria-pressed="true"] kbd { color: var(--ink); }
+  .range { display: inline-flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--dim); font-weight: 400; letter-spacing: 0; }
+  #pad, #map { width: 100%; aspect-ratio: 3 / 2; display: block; background: var(--bg); border: 1px solid var(--line); cursor: crosshair; touch-action: none; }
+  #map { aspect-ratio: 1 / 1; max-height: 380px; margin: 0 auto; }
+  #map-group.steering #map { border-color: var(--danger); }
+  .pad-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 12px; color: var(--dim); }
+  .pad-foot b { color: var(--hi); font-weight: 400; }
+  .talk-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+
+  .readout { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat { padding: 5px 10px; border: 1px solid var(--line); background: var(--bg); min-width: 0; }
+  .stat .k { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+  .stat .v { font-size: 17px; font-weight: 700; color: var(--hi); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .facts { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .engine-error { margin-top: 8px; color: var(--danger); font-size: 12px; overflow-wrap: anywhere; }
+  .bars { display: grid; grid-template-columns: 8.5em minmax(0, 1fr) 3.4em; gap: 4px 10px; align-items: center; font-size: 12px; }
+  .bars .row { display: contents; }
+  .bars .name { color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bars .name.best { color: var(--hi); }
+  .bars .name.best::before { content: "> "; }
+  .bars .val { text-align: right; color: var(--dim); }
+  .track { position: relative; height: 8px; background: repeating-linear-gradient(90deg, var(--faint) 0 1px, transparent 1px 3px); }
+  .track .fill { position: absolute; top: 0; bottom: 0; background: var(--fg); }
+  .track.signed .fill { background: var(--hi); }
+  .track .rest { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--warn); }
+  #chart { width: 100%; height: 110px; display: block; border: 1px solid var(--line); background: var(--bg); }
+  .legend { display: flex; flex-wrap: wrap; gap: 3px 12px; font-size: 11.5px; color: var(--dim); margin-top: 5px; }
+  .legend i { display: inline-block; width: 10px; height: 3px; vertical-align: middle; margin-right: 5px; }
+  .feed { list-style: none; margin: 0; padding: 0; font-size: 11.5px; }
+  .feed li { padding: 3px 0; border-bottom: 1px dotted var(--faint); overflow-wrap: anywhere; color: var(--dim); }
+  .feed li b { color: var(--hi); font-weight: 400; text-transform: uppercase; }
+  .feed li time { color: var(--faint); margin-right: 8px; }
+  .feed .empty { border: 0; }
+
+  /* ----- narrower screens ----- */
+  @media (max-width: 1280px) {
+    .app { height: auto; min-height: calc(100vh - var(--header) - var(--footer)); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+           grid-template-rows: auto 1fr; grid-template-areas: "stage chat" "side chat"; }
+    .stage { flex: none; height: 52vh; }
+    .chat { position: sticky; top: calc(var(--header) + 10px); height: calc(100vh - var(--header) - var(--footer) - 20px); align-self: start; }
+    .panel { overflow: visible; }
+  }
+  @media (max-width: 860px) {
+    .top { position: static; }
+    .keys { display: none; }
+    .app { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "chat" "side"; padding: 10px 16px; }
+    .stage { height: 60vh; }
+    .chat { position: static; height: 78vh; }
+    kbd { display: none; }   /* no keyboard on a phone: the words alone */
   }
 </style>
 </head>
@@ -115,78 +289,220 @@
 <header class="top">
   <div class="brand">
     <span class="logo">FRANK</span>
-    <span id="status" class="pill">Starting…</span>
-    <span id="face" class="pill" title="The face he's making">face: neutral</span>
+    <span id="status" class="mode">MODE: <span class="txt">Starting</span></span>
   </div>
   <div class="controls">
-    <button id="mic" class="toggle" aria-pressed="false" title="Listen on the laptop's microphone">Microphone</button>
-    <button id="gate" class="toggle" aria-pressed="true" title="On: he answers only someone in front of him whose mouth moved. Off: he answers everything the microphone hears.">Mouth check</button>
-    <button id="voice" class="toggle" aria-pressed="false" title="His voice on or off">Voice</button>
-    <button id="eyes-pause" class="toggle" aria-pressed="false" title="Hold his eyes still: centred, lids at their OPEN pose, no blinking" hidden>Pause eyes</button>
-    <button id="eyes-alive" class="toggle" aria-pressed="true" title="His eyes look around and blink" hidden>Eyes alive</button>
-    <label>Speaker <select id="speaker" aria-label="Speaker for his voice"></select></label>
-    <button id="beep" title="A short tone through the chosen speaker">Test sound</button>
-    <label>Brain <select id="model" aria-label="Brain"></select></label>
-    <button id="silence" title="Send '(no speech)' with a silence note">Let a silence pass</button>
-    <button id="new" title="The next visitor: a fresh conversation">New conversation</button>
+    <button id="mic" class="btn toggle" aria-pressed="false" title="Listen on the laptop's microphone"><kbd>M</kbd><span class="lbl">Mic</span></button>
+    <button id="voice" class="btn toggle" aria-pressed="false" title="His voice on or off"><kbd>V</kbd><span class="lbl">Voice</span></button>
+    <button id="new" class="btn" title="The next visitor: a fresh conversation">+<span class="lbl">New conversation</span></button>
+    <button id="settings-btn" class="btn" aria-expanded="false" aria-controls="settings" title="Brain, speaker, mouth check, eyes"><kbd>S</kbd><span class="lbl">Settings</span></button>
+
+    <div id="settings" class="popover" hidden>
+      <h2 style="align-self:flex-start">Settings</h2>
+      <div class="field">
+        <span class="label">Brain</span>
+        <select id="model" aria-label="Brain"></select>
+      </div>
+      <div class="field">
+        <span class="label">Speaker for his voice</span>
+        <div class="row"><select id="speaker" aria-label="Speaker for his voice"></select>
+          <button id="beep" class="btn" title="A short tone through the chosen speaker">Test</button></div>
+      </div>
+      <div class="field" id="gate-field">
+        <span class="label">Who he answers</span>
+        <div class="seg">
+          <button id="gate" aria-pressed="true" title="He answers only someone in front of him whose mouth moved">Mouth check</button>
+          <button id="gate-off" aria-pressed="false" title="He answers everything the microphone hears">Everything</button>
+        </div>
+      </div>
+      <div class="field" id="eyes-field" hidden>
+        <span class="label">His eyes</span>
+        <div class="seg">
+          <button id="eyes-alive" aria-pressed="true" title="His eyes look around and blink">Alive</button>
+          <button id="eyes-pause" aria-pressed="false" title="Hold his eyes still: centred, lids at their OPEN pose, no blinking">Paused</button>
+        </div>
+      </div>
+      <div class="links">
+        <a href="http://127.0.0.1:8810" target="_blank" rel="noopener">Body twin page ↗</a>
+        <a href="http://127.0.0.1:8820" target="_blank" rel="noopener">Face editor ↗</a>
+      </div>
+    </div>
   </div>
 </header>
 
-<main class="grid">
-  <section class="col left">
-    <div class="card">
-      <div class="card-h"><h2>What he sees</h2><div id="senses" class="chips"></div></div>
-      <div class="cam"><img id="cam" alt="Frank's camera, with faces marked"><div id="nocam" class="nocam">Camera off</div></div>
+<main class="app">
+  <section class="stage-col" aria-label="Frank">
+    <div class="card stage crt">
+      <iframe id="twin" title="Frank's 3D body twin, moved by the face engine through perform/body.py" hidden></iframe>
+      <div id="twin-off" class="twin-off">
+        <b>NO SIGNAL</b>
+        <span>The 3D twin isn't running. Start the body server, then Frank through it.</span>
+        <code>python perform/body.py robots/frank/robot.json --sim</code>
+        <code>python frank/web.py … --mouth socket://127.0.0.1:8811</code>
+        <span>This view connects by itself.</span>
+      </div>
+      <div class="top-r">
+        <button id="colour" class="chipbox" aria-pressed="false" title="The twin and the camera in their own colours (red parts: a servo that can't reach), or in green"><kbd>C</kbd>Colour</button>
+        <a class="chipbox" href="http://127.0.0.1:8810" target="_blank" rel="noopener" title="The full twin page: servos, calibration, layers">Twin ↗</a>
+      </div>
+      <div class="bottom">
+        <div>
+          <span class="chipbox inv" title="The face engine's state"><span id="state-led" class="led"></span><span id="state-chip">engine off</span></span>
+          <span class="chipbox" title="The expression he's making now"><span class="k">face</span><span id="face-chip">neutral</span></span>
+          <span class="chipbox steer" id="steer-chip" title="The emotion map holds his feeling (Face tab: Release hands it back)" hidden>steered</span>
+        </div>
+        <div class="mood chipbox" id="mood-mini" title="His mood: pleasure, arousal, dominance (−1 to 1)" hidden>
+          <span>P<span class="meter"><i></i></span></span><span>A<span class="meter"><i></i></span></span><span>D<span class="meter"><i></i></span></span>
+        </div>
+      </div>
     </div>
-    <div class="card">
-      <div class="card-h"><h2>His face</h2><span><span id="face-state" class="muted small">engine off</span>
-        <button id="face-mode" class="toggle" title="The 3D body twin (perform/body.py) or the 2D sketch">2D sketch</button></span></div>
-      <iframe id="face-twin" title="Frank's 3D body twin, moved by the face engine through perform/body.py" hidden
-              style="width:100%;aspect-ratio:1/1;border:0;border-radius:8px;background:#0d0f0e;display:block"></iframe>
-      <canvas id="face-canvas" width="360" height="240" style="width:100%;border-radius:8px;background:#111"></canvas>
-      <div id="face-twin-note" class="muted small"></div>
-      <a class="small" href="http://127.0.0.1:8820" target="_blank" rel="noopener">Open the face editor (live on this session)</a>
-      <div id="face-mix" class="muted small"></div>
-    </div>
-    <div class="card">
-      <div class="card-h"><h2>In view</h2><span id="far" class="muted small"></span></div>
-      <ul id="inview" class="rows"></ul>
-    </div>
-    <div class="card">
-      <div class="card-h"><h2>Remembered</h2><span class="muted small">faces stored on this laptop</span></div>
-      <ul id="stored" class="rows"></ul>
-      <form id="enrol" class="enrol">
-        <input id="enrol-name" placeholder="Name to enrol" autocomplete="off" aria-label="Name to enrol">
-        <label><input type="checkbox" id="enrol-creator" checked> creator</label>
-        <button>Enrol</button>
-      </form>
-      <p id="enrol-msg" class="muted small">One person in view, close to the camera, turning their head a little.</p>
+
+    <div class="card cam-card" id="cam-card">
+      <div class="card-h">
+        <h2>What he sees</h2>
+        <div style="display:flex;align-items:center;gap:6px;min-width:0">
+          <div id="senses" class="chips"></div>
+          <button id="fold" class="btn sm quiet fold" aria-expanded="true" title="Show or hide the camera"><span class="arrow">▾</span></button>
+        </div>
+      </div>
+      <div class="body">
+        <div class="cam crt"><img id="cam" alt="Frank's camera, with faces marked"><div id="nocam" class="nocam">Camera off</div></div>
+      </div>
     </div>
   </section>
 
-  <section class="col card convo">
+  <section class="card chat" aria-label="Conversation">
     <div class="card-h">
       <h2>Conversation</h2>
-      <label class="muted small"><input type="checkbox" id="show-senses" checked> show what he senses</label>
+      <label class="check" title="Show what his senses report between the lines"><input type="checkbox" id="show-senses" checked> Senses</label>
     </div>
     <div id="log" class="log" aria-live="polite"></div>
-    <div id="hearing" class="hearing" hidden></div>
-    <form id="say" class="say">
-      <input id="text" placeholder="Type to Frank…" autocomplete="off" aria-label="Type to Frank">
-      <button>Send</button>
-    </form>
-    <div class="say-tools">
-      <button type="button" data-prefix="/note ">Add a note</button>
-      <button type="button" data-prefix="/fb ">Feedback on his last reply</button>
-      <span class="muted small">A note goes with the next line. /help lists the commands.</span>
+    <div id="hearing" class="hearing" hidden><span class="txt"></span></div>
+    <div class="compose">
+      <form id="say" class="composer">
+        <span class="prompt">&gt;</span>
+        <input id="text" type="text" placeholder="Type to Frank…" autocomplete="off" aria-label="Type to Frank">
+        <button class="btn">Send ↵</button>
+      </form>
+      <div class="tools">
+        <button type="button" class="btn sm quiet" data-prefix="/note " title="A note goes with the next line">Note</button>
+        <button type="button" class="btn sm quiet" data-prefix="/fb " title="Feedback on his last reply">Feedback</button>
+        <button type="button" class="btn sm quiet" id="silence" title="Send '(no speech)' with a silence note">Let a silence pass</button>
+        <span class="hint">/help lists the commands</span>
+      </div>
     </div>
   </section>
+
+  <aside class="card side" aria-label="Details">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="t-people" data-tab="people" aria-controls="tab-people" aria-selected="true"><kbd>P</kbd> People <span id="people-count" class="count" hidden></span></button>
+      <button class="tab" role="tab" id="t-face" data-tab="face" aria-controls="tab-face" aria-selected="false"><kbd>F</kbd> Face</button>
+      <button class="tab" role="tab" id="t-engine" data-tab="engine" aria-controls="tab-engine" aria-selected="false"><kbd>E</kbd> Engine</button>
+    </div>
+
+    <section id="tab-people" class="panel" role="tabpanel" aria-labelledby="t-people">
+      <div class="group">
+        <h3>In view <span id="far" class="note"></span></h3>
+        <ul id="inview" class="rows"></ul>
+      </div>
+      <div class="group">
+        <h3>Remembered <span class="note">faces stored on this laptop</span></h3>
+        <ul id="stored" class="rows"></ul>
+        <form id="enrol" class="enrol">
+          <input id="enrol-name" type="text" placeholder="Name to enrol" autocomplete="off" aria-label="Name to enrol">
+          <label class="check"><input type="checkbox" id="enrol-creator" checked> creator</label>
+          <button class="btn">Enrol</button>
+        </form>
+        <p id="enrol-msg" class="enrol-msg">One person in view, close to the camera, turning their head a little.</p>
+      </div>
+    </section>
+
+    <section id="tab-face" class="panel" role="tabpanel" aria-labelledby="t-face" hidden>
+      <p class="off-note engine-off" hidden></p>
+      <div class="engine-on">
+        <div class="group" id="map-group">
+          <h3>Emotion map <span class="note" id="map-note">drag to set how he feels</span></h3>
+          <canvas id="map" aria-label="Emotion map: pleasure left to right, arousal bottom to top; drag to steer his feeling"></canvas>
+          <div class="pad-foot">
+            <label class="range">DOMINANCE <input id="dominance" type="range" min="-1" max="1" step="0.05" value="0.3">
+              <span id="dominance-v">0.30</span></label>
+            <button id="release" class="btn sm" disabled title="Hand his face back to the conversation">Release</button>
+          </div>
+        </div>
+        <div class="group">
+          <h3>Expressions <label class="range">INTENSITY <input id="intensity" type="range" min="0" max="1" step="0.05" value="1">
+            <span id="intensity-v">1.00</span></label></h3>
+          <div class="buttons tags" id="tags"></div>
+        </div>
+        <div class="group">
+          <h3>Visitor <span class="note" id="pad-note">click or drag where they stand</span></h3>
+          <canvas id="pad" aria-label="Visitor position pad: where a pretend visitor stands"></canvas>
+          <div class="pad-foot"><span>YAW <b id="yaw">–</b>°  PITCH <b id="pitch">–</b>°</span>
+            <button id="clear" class="btn sm">Nobody</button></div>
+          <div class="talk-row">
+            <button id="talk" class="btn sm toggle" aria-pressed="false">Fake voice</button>
+            <span class="small dim" id="talk-info">a pretend voice into the engine</span>
+          </div>
+        </div>
+        <div class="group">
+          <h3>States</h3>
+          <div class="buttons" id="states"></div>
+        </div>
+        <div class="group">
+          <h3>Events</h3>
+          <div class="buttons" id="events"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-engine" class="panel" role="tabpanel" aria-labelledby="t-engine" hidden>
+      <p class="off-note engine-off" hidden></p>
+      <div class="engine-on">
+        <div class="group">
+          <div class="readout">
+            <div class="stat"><div class="k">State</div><div class="v" id="state">–</div></div>
+            <div class="stat"><div class="k">Strongest</div><div class="v" id="strongest">–</div></div>
+          </div>
+          <div class="facts" id="facts"></div>
+          <div class="engine-error" id="engine-error" hidden></div>
+        </div>
+        <div class="group">
+          <h3>Last 10 seconds</h3>
+          <canvas id="chart"></canvas>
+          <div class="legend" id="legend"></div>
+        </div>
+        <div class="group">
+          <h3>Mood</h3>
+          <div class="bars" id="mood"></div>
+        </div>
+        <div class="group">
+          <h3>Tag weights</h3>
+          <div class="bars" id="weights"></div>
+        </div>
+        <div class="group">
+          <h3>Joint channels <span class="note">amber tick = rest</span></h3>
+          <div class="bars" id="joints"></div>
+        </div>
+        <div class="group">
+          <h3>Decisions <span class="note" id="his-tags" title="His last tags"></span></h3>
+          <ol id="feed" class="feed"></ol>
+        </div>
+      </div>
+    </section>
+  </aside>
 </main>
 
+<footer class="keys" aria-label="Keys (when you're not typing)">
+  <span><kbd>M</kbd>Mic</span><span><kbd>V</kbd>Voice</span><span><kbd>/</kbd>Type</span>
+  <span><kbd>P</kbd>People</span><span><kbd>F</kbd>Face</span><span><kbd>E</kbd>Engine</span>
+  <span><kbd>1-0</kbd>Tags (Face tab)</span><span><kbd>C</kbd>Colour</span><span><kbd>S</kbd>Settings</span><span><kbd>ESC</kbd>Close</span>
+</footer>
+
 <script>
+"use strict";
 const $ = (s) => document.querySelector(s);
 const log = $("#log");
-let state = {}, lastSeq = 0, bubble = null, known = new Set();
+let state = {}, lastSeq = 0, bubble = null, known = new Set(), chatFace = "neutral";
 
 function el(tag, cls, text) {
   const e = document.createElement(tag);
@@ -194,7 +510,7 @@ function el(tag, cls, text) {
   if (text != null) e.textContent = text;   // never innerHTML: visitors' words are untrusted
   return e;
 }
-function clock(t) { return new Date(t * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }); }
+function clock(t) { return new Date(t * 1000).toLocaleTimeString([], { hour12: false }); }
 function add(node) {
   const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 120;
   log.appendChild(node);
@@ -202,15 +518,23 @@ function add(node) {
   return node;
 }
 async function post(path, body) {
-  const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json", "X-Frank": "1" }, body: JSON.stringify(body) });
-  return r.json();
+  try {
+    const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json", "X-Frank": "1" }, body: JSON.stringify(body) });
+    return await r.json().catch(() => ({ ok: r.ok }));
+  } catch { return { ok: false, why: "Frank isn't answering" }; }
 }
 const say = (text) => post("/say", { text });
+const remember = {   // per-browser conveniences only: the open tab, the folded camera, colour or green
+  get(k, d) { try { return localStorage.getItem("frank." + k) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("frank." + k, v); } catch { /* private window */ } },
+};
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
 function setStatus(s) {
   const p = $("#status");
-  p.textContent = s;
-  p.className = "pill" + (s === "Listening" ? " on" : s === "Thinking" || s === "Speaking" || s === "Hearing" ? " busy" : "");
+  p.querySelector(".txt").textContent = s;
+  p.className = "mode" + (s === "Listening" ? " on" : ["Thinking", "Speaking", "Hearing"].includes(s) ? " busy"
+    : ["Reconnecting", "Not running"].includes(s) ? " bad" : "");
 }
 const idle = () => setStatus(state.quiet ? "Quiet" : state.listening ? "Listening" : "Idle");
 
@@ -240,17 +564,22 @@ function sense(ev) {
   add(row);
 }
 function system(text, cls) { add(el("div", "sys" + (cls ? " " + cls : ""), text)); }
+function hearing(text) {
+  const h = $("#hearing");
+  h.hidden = text == null;
+  if (text != null) h.querySelector(".txt").textContent = text;
+}
 
 function handle(ev) {
   switch (ev.kind) {
     case "new": bubble = null; add(el("div", "divider", `New conversation · ${ev.model} · ${clock(ev.t)}`)); break;
     case "seen": sense(ev); break;
-    case "hearing": { const h = $("#hearing"); h.hidden = false; h.textContent = "hearing: " + ev.text; setStatus("Hearing"); break; }
-    case "visitor": $("#hearing").hidden = true; visitorLine(ev.said, ev.t); setStatus("Thinking"); break;
+    case "hearing": hearing("hearing: " + ev.text); setStatus("Hearing"); break;
+    case "visitor": hearing(null); visitorLine(ev.said, ev.t); setStatus("Thinking"); break;
     case "frank_start": bubble = frankBubble(ev.t); break;
     case "face": case "sound":
       body().append(el("span", "tag", ev.tag));
-      if (ev.kind === "face") $("#face").textContent = "face: " + ev.tag;
+      if (ev.kind === "face") { chatFace = ev.tag; if (!meta) $("#face-chip").textContent = ev.tag; }
       break;
     case "say": body().append(document.createTextNode(ev.text + " ")); setStatus("Speaking"); break;
     case "tool_call": body().append(el("span", "call", "calls " + ev.text)); break;
@@ -266,7 +595,7 @@ function handle(ev) {
     case "resumed": setStatus("Speaking"); break;
     case "tool": system(`${ev.name}: ${ev.text}`, "tool"); break;
     case "ignored": {
-      $("#hearing").hidden = true; idle();
+      hearing(null); idle();
       const row = el("div", "ignored");
       row.append(el("q", null, ev.text), el("div", null, ev.quiet ? "quiet: he ignores it until someone says his name or asks him to talk" : `not to him: ${ev.why}`));
       add(row); break;
@@ -281,23 +610,28 @@ function handle(ev) {
 function connect() {
   const es = new EventSource("/events");
   es.onmessage = (e) => { const ev = JSON.parse(e.data); if (ev.seq <= lastSeq) return; lastSeq = ev.seq; handle(ev); };
-  es.onerror = () => { setStatus("Reconnecting…"); };
+  es.onerror = () => { setStatus("Reconnecting"); };
   es.onopen = () => idle();
 }
 
 // ----- the switches and the senses, from /state -----
 function chip(text, cls) { return el("span", "chip" + (cls ? " " + cls : ""), text); }
 function dotColour(p) { return p.level === "known" ? "var(--known)" : p.level === "possible" ? "var(--possible)" : p.engaged ? "var(--stranger)" : "var(--far)"; }
+function avatar(name, colour) {
+  const a = el("span", "avatar", (name || "?").trim().charAt(0).toUpperCase() || "?");
+  a.style.background = colour;
+  return a;
+}
+function pressed(id, on) { $(id).setAttribute("aria-pressed", String(!!on)); }
 
 function render() {
-  $("#mic").setAttribute("aria-pressed", String(!!state.listening));
-  $("#gate").setAttribute("aria-pressed", String(!!state.gate));
-  $("#gate").hidden = !state.seeing;
-  $("#voice").setAttribute("aria-pressed", String(!!state.voice));
+  pressed("#mic", state.listening);
+  pressed("#voice", state.voice);
+  pressed("#gate", state.gate); pressed("#gate-off", !state.gate);
+  $("#gate-field").hidden = !state.seeing;
   const gazeOn = state.gaze === "alive" || state.gaze === "paused";   // the mouth is up and the eye poses are saved
-  $("#eyes-pause").hidden = $("#eyes-alive").hidden = !gazeOn;
-  $("#eyes-pause").setAttribute("aria-pressed", String(state.gaze === "paused"));
-  $("#eyes-alive").setAttribute("aria-pressed", String(state.gaze === "alive"));
+  $("#eyes-field").hidden = !gazeOn;
+  pressed("#eyes-pause", state.gaze === "paused"); pressed("#eyes-alive", state.gaze === "alive");
   const sel = $("#model");
   if (sel.options.length !== (state.models || []).length) {
     sel.replaceChildren(...(state.models || []).map((m) => { const o = el("option", null, m); o.value = m; return o; }));
@@ -306,6 +640,7 @@ function render() {
 
   known = new Set((state.people || []).map((p) => p.name));
   const sight = state.sight, problem = state.eyes_error;
+  $("#cam-card").classList.toggle("off", !state.seeing);   // no camera: the card folds to its title, the twin gets the room
   const nocam = $("#nocam");
   nocam.hidden = !!(sight && frameUrl) && !problem;
   nocam.classList.toggle("problem", !!problem);
@@ -339,37 +674,37 @@ function render() {
 
   const people = sight ? [...sight.people].sort((a, b) => (b.engaged - a.engaged) || (a.dist - b.dist)) : [];
   $("#far").textContent = sight && sight.far ? `${sight.far} further back` : "";
+  $("#people-count").hidden = !people.length;
+  $("#people-count").textContent = people.length;
   $("#inview").replaceChildren(...(people.length ? people.map((p) => {
     const li = el("li");
-    const dot = el("span", "dot"); dot.style.background = dotColour(p);
-    const who = el("div", "who");
     const name = p.name || (p.level === "possible" ? "Maybe met before" : `Stranger${p.stranger ? " " + p.stranger : ""}`);
+    const who = el("div", "who");
     who.append(el("b", null, name), el("span", "meta",
       `${p.place} · ${p.dist.toFixed(1)} m · ${p.engaged ? "with him" : "not engaged"}${p.level ? " · match " + p.score.toFixed(2) : ""}${p.mouth != null ? " · mouth " + p.mouth.toFixed(2) : ""}`));
-    li.append(dot, who);
+    li.append(avatar(p.name || (p.level === "possible" ? "?" : "S"), dotColour(p)), who);
     if (p.talking) li.append(el("span", "talking", "talking"));
     return li;
-  }) : [el("li", "empty", sight ? "Nobody in view." : "—")]));
+  }) : [el("li", "empty", !state.seeing ? "The camera is off." : sight ? "Nobody in view." : "The camera is starting…")]));
 
   $("#stored").replaceChildren(...((state.people || []).length ? state.people.map((p) => {
     const li = el("li");
     const who = el("div", "who");
-    const b = el("b", null, p.name);
-    who.append(b, el("span", "role", p.role), el("span", "meta", `${p.prints} looks · since ${p.enrolled}`));
-    const forget = el("button", null, "Forget");
+    who.append(el("b", null, p.name), el("span", "role", p.role), el("span", "meta", `${p.prints} looks · since ${p.enrolled}`));
+    const forget = el("button", "btn sm quiet danger", "Forget");
     forget.onclick = async () => {
       if (!confirm(`Forget ${p.name}? This deletes their stored face.`)) return;
       await post("/forget", { id: p.id }); poll();
     };
-    li.append(who, forget);
+    li.append(avatar(p.name, p.role === "creator" ? "var(--fg)" : "var(--dim)"), who, forget);
     return li;
   }) : [el("li", "empty", "Nobody yet. Enrol yourselves below.")]));
 }
 
-// The newest preview picture, 10 times a second while the tab is visible.
+// The newest camera picture, 10 times a second while it is on screen.
 let frameUrl = null;
 async function camLoop() {
-  if (state.seeing && !document.hidden) {
+  if (state.seeing && !document.hidden && !$("#cam-card").classList.contains("folded")) {
     try {
       const r = await fetch("/frame", { cache: "no-store" });
       if (r.status === 200) {
@@ -383,72 +718,440 @@ async function camLoop() {
   }
   setTimeout(camLoop, 100);
 }
-
-// The face engine's joints (frank/engine), drawn 15 times a second while the tab is visible.
-// The 3D body twin (perform/body.py on 8810, moved by the servo lines when Frank runs with
-// --mouth socket://127.0.0.1:8811) is the hero view when it is up; otherwise the 2D sketch.
-const TWIN = "http://127.0.0.1:8810/?hero=1";
-let faceMode = "2d", twinUp = false;
-function setFaceMode(m) {
-  faceMode = m;
-  $("#face-twin").hidden = m !== "3d";
-  $("#face-canvas").hidden = m === "3d";
-  $("#face-mode").textContent = m === "3d" ? "2D sketch" : "3D twin";
-  if (m === "3d" && !$("#face-twin").src) $("#face-twin").src = TWIN;
+function fold(folded) {
+  $("#cam-card").classList.toggle("folded", folded);
+  $("#fold").setAttribute("aria-expanded", String(!folded));
+  remember.set("camFolded", folded ? "1" : "0");
 }
-async function probeTwin() {
-  try {
-    await fetch("http://127.0.0.1:8810/robot", { mode: "no-cors", cache: "no-store" });
-    if (!twinUp) { twinUp = true; if (faceMode !== "3d") setFaceMode("3d"); }
-    $("#face-twin-note").textContent = "";
-  } catch {
-    twinUp = false;
-    $("#face-twin-note").textContent = "3D twin off: run perform/body.py and start Frank with --mouth socket://127.0.0.1:8811";
-    if (faceMode === "3d") { $("#face-twin").removeAttribute("src"); setFaceMode("2d"); }
-  }
-  setTimeout(probeTwin, 3000);
-}
-$("#face-mode").onclick = () => setFaceMode(faceMode === "3d" ? "2d" : "3d");
-
-async function faceLoop() {
-  if (!document.hidden && window.drawFace) {
-    try {
-      const s = await (await fetch("/face", { cache: "no-store" })).json();
-      if (s.joints) {
-        if (faceMode === "2d") drawFace($("#face-canvas"), s.joints, { talk: 0 });
-        const m = s.mood ? s.mood.map((v) => v.toFixed(2)).join(", ") : "";
-        $("#face-state").textContent = `${s.state}${s.error ? " · " + s.error : ""}`;
-        const w = Object.entries((s.face || {}).weights || {}).filter(([, v]) => v > 0.05)
-          .sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v.toFixed(2)}`).join(" · ");
-        $("#face-mix").textContent = `mood (P, A, D) ${m}${w ? " · " + w : ""}`;
-      }
-    } catch { /* the server is restarting */ }
-  }
-  setTimeout(faceLoop, 66);
-}
+$("#fold").onclick = () => fold(!$("#cam-card").classList.contains("folded"));
 
 async function poll() {
   try { state = await (await fetch("/state")).json(); render(); }
   catch { setStatus("Not running"); }
 }
 
+// ----- the 3D body twin -----
+// perform/body.py on 8810, moved by the very servo lines the engine sends when Frank runs with
+// --mouth socket://127.0.0.1:8811. It comes into view by itself when it is up.
+const TWIN = "http://127.0.0.1:8810/?hero=1";
+let twinUp = null;
+async function probeTwin() {
+  let up = false;
+  try { await fetch("http://127.0.0.1:8810/robot", { mode: "no-cors", cache: "no-store" }); up = true; }   // resolves if it is up
+  catch { /* not running */ }
+  if (up !== twinUp) {
+    twinUp = up;
+    $("#twin").src = up ? TWIN : "about:blank";
+    $("#twin").hidden = !up;
+    $("#twin-off").hidden = up;
+  }
+  setTimeout(probeTwin, 3000);
+}
+// Green (the twin and the camera through a phosphor filter) or their own colours, where the
+// twin's red parts show a servo that can't reach.
+function colour(on) {
+  document.body.classList.toggle("phosphor", !on);
+  pressed("#colour", on);
+  remember.set("colour", on ? "1" : "0");
+}
+$("#colour").onclick = () => colour(document.body.classList.contains("phosphor"));
+
+// ----- the face engine (frank/engine), through web.py's /engine/ routes -----
+const CHART = [["gaze_x", "--c1"], ["lid_top_L", "--c2"], ["brow_in_L", "--c3"], ["smile", "--c4"]];
+const YAW = 45, PITCH = 30;   // the pad spans ±45° by ±30°
+let meta = null, snap = null, history = [], tab = "people", fakeTalk = false;
+
+function engineOff(why) {
+  meta = null;
+  document.querySelectorAll(".engine-off").forEach((p) => { p.hidden = false; p.textContent = why; });
+  document.querySelectorAll(".engine-on").forEach((p) => { p.hidden = true; });
+  $("#state-chip").textContent = "engine off";
+  $("#state-led").className = "led";
+  $("#face-chip").textContent = chatFace;
+  $("#mood-mini").hidden = true;
+  $("#steer-chip").hidden = true;
+}
+
+function flash(b) { b.classList.add("flash"); setTimeout(() => b.classList.remove("flash"), 250); }
+function makeButtons(box, names, onClick, keys) {
+  box.replaceChildren(...names.map((name, i) => {
+    const b = el("button", "btn");
+    b.dataset.name = name;
+    if (keys) b.append(el("kbd", null, String((i + 1) % 10)));
+    b.append(document.createTextNode(name.replace(/_/g, " ")));
+    b.onclick = () => { flash(b); onClick(name); };
+    return b;
+  }));
+}
+const fireTag = (name) => post("/engine/tag", { name, intensity: +$("#intensity").value });
+
+async function startEngine() {
+  try {
+    const r = await fetch("/engine/meta", { cache: "no-store" });
+    if (r.status === 404) { engineOff("The face engine is off (Frank started with --no-face)."); setTimeout(startEngine, 5000); return; }
+    meta = await r.json();
+  } catch { engineOff("Waiting for Frank…"); setTimeout(startEngine, 2000); return; }
+  document.querySelectorAll(".engine-off").forEach((p) => { p.hidden = true; });
+  document.querySelectorAll(".engine-on").forEach((p) => { p.hidden = false; });
+  $("#map-group").hidden = !meta.map;
+  makeButtons($("#tags"), meta.tags, fireTag, true);
+  makeButtons($("#states"), meta.states, (n) => post("/engine/state", { name: n }));
+  makeButtons($("#events"), [...meta.events, ...meta.engine_events], (n) => post("/engine/event", { name: n }));
+  $("#legend").replaceChildren(...CHART.map(([k, c]) => { const s = el("span"); const i = el("i"); i.style.background = `var(${c})`; s.append(i, k); return s; }));
+  $("#facts").replaceChildren(chip(meta.engine === "stand-in" ? "stand-in engine" : meta.live ? "Frank's own engine" : "engine", meta.live ? "ok" : "warn"),
+    chip(meta.head ? "head on " + meta.head : "no head: twin only", meta.head ? "ok" : ""));
+  ["#mood", "#weights", "#joints"].forEach((b) => $(b).replaceChildren());
+  snapLoop();
+}
+
+async function snapLoop() {
+  const t0 = performance.now();
+  if (!meta) return;
+  if (!document.hidden) {
+    try {
+      const r = await fetch("/engine/snapshot", { cache: "no-store" });
+      if (r.status === 404) { engineOff("The face engine is off."); setTimeout(startEngine, 5000); return; }
+      if (r.ok) {
+        snap = await r.json();
+        const j = snap.joints || {};
+        history.push([Date.now(), CHART.map(([k]) => j[k])]);
+        while (history.length && history[0][0] < Date.now() - 10000) history.shift();
+        drawEngine();
+      }
+    } catch { /* the server is restarting */ }
+  }
+  setTimeout(snapLoop, Math.max(0, 66 - (performance.now() - t0)));
+}
+
+function strongestTag() {
+  const w = (snap.face || {}).weights || {};
+  let best = null;
+  meta.tags.forEach((t) => { if ((w[t] || 0) > 0.05 && (!best || w[t] > w[best])) best = t; });
+  return best;
+}
+
+function drawEngine() {
+  const best = strongestTag();
+  const m = Array.isArray(snap.mood) ? snap.mood : [];
+  // over the twin: his state, his face, his mood
+  $("#state-chip").textContent = snap.error ? "engine trouble" : snap.state || "–";
+  $("#state-led").className = "led " + (snap.error ? "error" : snap.state || "");
+  $("#face-chip").textContent = best || "at rest";
+  $("#steer-chip").hidden = !snap.steered;
+  $("#mood-mini").hidden = m.length < 3;
+  $("#mood-mini").querySelectorAll(".meter i").forEach((i, k) => {
+    const v = Math.max(-1, Math.min(1, m[k] || 0));
+    i.style.left = (50 + Math.min(0, v) * 50) + "%";
+    i.style.width = (Math.abs(v) * 50) + "%";
+  });
+  if (tab === "face") drawFace(best);
+  if (tab === "engine") drawReadouts(best, m);
+}
+
+function drawFace(best) {
+  document.querySelectorAll("#tags .btn").forEach((b) => b.classList.toggle("on", b.dataset.name === best));
+  document.querySelectorAll("#states .btn").forEach((b) => b.classList.toggle("on", b.dataset.name === snap.state));
+  const pv = snap.preview || {};
+  if (pv.talking !== undefined && pv.talking !== fakeTalk) setTalk(pv.talking, false);
+  $("#talk-info").textContent = fakeTalk ? "level " + (pv.talk || 0).toFixed(2) : "a pretend voice into the engine";
+  $("#pad-note").textContent = state.seeing ? "the camera wins while it sees" : "stands in for the camera";
+  pad(pv.target);
+  if (meta.map) {
+    const steered = !!snap.steered;
+    $("#map-group").classList.toggle("steering", steered);
+    $("#release").disabled = !steered;
+    $("#map-note").textContent = steered ? "holding his feeling here" : "drag to set how he feels";
+    const mood = Array.isArray(snap.mood) ? snap.mood : null;
+    if (!dTouched && mood && document.activeElement !== $("#dominance")) {   // the slider follows his own until moved
+      $("#dominance").value = mood[2];
+      $("#dominance-v").textContent = (+mood[2]).toFixed(2);
+    }
+    drawMap();
+  }
+}
+
+function bar(box, name, value, lo, hi, rest, best) {
+  let row = box.querySelector(`[data-k="${name}"]`);   // names come from the engine's own lists
+  if (!row) {
+    row = el("div", "row");
+    row.dataset.k = name;
+    const track = el("span", "track" + (lo < 0 ? " signed" : ""));
+    track.append(el("span", "fill"), el("span", "rest"));
+    row.append(el("span", "name", name.replace(/_/g, " ")), track, el("span", "val"));
+    box.append(row);
+  }
+  const v = typeof value === "number" && isFinite(value) ? value : null;
+  const span = hi - lo, zero = lo < 0 ? -lo / span : 0;
+  const pos = v === null ? zero : (Math.max(lo, Math.min(hi, v)) - lo) / span;
+  const fill = row.querySelector(".fill");
+  fill.style.left = (Math.min(zero, pos) * 100) + "%";
+  fill.style.width = (Math.abs(pos - zero) * 100) + "%";
+  row.querySelector(".rest").style.left = (((rest ?? 0) - lo) / span * 100) + "%";
+  row.querySelector(".val").textContent = v === null ? "–" : v.toFixed(2);
+  row.querySelector(".name").classList.toggle("best", !!best);
+}
+
+let feedKey = "";
+function drawReadouts(best, m) {
+  $("#state").textContent = snap.state || "–";
+  $("#strongest").textContent = best || "–";
+  $("#engine-error").hidden = !snap.error;
+  $("#engine-error").textContent = snap.error || "";
+  [["pleasure", m[0]], ["arousal", m[1]], ["dominance", m[2]]].forEach(([n, v]) => bar($("#mood"), n, v, -1, 1, 0));
+  const w = (snap.face || {}).weights || {};
+  meta.tags.forEach((t) => bar($("#weights"), t, w[t] || 0, 0, 1, 0, t === best));
+  const j = snap.joints || {};
+  for (const [k, r] of Object.entries(meta.joints)) bar($("#joints"), k, j[k], r.low, r.high, r.rest);
+  chart();
+  const s = snap.session || {};
+  $("#his-tags").textContent = (s.tags || []).slice(-4).join(" › ");
+  const rows = (s.recent || []).slice().reverse();
+  const key = rows.length ? rows[0].t + rows[0].what : "none";
+  if (key === feedKey) return;
+  feedKey = key;
+  $("#feed").replaceChildren(...(rows.length ? rows.map((r) => {
+    const { t, what, ...rest } = r;
+    const li = el("li");
+    li.append(el("time", null, clock(t)), el("b", null, (what || "").replace("engine_", "")),
+      document.createTextNode("  " + Object.entries(rest).map(([k, v]) => `${k}=${typeof v === "object" ? JSON.stringify(v) : v}`).join(" ")));
+    return li;
+  }) : [el("li", "empty", meta.live ? "Nothing yet." : "Only on Frank's own engine.")]));
+}
+
+function fit(canvas) {
+  const dpr = window.devicePixelRatio || 1, r = canvas.getBoundingClientRect();
+  const w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  return dpr;
+}
+const font = (px, dpr) => `${px * dpr}px ${css("--mono")}`;
+
+function chart() {
+  const c = $("#chart"), dpr = fit(c), ctx = c.getContext("2d");
+  const w = c.width, h = c.height;
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = css("--faint"); ctx.lineWidth = 1;
+  for (const v of [-1, 0, 1]) {
+    const y = h / 2 - v * (h / 2 - 4 * dpr);
+    ctx.setLineDash(v ? [2 * dpr, 3 * dpr] : []);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  const now = Date.now();
+  CHART.forEach(([, col], i) => {
+    ctx.strokeStyle = css(col); ctx.lineWidth = 1.5 * dpr;
+    ctx.beginPath();
+    let pen = false;
+    for (const [t, vals] of history) {
+      const v = vals[i];
+      if (typeof v !== "number") { pen = false; continue; }
+      const x = w - (now - t) / 10000 * w, y = h / 2 - Math.max(-1, Math.min(1, v)) * (h / 2 - 4 * dpr);
+      pen ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      pen = true;
+    }
+    ctx.stroke();
+  });
+}
+
+// ----- the visitor pad and the fake voice -----
+let dragging = false, lastSent = 0, pending = null;
+function grid(ctx, w, h, m, n) {
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= n; i++) {
+    const x = m + (w - 2 * m) * i / n, y = m + (h - 2 * m) * i / n;
+    ctx.strokeStyle = css(i === n / 2 ? "--line" : "--faint");
+    ctx.setLineDash(i === n / 2 ? [] : [2, 3]);
+    ctx.beginPath(); ctx.moveTo(x, m); ctx.lineTo(x, h - m); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(m, y); ctx.lineTo(w - m, y); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+}
+function pad(target) {
+  const c = $("#pad"), dpr = fit(c), ctx = c.getContext("2d"), w = c.width, h = c.height;
+  ctx.clearRect(0, 0, w, h);
+  grid(ctx, w, h, 0, 4);
+  ctx.fillStyle = css("--dim"); ctx.font = font(10.5, dpr);
+  ctx.fillText("HIS RIGHT", 6 * dpr, h - 7 * dpr);
+  ctx.textAlign = "right"; ctx.fillText("HIS LEFT", w - 6 * dpr, h - 7 * dpr); ctx.textAlign = "left";
+  ctx.fillStyle = css("--fg"); ctx.fillRect(w / 2 - 3 * dpr, h / 2 - 3 * dpr, 6 * dpr, 6 * dpr);   // Frank looks out of here
+  if (target) {
+    const x = (target[0] / YAW + 1) / 2 * w, y = (1 - target[1] / PITCH) / 2 * h;
+    ctx.strokeStyle = css("--hi"); ctx.lineWidth = 1.5 * dpr;
+    ctx.strokeRect(x - 9 * dpr, y - 9 * dpr, 18 * dpr, 18 * dpr);
+    ctx.fillStyle = css("--hi"); ctx.fillRect(x - 3 * dpr, y - 3 * dpr, 6 * dpr, 6 * dpr);
+    $("#yaw").textContent = target[0].toFixed(0); $("#pitch").textContent = target[1].toFixed(0);
+  } else { $("#yaw").textContent = "–"; $("#pitch").textContent = "–"; }
+}
+function padAim(e) {
+  const r = $("#pad").getBoundingClientRect();
+  const fx = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)), fy = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height));
+  pending = { yaw: +((fx * 2 - 1) * YAW).toFixed(1), pitch: +((1 - fy * 2) * PITCH).toFixed(1) };
+  const now = performance.now();
+  if (now - lastSent > 50) { lastSent = now; post("/engine/target", pending); pending = null; }
+}
+$("#pad").addEventListener("pointerdown", (e) => { dragging = true; $("#pad").setPointerCapture(e.pointerId); padAim(e); });
+$("#pad").addEventListener("pointermove", (e) => { if (dragging) padAim(e); });
+$("#pad").addEventListener("pointerup", () => { dragging = false; if (pending) { post("/engine/target", pending); pending = null; } });
+$("#clear").onclick = () => post("/engine/target", { clear: true });
+function setTalk(on, send = true) {
+  fakeTalk = on;
+  pressed("#talk", on);
+  if (send) post("/engine/talk", { on });
+}
+$("#talk").onclick = () => setTalk(!fakeTalk);
+$("#intensity").oninput = () => { $("#intensity-v").textContent = (+$("#intensity").value).toFixed(2); };
+
+// ----- the emotion map: a point dragged over pleasure x arousal holds his feeling there -----
+// POST /engine/steer {p, a, d?} (no d: his current dominance) until {release: true}.
+const MAP_MARGIN = 16;   // css px between the canvas edge and the map's ±1
+let mapDrag = false, mapSent = 0, dTouched = false;
+const clamp1 = (x) => Math.max(-1, Math.min(1, x));
+function mapXY(p, a, w, h, m) { return [m + (p + 1) / 2 * (w - 2 * m), m + (1 - a) / 2 * (h - 2 * m)]; }
+function steer(point, force) {   // about 30 a second while dragging; force: the last one
+  const now = performance.now();
+  if (force || now - mapSent > 33) { mapSent = now; post("/engine/steer", point); }
+}
+function mapAim(e, force) {
+  const r = $("#map").getBoundingClientRect(), m = MAP_MARGIN;
+  const point = { p: +clamp1((e.clientX - r.left - m) / (r.width - 2 * m) * 2 - 1).toFixed(3),
+                  a: +clamp1(1 - (e.clientY - r.top - m) / (r.height - 2 * m) * 2).toFixed(3) };
+  if (dTouched) point.d = +$("#dominance").value;
+  steer(point, force);
+}
+$("#map").addEventListener("pointerdown", (e) => { mapDrag = true; $("#map").setPointerCapture(e.pointerId); mapAim(e); });
+$("#map").addEventListener("pointermove", (e) => { if (mapDrag) mapAim(e); });
+$("#map").addEventListener("pointerup", (e) => { if (mapDrag) { mapDrag = false; mapAim(e, true); } });   // the last point always lands
+function dominance(force) {
+  dTouched = true;
+  const d = +$("#dominance").value;
+  $("#dominance-v").textContent = d.toFixed(2);
+  if (snap && snap.steered) steer({ p: snap.steered[0], a: snap.steered[1], d }, force);
+  if (snap && meta) drawMap();
+}
+$("#dominance").oninput = () => dominance(false);
+$("#dominance").onchange = () => dominance(true);
+$("#release").onclick = () => { post("/engine/steer", { release: true }); dTouched = false; };
+
+function drawMap() {
+  const c = $("#map"), dpr = fit(c), ctx = c.getContext("2d"), w = c.width, h = c.height, m = MAP_MARGIN * dpr;
+  ctx.clearRect(0, 0, w, h);
+  grid(ctx, w, h, m, 4);
+  ctx.fillStyle = css("--dim"); ctx.font = font(10, dpr);
+  ctx.textAlign = "center";
+  ctx.fillText("AROUSED", w / 2, m - 4 * dpr);
+  ctx.fillText("CALM", w / 2, h - 4 * dpr);
+  ctx.save(); ctx.translate(m - 5 * dpr, h / 2); ctx.rotate(-Math.PI / 2); ctx.fillText("UNPLEASANT", 0, 0); ctx.restore();
+  ctx.save(); ctx.translate(w - m + 5 * dpr, h / 2); ctx.rotate(Math.PI / 2); ctx.fillText("PLEASANT", 0, 0); ctx.restore();
+
+  // the tags where the map puts them: brighter the nearer their dominance is to the slider's,
+  // bigger the more of his face they make now; labels step aside when they would overlap
+  const weights = (snap.face || {}).weights || {}, d = +$("#dominance").value, taken = [];
+  ctx.font = font(11, dpr);
+  const tags = Object.entries(meta.map).sort((x, y) => Math.abs(x[1][2] - d) - Math.abs(y[1][2] - d));
+  for (const [tag, pos] of tags) {
+    const [x, y] = mapXY(pos[0], pos[1], w, h, m), wt = weights[tag] || 0, r = (2.5 + 5 * wt) * dpr;
+    ctx.globalAlpha = 1 - Math.min(1, Math.abs(pos[2] - d) / 1.2) * 0.7;
+    ctx.fillStyle = wt > 0.05 ? css("--hi") : css("--dim");
+    ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
+    const tw = ctx.measureText(tag).width, left = x > w * 0.68;
+    let lx = left ? x - 8 * dpr - tw : x + 8 * dpr, ly = y + 4 * dpr;
+    const hits = (yy) => taken.some(([a, b, c2, d2]) => lx < c2 && lx + tw > a && yy - 10 * dpr < d2 && yy + 2 * dpr > b);
+    for (let step = 1; hits(ly) && step < 8; step++) ly = y + 4 * dpr + Math.ceil(step / 2) * 12 * dpr * (step % 2 ? 1 : -1);
+    taken.push([lx, ly - 10 * dpr, lx + tw, ly + 2 * dpr]);
+    ctx.textAlign = "left";
+    ctx.fillText(tag, lx, ly);
+  }
+  ctx.globalAlpha = 1;
+
+  // where his mood is now, and the steered point (red, a selection box) while the map holds him
+  const mood = Array.isArray(snap.mood) ? snap.mood : null;
+  if (snap.steered) {
+    const [x, y] = mapXY(snap.steered[0], snap.steered[1], w, h, m);
+    ctx.strokeStyle = css("--danger"); ctx.lineWidth = 1;
+    ctx.setLineDash([3 * dpr, 4 * dpr]); ctx.globalAlpha = .5;
+    ctx.beginPath(); ctx.moveTo(x, m); ctx.lineTo(x, h - m); ctx.moveTo(m, y); ctx.lineTo(w - m, y); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.lineWidth = 2 * dpr;
+    ctx.strokeRect(x - 11 * dpr, y - 8 * dpr, 22 * dpr, 16 * dpr);
+  } else if (mood) {
+    const [x, y] = mapXY(clamp1(mood[0]), clamp1(mood[1]), w, h, m);
+    ctx.strokeStyle = css("--hi"); ctx.lineWidth = 1.5 * dpr;
+    ctx.strokeRect(x - 5 * dpr, y - 5 * dpr, 10 * dpr, 10 * dpr);
+  }
+}
+
+// ----- the side panel's tabs -----
+function showTab(name) {
+  tab = name;
+  document.querySelectorAll(".tab").forEach((b) => {
+    const on = b.dataset.tab === name;
+    b.setAttribute("aria-selected", String(on));
+    b.tabIndex = on ? 0 : -1;
+  });
+  document.querySelectorAll(".side .panel").forEach((p) => { p.hidden = p.id !== "tab-" + name; });
+  remember.set("tab", name);
+  if (snap && meta) drawEngine();
+}
+document.querySelectorAll(".tab").forEach((b) => {
+  b.onclick = () => showTab(b.dataset.tab);
+  b.onkeydown = (e) => {
+    const tabs = [...document.querySelectorAll(".tab")], i = tabs.indexOf(b);
+    const next = e.key === "ArrowRight" ? tabs[(i + 1) % tabs.length] : e.key === "ArrowLeft" ? tabs[(i + tabs.length - 1) % tabs.length] : null;
+    if (next) { e.preventDefault(); e.stopPropagation(); showTab(next.dataset.tab); next.focus(); }
+  };
+});
+
+// ----- the settings popover -----
+function settings(open) {
+  $("#settings").hidden = !open;
+  $("#settings-btn").setAttribute("aria-expanded", String(open));
+}
+$("#settings-btn").onclick = (e) => { e.stopPropagation(); settings($("#settings").hidden); };
+document.addEventListener("click", (e) => { if (!$("#settings").hidden && !$("#settings").contains(e.target)) settings(false); });
+
+// ----- keys, as in the bar at the bottom, while nothing is being typed -----
+document.addEventListener("keydown", (e) => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = e.target;
+  const typing = t.tagName === "SELECT" || t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type !== "range" && t.type !== "checkbox");
+  if (e.key === "Escape") {
+    if (!$("#settings").hidden) { settings(false); $("#settings-btn").focus(); }
+    else if (typing) t.blur();
+    return;
+  }
+  if (typing) return;
+  if (/^[0-9]$/.test(e.key)) {   // the tags, while the Face tab is open
+    if (!meta || tab !== "face") return;
+    const i = (+e.key + 9) % 10, name = meta.tags[i];
+    if (name) { fireTag(name); flash(document.querySelectorAll("#tags .btn")[i]); e.preventDefault(); }
+    return;
+  }
+  const act = {
+    m: () => $("#mic").click(), v: () => $("#voice").click(), "/": () => $("#text").focus(),
+    p: () => showTab("people"), f: () => showTab("face"), e: () => showTab("engine"),
+    c: () => $("#colour").click(), s: () => settings($("#settings").hidden),
+  }[e.key.toLowerCase()];
+  if (act) { e.preventDefault(); act(); }
+});
+
 // ----- wiring -----
+const refresh = () => setTimeout(poll, 300);
 $("#say").onsubmit = (e) => { e.preventDefault(); const t = $("#text"); if (t.value.trim()) say(t.value); t.value = ""; };
 document.querySelectorAll("[data-prefix]").forEach((b) => b.onclick = () => { const t = $("#text"); t.value = b.dataset.prefix; t.focus(); });
-$("#mic").onclick = () => say("/talk").then(() => setTimeout(poll, 300));
-$("#gate").onclick = () => say("/gate").then(() => setTimeout(poll, 300));
-$("#voice").onclick = () => say("/mute").then(() => setTimeout(poll, 300));
-$("#eyes-pause").onclick = () => say("/eyes pause").then(() => setTimeout(poll, 300));
-$("#eyes-alive").onclick = () => say("/eyes alive").then(() => setTimeout(poll, 300));
+$("#mic").onclick = () => say("/talk").then(refresh);
+$("#voice").onclick = () => say("/mute").then(refresh);
+$("#gate").onclick = () => { if (!state.gate) say("/gate").then(refresh); };
+$("#gate-off").onclick = () => { if (state.gate) say("/gate").then(refresh); };
+$("#eyes-pause").onclick = () => say("/eyes pause").then(refresh);
+$("#eyes-alive").onclick = () => say("/eyes alive").then(refresh);
 $("#new").onclick = () => say("/new");
 $("#speaker").onchange = async (e) => {
   const r = await post("/speaker", { id: e.target.value });
   if (!r.ok) system(r.why, "error");
-  setTimeout(poll, 300);
+  refresh();
 };
 $("#beep").onclick = async () => { const r = await post("/beep", {}); if (!r.ok) system(r.why, "error"); };
 $("#silence").onclick = () => say("/silence");
-$("#model").onchange = (e) => say("/model " + e.target.value).then(() => setTimeout(poll, 300));
+$("#model").onchange = (e) => say("/model " + e.target.value).then(refresh);
 $("#show-senses").onchange = (e) => log.classList.toggle("no-senses", !e.target.checked);
 $("#enrol").onsubmit = async (e) => {
   e.preventDefault();
@@ -459,14 +1162,14 @@ $("#enrol").onsubmit = async (e) => {
   if (r.ok) $("#enrol-name").value = "";
 };
 
-connect();
-poll();
+colour(remember.get("colour", "0") === "1");
+fold(remember.get("camFolded", "0") === "1");
+showTab(["people", "face", "engine"].includes(remember.get("tab")) ? remember.get("tab") : "people");
+poll().then(connect);   // the stored names first, so the replayed lines show who said them
 camLoop();
-faceLoop();
-setFaceMode("2d");
 probeTwin();
+startEngine();
 setInterval(poll, 1000);
 </script>
-<script src="/face_draw.js"></script>
 </body>
 </html>
