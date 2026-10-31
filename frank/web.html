@@ -139,6 +139,11 @@
       <div class="cam"><img id="cam" alt="Frank's camera, with faces marked"><div id="nocam" class="nocam">Camera off</div></div>
     </div>
     <div class="card">
+      <div class="card-h"><h2>His face</h2><span id="face-state" class="muted small">engine off</span></div>
+      <canvas id="face" width="360" height="240" style="width:100%;border-radius:8px;background:#111"></canvas>
+      <div id="face-mix" class="muted small"></div>
+    </div>
+    <div class="card">
       <div class="card-h"><h2>In view</h2><span id="far" class="muted small"></span></div>
       <ul id="inview" class="rows"></ul>
     </div>
@@ -374,6 +379,24 @@ async function camLoop() {
   setTimeout(camLoop, 100);
 }
 
+// The face engine's joints (frank/engine), drawn 15 times a second while the tab is visible.
+async function faceLoop() {
+  if (!document.hidden && window.drawFace) {
+    try {
+      const s = await (await fetch("/face", { cache: "no-store" })).json();
+      if (s.joints) {
+        drawFace($("#face"), s.joints, { talk: 0 });
+        const m = s.mood ? s.mood.map((v) => v.toFixed(2)).join(", ") : "";
+        $("#face-state").textContent = `${s.state}${s.error ? " · " + s.error : ""}`;
+        const w = Object.entries((s.face || {}).weights || {}).filter(([, v]) => v > 0.05)
+          .sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v.toFixed(2)}`).join(" · ");
+        $("#face-mix").textContent = `mood (P, A, D) ${m}${w ? " · " + w : ""}`;
+      }
+    } catch { /* the server is restarting */ }
+  }
+  setTimeout(faceLoop, 66);
+}
+
 async function poll() {
   try { state = await (await fetch("/state")).json(); render(); }
   catch { setStatus("Not running"); }
@@ -409,7 +432,9 @@ $("#enrol").onsubmit = async (e) => {
 connect();
 poll();
 camLoop();
+faceLoop();
 setInterval(poll, 1000);
 </script>
+<script src="/face_draw.js"></script>
 </body>
 </html>

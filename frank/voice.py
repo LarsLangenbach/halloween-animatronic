@@ -411,7 +411,9 @@ class Voice:
         elif self.model_id.startswith("eleven_v4"):
             sentence = delivery_text(sentence, face)
         if not self.buf:
-            self.buf_face = face  # the piece's expression, for the mouth
+            self.buf_faces = [(0, face)]  # the piece's expressions, for the face: (character, tag)
+        elif face != self.buf_faces[-1][1]:
+            self.buf_faces.append((sum(len(s) + 1 for s in self.buf), face))  # a tag mid-piece
         self.buf.append(sentence)
         need = FIRST_CHARS if not self.said else NEXT_CHARS
         if sum(len(s) + 1 for s in self.buf) >= need:
@@ -441,7 +443,7 @@ class Voice:
         chunks = queue.Queue()
         chunks.put(clip)
         chunks.put(None)
-        self.order.put((self.gen, "", chunks, None))  # no text: not part of what he said
+        self.order.put((self.gen, "", chunks, []))  # no text: not part of what he said; no face
         return name.replace("_", " ")
 
     def end_reply(self):
@@ -464,7 +466,7 @@ class Voice:
         self.said.append(text)
         self.log(what="piece", text=text[:80], chars=len(text))
         chunks = queue.Queue()
-        self.order.put((self.gen, text, chunks, getattr(self, "buf_face", None)))
+        self.order.put((self.gen, text, chunks, getattr(self, "buf_faces", [(0, None)])))
         threading.Thread(target=self._fetch, args=(body, chunks, self.gen), daemon=True).start()
 
     def wait(self):
@@ -514,12 +516,13 @@ class Voice:
                     self.order.task_done()
 
     def _play_one(self, me, item):
-        gen, text, chunks, face = item
+        gen, text, chunks, faces = item
         rec = {"text": text, "played": 0, "received": 0, "done": False}
+        faces = list(faces or [])  # (character, tag): each goes to the face when its words play
         if gen == self.gen:
             self.current = rec
-            if self.mouth:
-                self.mouth.face(face)
+            if self.mouth and faces:
+                self.mouth.face(faces.pop(0)[1])
         odd = b""
         # A stopped piece is left where it is, not drained: its fetch thread stops at its next
         # chunk, and nothing waits on it (draining held wait() until the download finished,
@@ -554,6 +557,9 @@ class Voice:
                     except Exception as e:
                         self.aec, self.error = None, f"echo cancellation off ({e})"
                 rec["played"] += len(s)
+                if faces and self.mouth:  # where the voice has got to, as stop() estimates it
+                    if rec["played"] / 2 / RATE * CHARS_PER_SEC >= faces[0][0]:
+                        self.mouth.face(faces.pop(0)[1])
         rec["done"] = gen == self.gen
         self.log(what="played" if gen == self.gen else "dropped", text=text[:40],
                  seconds=round(rec["played"] / 2 / RATE, 1), of=round(rec["received"] / 2 / RATE, 1))

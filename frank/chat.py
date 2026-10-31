@@ -139,6 +139,39 @@ def load_voice():
         return None
 
 
+def start_face(chat, port=None, face=True, still_eyes=False):
+    """The mouth board (mouth.py) on `port`, and the face engine (frank/engine) driving the eyes,
+    lids, brows and the emotion part of the mouth: it takes the voice player's mouth hook,
+    hears the chat's events and watches the eyes. The engine is then the eyes, so the mouth
+    doesn't start gaze.py, and /eyes pause | alive go to the engine (engine.gaze).
+    face=False: the mouth alone with gaze.py's eyes, as before. still_eyes: eyes held still."""
+    writer = None
+    if port:
+        import mouth
+        writer = mouth.Mouth(port, log=lambda **k: chat.write(event="mouth", **k),
+                             eyes=not face and not still_eyes)
+        print(f"{DIM}Mouth on {writer.port} ({writer.program}).{OFF}")
+    chat.engine = None
+    if face:
+        from engine import Engine
+        chat.engine = Engine(writer=writer, log=lambda **k: chat.write(event="face", **k)).start()
+        chat.listeners.append(chat.engine.on_ui)
+        chat.engine.watch(lambda: chat.eyes.state if chat.eyes else None)
+        if still_eyes:
+            chat.engine.gaze.pause()
+        print(f"{DIM}Face engine on ({'the head' if writer else 'no head: preview only'}); "
+              f"eyes {chat.engine.gaze.state}.{OFF}")
+    if chat.voice:
+        chat.voice.mouth = chat.engine or writer
+    return chat.engine or writer
+
+
+def stop_face(chat):
+    face = getattr(chat, "engine", None) or (chat.voice.mouth if chat.voice else None)
+    if face:
+        face.close()
+
+
 class Turn:
     """One reply from Frank, on its own thread and its own copy of the conversation.
 
@@ -460,7 +493,7 @@ class Chat:
             self.ui("enrol", text=ev["message"], done=ev.get("done", False))
         for note in ev["notes"]:
             print(f"\r\033[K{DIM}(sees) {note}{OFF}")
-        if ev["notes"]:
+        if ev["notes"] or ev["kind"] == "session_end":  # the face engine needs the end too
             self.ui("seen", what=ev["kind"], notes=ev["notes"], prompt=ev["prompt"])
         self.write(event="seen", kind=ev["kind"], notes=ev["notes"], prompt=ev["prompt"])
         if ev["kind"] == "session_end":  # everyone has gone: the next visitor gets a new conversation
@@ -945,17 +978,14 @@ def main():
     ap.add_argument("--no-preview", action="store_true", help="with --see: no camera window")
     ap.add_argument("--mouth", help="the mouth Pico's serial port, or auto: the jaw follows his voice (mouth.py)")
     ap.add_argument("--still-eyes", action="store_true", help="with --mouth: the eyes do not look around and blink (gaze.py)")
+    ap.add_argument("--no-face", action="store_true", help="no face engine: the mouth alone (frank/engine)")
     args = ap.parse_args()
     brain.load_env()
     if not brain.available(args.model):
         sys.exit(f"No key for {args.model}: add it to frank/.env")
 
     chat = Chat(args.model, args.speaker, args.place, args.mute)
-    if args.mouth and chat.voice:
-        import mouth
-        chat.voice.mouth = mouth.Mouth(args.mouth, log=lambda **k: chat.write(event="mouth", **k),
-                                       eyes=not args.still_eyes)
-        print(f"{DIM}Mouth on {chat.voice.mouth.port} ({chat.voice.mouth.program}); eyes {'alive' if chat.voice.mouth.gaze else 'still'}.{OFF}")
+    start_face(chat, args.mouth, face=not args.no_face, still_eyes=args.still_eyes)
     print(f"{DIM}Talk or type to Frank. /fb <text> gives feedback on his last reply; /help for more.{OFF}\n")
     if args.see or args.video:
         chat.see(preview=not args.no_preview, source=args.video)
@@ -974,8 +1004,7 @@ def main():
         pass
     if chat.eyes:
         chat.eyes.stop()
-    if chat.voice and chat.voice.mouth:
-        chat.voice.mouth.close()
+    stop_face(chat)
     print(f"\n{DIM}Saved to {chat.log}{OFF}")
 
 

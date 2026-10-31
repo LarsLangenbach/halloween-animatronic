@@ -1,0 +1,32 @@
+{
+  "_note": "Joint channels (frank/engine/channels.py) to eye-board servos. Sides are Frank's own (L = his left). The lid sockets follow firmware/eye_anim.py (TOP_LIDS CUR, CLR = top lid of the eye on your right, on your left, seen from the front) and the brow sockets follow brow_anim.py's bench layout (JL left outer, JR right outer, LUL left inner, LUR right inner, seen from the front), so viewer's left = Frank's right. CHECK ON THE HEAD: 'curious' must raise both brows, 'skeptical' must raise Frank's LEFT brow (the viewer's right); a lid_asym > 0 must narrow Frank's LEFT eye. If a pair is the wrong way round, set swap_brow_sides or swap_lid_sides to true. If a brow end goes down when it should rise, flip its dir. If the eyes look the wrong way, flip gaze_x_sign or UD_UP.",
+  "poses": "../../firmware/eye_poses.json",
+  "LOOK_LR": 30,
+  "LOOK_UD": 15,
+  "UD_UP": 1,
+  "gaze_x_sign": 1,
+  "swap_brow_sides": false,
+  "swap_lid_sides": false,
+  "quantum_deg": 0.5,
+  "deadband_deg": 0.5,
+  "brow_every": 2,
+  "max_lines_per_tick": 6,
+  "angle_limits": [-27, 207],
+  "rest_pause": 0.12,
+  "disabled": [],
+  "joints": {
+    "gaze_x":     {"board": "eye", "socket": "LLL", "pin": 8,  "kind": "look_lr"},
+    "gaze_y":     {"board": "eye", "socket": "LLR", "pin": 9,  "kind": "look_ud"},
+    "lid_top_L":  {"board": "eye", "socket": "CUR", "pin": 11, "kind": "lid"},
+    "lid_top_R":  {"board": "eye", "socket": "CLR", "pin": 13, "kind": "lid"},
+    "lid_bot_L":  {"board": "eye", "socket": "CUL", "pin": 10, "kind": "lid"},
+    "lid_bot_R":  {"board": "eye", "socket": "CLL", "pin": 12, "kind": "lid"},
+    "brow_out_R": {"board": "eye", "socket": "JL",  "pin": 4,  "kind": "brow", "dir": 1},
+    "brow_out_L": {"board": "eye", "socket": "JR",  "pin": 5,  "kind": "brow", "dir": -1},
+    "brow_in_R":  {"board": "eye", "socket": "LUL", "pin": 6,  "kind": "brow", "dir": -1},
+    "brow_in_L":  {"board": "eye", "socket": "LUR", "pin": 7,  "kind": "brow", "dir": 1},
+    "smile":      {"board": "mouth", "kind": "expression"},
+    "smile_asym": {"board": "mouth", "kind": "expression"},
+    "jaw_floor":  {"board": "mouth", "kind": "expression"}
+  }
+}

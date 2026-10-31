@@ -154,7 +154,7 @@ class Mouth:
                     self.poses[k].update(v)
             if all(k in saved for k in ("vowel_ah", "vowel_ee", "vowel_oo")):
                 self.vowels = {k: dict(saved[k]) for k in ("vowel_ah", "vowel_ee", "vowel_oo")}
-        self.ser = serial.Serial(port, 115200, timeout=0)
+        self.ser = serial.serial_for_url(port, 115200, timeout=0)   # also socket:// (perform/body.py)
         self.cogley = self._ask_where() is not None
         if not self.cogley:
             self.ser.write(b"\x03\x03")   # a REPL left by Thonny, for one
@@ -174,6 +174,9 @@ class Mouth:
         self.width = 0.0              # mouth width, 0 narrow .. 1 wide
         self.bright = 0.0             # latest brightness while loud
         self.mood = self.mood_target = 0.0   # smile + .. frown -
+        self.asym = 0.0               # + his left corners more, - his right (the face engine)
+        self.jaw_floor = 0.0          # the jaw open at least this much, 0..1 (the face engine)
+        self.engine = False           # True once the face engine sets the expression
         self.tongue_until = 0.0
         self.sent = {}
         self.awake = False
@@ -252,9 +255,29 @@ class Mouth:
         self.last_audio = t
 
     def face(self, name):
-        """The expression tag of the piece starting now: a smile or a frown under the corners."""
+        """The expression tag of the piece starting now: a smile or a frown under the corners.
+        Ignored once the face engine (frank/engine) drives the expression."""
+        if self.engine:
+            return
         self.mood_target = MOOD.get(name or "", 0.0)
         self.log(what="face", face=name, mood=self.mood_target)
+
+    def expression(self, smile, asym=0.0, jaw_floor=0.0):
+        """The face engine's emotion part of the mouth, every tick: smile (+) or frown (-) under
+        the corners, how one-sided it is, and a jaw floor (surprise). Already smoothed."""
+        self.engine = True
+        self.mood = self.mood_target = max(-1.0, min(1.0, smile))
+        self.asym = max(-1.0, min(1.0, asym))
+        self.jaw_floor = max(0.0, min(1.0, jaw_floor))
+
+    def _corner(self, s, a):
+        """A corner's angle with the one-sided part of the expression: Cogley's L corners take
+        more of it when asym > 0 (his L and R are not yet matched to the face: check on the head)."""
+        if not self.asym:
+            return a
+        side = 1.0 + self.asym if s in ("CUL", "CLL") else 1.0 - self.asym
+        rest = self.poses["narrow"][s]
+        return rest + (a - rest) * side
 
     def flush(self):
         """An interruption: forget what was queued, shut now."""
@@ -282,7 +305,7 @@ class Mouth:
         for s in CORNERS:
             a = P["narrow"][s] + self.width * WIDTH_MAX * (P["wide"][s] - P["narrow"][s])
             a += abs(self.mood) * (mood_pose[s] - P["narrow"][s])
-            self._set(s, a)
+            self._set(s, self._corner(s, a))
         if TONGUE:
             down, up = P["tongue_down"]["TON"], P["tongue_up"]["TON"]
             self._set("TON", down + (TONGUE_UP * (up - down) if t < self.tongue_until else 0))
@@ -308,6 +331,7 @@ class Mouth:
             a = rest[s] + self.lips * (shape[s] - rest[s])
             if s in CORNERS:
                 a += abs(self.mood) * (mood_pose[s] - P["narrow"][s])
+                a = self._corner(s, a)
             self._set(s, a)
         if TONGUE:
             down, up = P["tongue_down"]["TON"], P["tongue_up"]["TON"]
@@ -327,6 +351,9 @@ class Mouth:
                     self.ser.reset_input_buffer()
                 self.sent["jaw"] = v
             return
+        if frac == 0.0 and getattr(self, "loose", False):
+            return   # let go after LOOSE_AFTER: stays loose until the mouth opens again
+        self.loose = False
         for socket, closed in self.poses["mouth_closed"].items():
             opened = self.poses["mouth_open"].get(socket, closed)
             a = round(closed + frac * (opened - closed))
@@ -359,14 +386,15 @@ class Mouth:
             self.mood += (self.mood_target - self.mood) * min(1.0, TICK / MOOD_SMOOTH)
             tick += 1
             if self.awake:
-                self._jaw(self.open * MAX_OPEN)
+                self._jaw(max(self.open * MAX_OPEN, self.jaw_floor))
                 if tick % 2 == 0:
                     self._lips(t)
-                if self.open == 0.0 and t - self.last_audio > LOOSE_AFTER and not self.cogley \
+                if self.open == 0.0 and self.jaw_floor == 0.0 and t - self.last_audio > LOOSE_AFTER and not self.cogley \
                         and any(s in self.sent for s in self.poses["mouth_closed"]):
                     for socket in self.poses["mouth_closed"]:
                         self.send(socket, "off")
                         self.sent.pop(socket, None)
+                    self.loose = True   # it switched them on again the next tick (2026-10-30)
             time.sleep(TICK)
 
     def close(self):

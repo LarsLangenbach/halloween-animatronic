@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frank's face</title>
+<style>
+  :root {
+    --bg: #0b0f0d; --panel: #121815; --panel-2: #18201c; --line: #25302a;
+    --text: #e6ece8; --muted: #8fa198; --faint: #5f6f67;
+    --accent: #9fe07a; --accent-ink: #0b0f0d;
+    --warn: #f0b44c; --danger: #ff6b5e;
+    --c1: #9fe07a; --c2: #7fb6ff; --c3: #f0b44c; --c4: #e58fd0;
+    --radius: 12px;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--text); font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; }
+  button, input { font: inherit; color: inherit; }
+  button { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+  button:hover { border-color: var(--faint); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button.on, .toggle[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  button.flash { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(159, 224, 122, .35); }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+  .mono { font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+  .top { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;
+         padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+  .brand { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .logo { font-weight: 800; letter-spacing: .18em; font-size: 18px; color: var(--accent); }
+  .pill { border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .pill.on { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); font-weight: 600; }
+  .pill.warn { color: var(--warn); border-color: var(--warn); }
+  .pill.danger { color: var(--danger); border-color: var(--danger); }
+
+  .grid { display: grid; grid-template-columns: minmax(320px, 1.15fr) minmax(360px, 1fr); gap: 16px; padding: 16px; }
+  .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
+  .card-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0; font-weight: 600; }
+
+  .stage { position: relative; aspect-ratio: 4 / 5; max-height: calc(100vh - 300px); min-height: 320px; margin: 0 auto; width: 100%; }
+  .stage canvas { width: 100%; height: 100%; display: block; border-radius: 8px; }
+  #chart { width: 100%; height: 120px; display: block; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); }
+  .legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+
+  .buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+  .buttons button { font-size: 13px; }
+  .buttons button kbd { font: 11px ui-monospace, Menlo, monospace; color: var(--faint); margin-right: 5px; }
+  .buttons button.on kbd { color: var(--accent-ink); }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 10px; }
+  .row label { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; }
+  input[type="range"] { accent-color: var(--accent); width: 140px; }
+  .sub { font-size: 12px; color: var(--faint); margin: 10px 0 6px; }
+
+  .split { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: start; }
+  #pad { width: 170px; height: 170px; display: block; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); cursor: crosshair; touch-action: none; }
+  .padinfo { display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--muted); }
+
+  .bars { display: grid; grid-template-columns: 9.5em minmax(0, 1fr) 3.5em; gap: 4px 10px; align-items: center; font-size: 13px; }
+  .bars .name { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bars .name.top { color: var(--accent); font-weight: 600; }
+  .bars .val { text-align: right; font: 12px ui-monospace, Menlo, Consolas, monospace; color: var(--muted); }
+  .track { position: relative; height: 8px; background: var(--panel-2); border-radius: 4px; overflow: hidden; }
+  .track .fill { position: absolute; top: 0; bottom: 0; background: var(--accent); border-radius: 4px; }
+  .track .rest { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--faint); }
+  .track.signed .fill { background: var(--c2); }
+  .readout { display: flex; gap: 14px; flex-wrap: wrap; align-items: baseline; margin-bottom: 8px; }
+  .big { font-size: 22px; font-weight: 700; color: var(--accent); }
+
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+    .stage { max-height: none; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="logo">FRANK</span>
+    <span class="pill">face engine preview</span>
+    <span id="engine" class="pill">engine: …</span>
+    <span id="head" class="pill">no servos</span>
+    <span id="conn" class="pill warn">connecting…</span>
+  </div>
+  <div class="small muted">We face him: his left is on your right. Keys 1–0 fire the tags, T talks, B blinks.</div>
+</header>
+
+<main class="grid">
+  <section class="col">
+    <div class="card">
+      <div class="stage"><canvas id="face" aria-label="Frank's face, drawn from the engine's channels"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>Last 10 seconds</h2>
+        <div class="legend" id="legend"></div></div>
+      <canvas id="chart"></canvas>
+    </div>
+  </section>
+
+  <section class="col">
+    <div class="card">
+      <div class="card-h"><h2>Tags</h2>
+        <label class="small muted">intensity <input id="intensity" type="range" min="0" max="1" step="0.05" value="1">
+          <span id="intensity-v" class="mono">1.00</span></label></div>
+      <div class="buttons" id="tags"></div>
+      <div class="sub">States</div>
+      <div class="buttons" id="states"></div>
+      <div class="sub">Events</div>
+      <div class="buttons" id="events"></div>
+      <div class="row">
+        <button id="talk" class="toggle" aria-pressed="false">Talk</button>
+        <span class="small muted" id="talk-info">a fake voice into the engine</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Visitor</h2><span class="small muted">click or drag where they stand</span></div>
+      <div class="split">
+        <canvas id="pad" width="170" height="170" aria-label="Visitor position pad"></canvas>
+        <div class="padinfo">
+          <div>yaw <b id="yaw" class="mono">–</b>°, pitch <b id="pitch" class="mono">–</b>°</div>
+          <div class="small">right = his left (yaw +), up = pitch +; the pad spans ±45° by ±30°.</div>
+          <div><button id="clear">Clear (nobody)</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="readout">
+        <div><h2>State</h2><div class="big" id="state">–</div></div>
+        <div><h2>Strongest</h2><div class="big" id="strongest">–</div></div>
+      </div>
+      <h2 style="margin-bottom: 6px">Mood</h2>
+      <div class="bars" id="mood"></div>
+      <h2 style="margin: 12px 0 6px">Tag weights</h2>
+      <div class="bars" id="weights"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom: 6px">Joint channels</h2>
+      <div class="bars" id="joints"></div>
+    </div>
+  </section>
+</main>
+
+<script src="/face_draw.js"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const CHART = [["gaze_x", "--c1"], ["lid_top_L", "--c2"], ["brow_in_L", "--c3"], ["smile", "--c4"]];
+const YAW = 45, PITCH = 30;
+let meta = null, snap = null, history = [], lastOk = 0, talking = false;
+
+async function post(path, body) {
+  try {
+    const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json", "X-Frank": "1" }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({ ok: r.ok }));
+    if (!j.ok) console.warn(path, j.why);
+    return j;
+  } catch (e) { console.warn(path, e); return { ok: false }; }
+}
+
+function flash(btn) { btn.classList.add("flash"); setTimeout(() => btn.classList.remove("flash"), 250); }
+
+function makeButtons(box, names, onClick, keys) {
+  box.innerHTML = "";
+  names.forEach((name, i) => {
+    const b = document.createElement("button");
+    b.dataset.name = name;
+    b.innerHTML = (keys ? `<kbd>${(i + 1) % 10}</kbd>` : "") + name.replace(/_/g, " ");
+    b.onclick = () => { flash(b); onClick(name); };
+    box.appendChild(b);
+  });
+}
+
+function bar(box, name, value, lo, hi, rest, extraClass) {
+  let row = box.querySelector(`[data-k="${name}"]`);
+  if (!row) {
+    row = document.createElement("div");
+    row.style.display = "contents";
+    row.dataset.k = name;
+    row.innerHTML = `<span class="name">${name}</span><span class="track${lo < 0 ? " signed" : ""}"><span class="fill"></span><span class="rest"></span></span><span class="val"></span>`;
+    box.appendChild(row);
+  }
+  const v = typeof value === "number" && isFinite(value) ? value : null;
+  const span = hi - lo, zero = lo < 0 ? (0 - lo) / span : 0;
+  const pos = v === null ? zero : (Math.max(lo, Math.min(hi, v)) - lo) / span;
+  const fill = row.querySelector(".fill");
+  fill.style.left = (Math.min(zero, pos) * 100) + "%";
+  fill.style.width = (Math.abs(pos - zero) * 100) + "%";
+  row.querySelector(".rest").style.left = (((rest ?? 0) - lo) / span * 100) + "%";
+  row.querySelector(".val").textContent = v === null ? "–" : v.toFixed(2);
+  row.querySelector(".name").className = "name" + (extraClass ? " " + extraClass : "");
+}
+
+async function start() {
+  try { meta = await (await fetch("/meta")).json(); }
+  catch (e) { $("conn").textContent = "no server"; setTimeout(start, 1000); return; }
+  $("engine").textContent = "engine: " + meta.engine;
+  $("engine").className = "pill" + (meta.engine === "stand-in" ? " warn" : " on");
+  $("head").textContent = meta.head ? "head on " + meta.head : "no servos";
+  $("head").className = "pill" + (meta.head ? " on" : "");
+  makeButtons($("tags"), meta.tags, (n) => post("/tag", { name: n, intensity: +$("intensity").value }), true);
+  makeButtons($("states"), meta.states, (n) => post("/state", { name: n }));
+  makeButtons($("events"), [...meta.events, ...meta.engine_events], (n) => post("/event", { name: n }));
+  $("legend").innerHTML = CHART.map(([k, c]) => `<span><i style="background: var(${c})"></i>${k}</span>`).join("");
+  poll();
+  requestAnimationFrame(frame);
+}
+
+async function poll() {
+  const t0 = performance.now();
+  try {
+    const r = await fetch("/snapshot", { cache: "no-store" });
+    if (r.ok) {
+      snap = await r.json();
+      lastOk = Date.now();
+      const j = snap.joints || {};
+      history.push([Date.now(), CHART.map(([k]) => j[k])]);
+      while (history.length && history[0][0] < Date.now() - 10000) history.shift();
+    }
+  } catch (e) { /* the server is restarting: keep trying */ }
+  setTimeout(poll, Math.max(0, 33 - (performance.now() - t0)));
+}
+
+function fit(canvas) {
+  const dpr = window.devicePixelRatio || 1, r = canvas.getBoundingClientRect();
+  const w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  return dpr;
+}
+
+function frame() {
+  requestAnimationFrame(frame);
+  const live = Date.now() - lastOk < 1500;
+  $("conn").textContent = live ? "live" : "no snapshot";
+  $("conn").className = "pill " + (live ? "on" : "danger");
+  if (!snap) return;
+  const face = $("face");
+  fit(face);
+  const pv = snap.preview || {};
+  drawFace(face, snap.joints || {}, { talk: pv.talk ?? (snap.cue && snap.cue.talk) ?? 0 });
+  readouts(pv);
+  chart();
+  pad(pv.target);
+}
+
+function readouts(pv) {
+  $("state").textContent = snap.state || "–";
+  const face = snap.face || {};
+  const m = Array.isArray(snap.mood) ? snap.mood : [face.valence, face.arousal, face.dominance];
+  const box = $("mood");
+  [["P pleasure", m[0]], ["A arousal", m[1]], ["D dominance", m[2]]].forEach(([n, v]) => bar(box, n, v, -1, 1, 0));
+  const w = face.weights || {};
+  const tags = meta.tags;
+  let best = null;
+  tags.forEach((t) => { if ((w[t] || 0) > 0.05 && (!best || w[t] > w[best])) best = t; });
+  $("strongest").textContent = best || "–";
+  tags.forEach((t) => bar($("weights"), t, w[t] || 0, 0, 1, 0, t === best ? "top" : ""));
+  document.querySelectorAll("#tags button").forEach((b) => b.classList.toggle("on", b.dataset.name === best));
+  document.querySelectorAll("#states button").forEach((b) => b.classList.toggle("on", b.dataset.name === snap.state));
+  const j = snap.joints || {};
+  for (const [k, r] of Object.entries(meta.joints)) bar($("joints"), k, j[k], r.low, r.high, r.rest);
+  if (pv.talking !== undefined && pv.talking !== talking) setTalk(pv.talking, false);
+  $("talk-info").textContent = (talking ? "level " + (pv.talk || 0).toFixed(2) + " · " : "a fake voice · ") + "via " + (pv.hook || meta.talk_hook);
+}
+
+function chart() {
+  const c = $("chart"), dpr = fit(c), ctx = c.getContext("2d");
+  const w = c.width, h = c.height, css = getComputedStyle(document.documentElement);
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = css.getPropertyValue("--line");
+  ctx.lineWidth = 1;
+  for (const v of [-1, 0, 1]) {
+    const y = h / 2 - v * (h / 2 - 4 * dpr);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+  const now = Date.now();
+  CHART.forEach(([, col], i) => {
+    ctx.strokeStyle = css.getPropertyValue(col);
+    ctx.lineWidth = 1.6 * dpr;
+    ctx.beginPath();
+    let pen = false;
+    for (const [t, vals] of history) {
+      const v = vals[i];
+      if (typeof v !== "number") { pen = false; continue; }
+      const x = w - (now - t) / 10000 * w, y = h / 2 - Math.max(-1, Math.min(1, v)) * (h / 2 - 4 * dpr);
+      pen ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      pen = true;
+    }
+    ctx.stroke();
+  });
+}
+
+// ----- the visitor pad -----
+let dragging = false, lastSent = 0, pending = null;
+function pad(target) {
+  const c = $("pad"), dpr = fit(c), ctx = c.getContext("2d"), w = c.width, h = c.height;
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = "#25302a"; ctx.lineWidth = 1;
+  for (let i = 1; i < 4; i++) {
+    ctx.beginPath(); ctx.moveTo(w * i / 4, 0); ctx.lineTo(w * i / 4, h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, h * i / 4); ctx.lineTo(w, h * i / 4); ctx.stroke();
+  }
+  ctx.fillStyle = "#5f6f67"; ctx.font = `${10 * dpr}px sans-serif`;
+  ctx.fillText("his R", 4 * dpr, h - 5 * dpr);
+  ctx.textAlign = "right"; ctx.fillText("his L", w - 4 * dpr, h - 5 * dpr); ctx.textAlign = "left";
+  ctx.fillStyle = "#9fe07a"; ctx.beginPath(); ctx.arc(w / 2, h / 2, 3 * dpr, 0, 7); ctx.fill();   // Frank looks out of here
+  if (target) {
+    const x = (target[0] / YAW + 1) / 2 * w, y = (1 - target[1] / PITCH) / 2 * h;
+    ctx.fillStyle = "#7fb6ff"; ctx.beginPath(); ctx.arc(x, y, 8 * dpr, 0, 7); ctx.fill();
+    $("yaw").textContent = target[0].toFixed(0); $("pitch").textContent = target[1].toFixed(0);
+  } else { $("yaw").textContent = "–"; $("pitch").textContent = "–"; }
+}
+function padAim(e) {
+  const r = $("pad").getBoundingClientRect();
+  const fx = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)), fy = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height));
+  pending = { yaw: +((fx * 2 - 1) * YAW).toFixed(1), pitch: +((1 - fy * 2) * PITCH).toFixed(1) };
+  const now = performance.now();
+  if (now - lastSent > 50) { lastSent = now; post("/target", pending); pending = null; }
+}
+$("pad").addEventListener("pointerdown", (e) => { dragging = true; $("pad").setPointerCapture(e.pointerId); padAim(e); });
+$("pad").addEventListener("pointermove", (e) => { if (dragging) padAim(e); });
+$("pad").addEventListener("pointerup", () => { dragging = false; if (pending) { post("/target", pending); pending = null; } });
+$("clear").onclick = () => post("/target", { clear: true });
+
+// ----- talk, intensity, keys -----
+function setTalk(on, send = true) {
+  talking = on;
+  $("talk").setAttribute("aria-pressed", on ? "true" : "false");
+  $("talk").textContent = on ? "Talking…" : "Talk";
+  if (send) post("/talk", { on });
+}
+$("talk").onclick = () => setTalk(!talking);
+$("intensity").oninput = () => { $("intensity-v").textContent = (+$("intensity").value).toFixed(2); };
+document.addEventListener("keydown", (e) => {
+  if (!meta || e.ctrlKey || e.metaKey || e.altKey || e.target.tagName === "INPUT" && e.target.type !== "range") return;
+  if (/^[0-9]$/.test(e.key)) {
+    const i = (+e.key + 9) % 10, name = meta.tags[i];
+    if (name) { post("/tag", { name, intensity: +$("intensity").value }); flash(document.querySelectorAll("#tags button")[i]); e.preventDefault(); }
+  } else if (e.key === "t" || e.key === "T") { setTalk(!talking); }
+  else if (e.key === "b" || e.key === "B") { post("/event", { name: "blink" }); }
+});
+
+start();
+</script>
+</body>
+</html>

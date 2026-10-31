@@ -132,6 +132,11 @@ def handler(chat, hub, people):
             elif path == "/frame":  # the newest preview picture; the page asks 10 times a second
                 jpeg = chat.eyes.jpeg if chat.eyes else None
                 self._send(200, jpeg, "image/jpeg") if jpeg else self._send(204, b"", "image/jpeg")
+            elif path == "/face":  # the face engine's joints, face and state; the page asks 15 times a second
+                engine = getattr(chat, "engine", None)
+                self._json(engine.snapshot() if engine else {})
+            elif path == "/face_draw.js":
+                self._send(200, (HERE / "engine" / "face_draw.js").read_bytes(), "text/javascript; charset=utf-8")
             else:
                 self._send(404, b"not found", "text/plain")
 
@@ -219,6 +224,7 @@ def main():
     ap.add_argument("--port", type=int, default=8800)
     ap.add_argument("--mouth", help="the mouth Pico's serial port, or auto: the jaw follows his voice (mouth.py)")
     ap.add_argument("--still-eyes", action="store_true", help="with --mouth: the eyes do not look around and blink (gaze.py)")
+    ap.add_argument("--no-face", action="store_true", help="no face engine: the mouth alone (frank/engine)")
     args = ap.parse_args()
     brain.load_env()
     if not brain.available(args.model):
@@ -233,11 +239,7 @@ def main():
             chat.voice.use_speaker(int(args.speaker) if args.speaker.isdigit() else args.speaker)
         except Exception as e:  # not plugged in here: the Mac's own output, and the page can change it
             print(f"(speaker {args.speaker!r} not found, so the Mac's default output: {e})")
-    if args.mouth and chat.voice:
-        import mouth
-        chat.voice.mouth = mouth.Mouth(args.mouth, log=lambda **k: chat.write(event="mouth", **k),
-                                       eyes=not args.still_eyes)
-        print(f"Mouth on {chat.voice.mouth.port} ({chat.voice.mouth.program}); eyes {'alive' if chat.voice.mouth.gaze else 'still'}.")
+    chat_mod.start_face(chat, args.mouth, face=not args.no_face, still_eyes=args.still_eyes)
     if not args.no_see:
         chat.see(preview="web", source=args.video)
     if args.talk:
@@ -253,8 +255,7 @@ def main():
     finally:
         if chat.eyes:
             chat.eyes.stop()
-        if chat.voice and chat.voice.mouth:
-            chat.voice.mouth.close()
+        chat_mod.stop_face(chat)
         server.shutdown()
         print(f"Saved to {chat.log}")
 
