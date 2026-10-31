@@ -5,19 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Frank's face</title>
 <style>
-  :root {
-    --bg: #0b0f0d; --panel: #121815; --panel-2: #18201c; --line: #25302a;
-    --text: #e6ece8; --muted: #8fa198; --faint: #5f6f67;
-    --accent: #9fe07a; --accent-ink: #0b0f0d;
-    --warn: #f0b44c; --danger: #ff6b5e;
-    --c1: #9fe07a; --c2: #7fb6ff; --c3: #f0b44c; --c4: #e58fd0;
-    --radius: 12px;
+  :root {   /* the retro green terminal of frank/web.html */
+    --bg: #020704; --panel: #040b06; --panel-2: #08150c; --line: #2b6542;
+    --text: #7cf0a0; --muted: #4f9a6b; --faint: #2f5c3f;
+    --accent: #7cf0a0; --accent-ink: #021006; --hi: #d4ffe2;
+    --warn: #ffc857; --danger: #ff5a4a;
+    --c1: #7cf0a0; --c2: #d4ffe2; --c3: #ffc857; --c4: #5ad1e6;
+    --mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", Consolas, "Courier New", monospace;
+    --radius: 0;
     color-scheme: dark;
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
   html, body { margin: 0; height: 100%; }
-  body { background: var(--bg); color: var(--text); font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; }
+  body { background: var(--bg); color: var(--text); font: 13px/1.5 var(--mono); }
   button, input { font: inherit; color: inherit; }
   button { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
   button:hover { border-color: var(--faint); }
@@ -86,6 +87,26 @@
     .grid { grid-template-columns: 1fr; }
     .stage { max-height: none; }
   }
+
+  /* ----- retro terminal ----- */
+  ::selection { background: var(--text); color: var(--accent-ink); }
+  button, .pill, .card, canvas, iframe, #map, .stage canvas, .stage iframe, input[type=range] { border-radius: 0 !important; }
+  button { background: var(--bg); text-transform: lowercase; letter-spacing: .02em; }
+  button:hover { border-color: var(--text); background: var(--panel-2); }
+  button:focus-visible, input:focus-visible { outline: 1px dashed var(--hi); outline-offset: 2px; }
+  button.on, .toggle[aria-pressed="true"], .pill.on { background: var(--text); color: var(--accent-ink); border-color: var(--text); }
+  button.flash { box-shadow: 0 0 0 1px var(--hi), 0 0 12px rgba(124, 240, 160, .45); }
+  .logo { color: var(--hi); text-shadow: 0 0 8px rgba(124, 240, 160, .7); letter-spacing: .3em; }
+  .logo::after { content: "_"; animation: blink 1.1s steps(1) infinite; color: var(--text); }
+  @keyframes blink { 50% { opacity: 0; } }
+  h2 { color: var(--hi); text-shadow: 0 0 6px rgba(124, 240, 160, .35); }
+  .mono, .small { font-family: var(--mono); }
+  .big { color: var(--hi); text-shadow: 0 0 10px rgba(124, 240, 160, .5); }
+  body::after {   /* faint scan lines */
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 50;
+    background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0 2px, rgba(0, 0, 0, .18) 2px 3px);
+  }
+  @media (prefers-reduced-motion: reduce) { .logo::after { animation: none; } }
 </style>
 </head>
 <body>
@@ -419,7 +440,7 @@ function drawMap() {
   ctx.strokeStyle = v("--line"); ctx.lineWidth = dpr;
   ctx.beginPath(); ctx.moveTo(X(0), 0); ctx.lineTo(X(0), h); ctx.moveTo(0, Y(0)); ctx.lineTo(w, Y(0)); ctx.stroke();
   ctx.beginPath(); ctx.arc(X(0), Y(0), w / 2 - dpr, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = v("--faint"); ctx.font = `${11 * dpr}px system-ui, sans-serif`;
+  ctx.fillStyle = v("--faint"); ctx.font = `${11 * dpr}px ui-monospace, Menlo, Consolas, monospace`;
   ctx.textAlign = "center";
   ctx.fillText("aroused", X(0), 14 * dpr); ctx.fillText("calm", X(0), h - 6 * dpr);
   ctx.textAlign = "left"; ctx.fillText("unpleasant", 6 * dpr, Y(0) - 6 * dpr);
@@ -441,7 +462,7 @@ function drawMap() {
     ctx.fillStyle = v("--text"); ctx.beginPath(); ctx.arc(x, y, 3.5 * dpr, 0, Math.PI * 2); ctx.fill();
     const [lx, ly, align] = LABEL[tag] || [0, -8, "center"];
     ctx.fillStyle = k > 0.15 ? v("--text") : v("--muted"); ctx.textAlign = align;
-    ctx.font = `${(k > 0.15 ? 12 : 11) * dpr}px system-ui, sans-serif`;
+    ctx.font = `${(k > 0.15 ? 12 : 11) * dpr}px ui-monospace, Menlo, Consolas, monospace`;
     ctx.fillText(tag, x + lx * 7 * dpr, y + ly * dpr);
   }
   ctx.globalAlpha = 1;
