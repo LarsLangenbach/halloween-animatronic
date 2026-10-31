@@ -80,6 +80,7 @@ class Engine:
         self.recent = deque(maxlen=16)  # the engine's last decisions, for the editor's live feed
         self.session = dict(heard="", said="", visitor="", tags=[])  # the conversation, for the editor
         self.vision_at = 0.0           # when vision() was last called by hand (the editor's pad)
+        self.gaze_override = None      # (yaw, pitch, until): a performance holds his eyes there (animate.py)
         self.synth = Synth(personality)
         self.anim = Animator(personality)
         self.rig = Rig(writer)
@@ -255,14 +256,14 @@ class Engine:
         if self.talk_level > 0.05:
             self.last_feed = self.talk_at
 
-    def steer(self, p, a, d=None):
+    def steer(self, p, a, d=None, tags=False):
         """Hold his feeling at a point of the emotion map (the editor): pleasure and arousal in
         -1..1, dominance too (or his current one). The face is the mix of the tags near the
         point; Claude's tags wait unseen until release()."""
         t = time.monotonic()
         with self.lock:
             first = self.synth.steered is None
-            self.synth.steer(t, p, a, d)
+            self.synth.steer(t, p, a, d, tags)
         if first:
             self.log(what="engine_steer", state="on", p=round(p, 2), a=round(a, 2))
 
@@ -273,6 +274,12 @@ class Engine:
             self.synth.release(time.monotonic())
         if was:
             self.log(what="engine_steer", state="off")
+
+    def look_at(self, yaw, pitch=0.0, hold=2.0):
+        """Hold his eyes at (yaw, pitch) degrees for `hold` seconds (a performance's look keys,
+        animate.py), over whoever he'd look at; look_at(None) lets them go."""
+        with self.lock:
+            self.gaze_override = None if yaw is None else (float(yaw), float(pitch), time.monotonic() + hold)
 
     def watch(self, look):
         """Where to read the vision from: a callable returning eyes.Eyes.state (or None)."""
@@ -449,6 +456,9 @@ class Engine:
     def _gaze_target(self, t, state):
         """Whom to look at, as (yaw, pitch) degrees, and the others in view. The speaker wins;
         then the engaged person nearest; now and then a glance at someone else."""
+        if self.gaze_override and t < self.gaze_override[2]:   # a performance holds his eyes
+            self.target = self.gaze_override[:2]
+            return self.target, []
         vis = self.vision_state
         if vis is None:  # no eyes running: in a conversation, the visitor is straight ahead
             self.target = (0.0, 0.0) if state in IN_CONVERSATION else None

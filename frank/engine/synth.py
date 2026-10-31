@@ -229,6 +229,7 @@ class Synth:
         self.last_feel = None
         self.weights = {tag: 0.0 for tag in TAGS}
         self.steered = None              # (p, a, d) while the editor's emotion map steers him
+        self.steer_tags = False          # while steered: tags still show on top (a performance)
 
     # -- inputs ----------------------------------------------------------------------------
 
@@ -265,13 +266,14 @@ class Synth:
         for i, x in enumerate((p, a, d)):
             self.mood[i] = _clamp1(self.mood[i] + x)
 
-    def steer(self, t, p, a, d=None):
+    def steer(self, t, p, a, d=None, tags=False):
         """Hold his feeling at a point of the emotion map (pleasure, arousal, dominance in
         -1..1) until release(): the face is the mix of the tags near it, and the mood sits there.
         Tags fired meanwhile still run, unseen, and show again after release()."""
         self._advance(t)
         d = self.mood[2] if d is None else d
         self.steered = tuple(_clamp1(float(x)) for x in (p, a, d))
+        self.steer_tags = bool(tags)
         self.mood, self.vel = list(self.steered), [0.0, 0.0, 0.0]
 
     def release(self, t):
@@ -292,10 +294,15 @@ class Synth:
         steered = steer_weights(self.steered) if self.steered else None
         for tag in TAGS:
             if steered is not None:      # the emotion map: its weights, each tag's settled pose
-                w = self.weights[tag] = min(steered[tag], 1.0)
+                w = steered[tag]
+                tr = self.active.get(tag) if self.steer_tags else None
+                if tr is not None:       # a performance's tags show on top of the map
+                    w = max(w, tr.value(t) * tr.intensity)
+                w = self.weights[tag] = min(w, 1.0)
                 if w > 0.005:
                     keys = _KEYS[tag]
-                    entries.append((tag, w, w * gain * tag_gain.get(tag, 1.0), keys[-1][2], keys[-1][3]))
+                    sym, asym = _pose_at(keys, t - tr.born) if tr is not None else (keys[-1][2], keys[-1][3])
+                    entries.append((tag, w, w * gain * tag_gain.get(tag, 1.0), sym, asym))
                 continue
             tr = self.active.get(tag)
             e = 0.0

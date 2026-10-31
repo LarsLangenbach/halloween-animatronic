@@ -29,6 +29,16 @@ Rules:
 
 ---
 
+## 2026-10-30 — Software — Prompt to face animation; the statechart editor's routes run without a server
+
+**Done:**
+- Prompt to face animation (`frank/engine/animate.py`): a written prompt becomes a short timed performance written by Claude (Opus 5.5, low effort, JSON matching a fixed schema, refusal fallback on) in the engine's own vocabulary: expression tags, emotion-map points the face glides between, blinks, flinches and brow beats, and where the eyes look. `clean()` drops anything unknown and clamps every number; `Player` runs it on the live engine (tags show on top of the map: `synth.steer(..., tags=True)`; the eyes held by `Engine.look_at`) and hands the face back at the end. A box in the editor and in Frank's page's Face tab (Animate, Replay, Stop); routes `/animate`, `/play`, `/stop`. Needs `ANTHROPIC_API_KEY` (laptop only); without one it says so.
+- `frank/statechart/api.py`: the statechart editor's routes without a server (`api.handle(method, path, body, store)`), so the public site runs the node editor in the browser (halloween-animatronic-43's State machine tab); `editor.py` is now a thin wrapper, unchanged over HTTP.
+
+**Check:** `animate OK` (a stand-in for Claude; the performance played on a real engine: skeptical then amused peaks, the map glide, the eyes held up, the long blink, the face handed back, stop() too); `synth OK`, `animator OK`, `rig OK`, `preview OK`, `engine OK`; statechart `bridge OK`, `chart OK`, `vibe OK`; the api in browser mode (load, save, 409 on a stale save, check, simulate, vibe refused online). Through the demo server here: `/engine/play` moved the twin. Not run with a real key on this PC.
+
+**Next:** on the Mac, try a few prompts in the Face tab and judge the performances on the head.
+
 ## 2026-10-30 — Software — Face engine live on the session, the 3D twin as the hero, the emotion map; everything pushed; handover to the Mac
 
 **Done:**

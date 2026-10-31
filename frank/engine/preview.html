@@ -51,6 +51,11 @@
   #map { width: min(100%, 440px); aspect-ratio: 1 / 1; display: block; margin: 0 auto 8px;
          border-radius: 8px; background: var(--panel-2); touch-action: none; cursor: crosshair; }
   .warnt { color: var(--warn); }
+  #anim-prompt { width: 100%; resize: vertical; background: var(--bg); color: var(--text); border: 1px solid var(--line);
+                 padding: 8px; font: 13px/1.5 var(--mono, monospace); margin-bottom: 8px; }
+  #anim-prompt:focus { outline: 1px dashed var(--hi, var(--accent)); }
+  .anim-eg { font-size: 11px; padding: 3px 7px; }
+  #anim-keys li.now { color: var(--hi, var(--accent)); }
   .live { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 4px 10px; align-items: baseline; }
   .live .sub { margin: 0; }
   .feed { list-style: none; margin: 4px 0 0; padding: 0; max-height: 220px; overflow-y: auto; }
@@ -162,6 +167,22 @@
           <span id="map-dv" class="mono">0.30</span></label>
         <label class="small muted"><input type="checkbox" id="map-spring"> let go when the mouse is released</label>
       </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Prompt to animation</h2><span id="anim-state" class="small muted">write what he does</span></div>
+      <textarea id="anim-prompt" rows="3" placeholder="he hears a terrible pun, groans, then can't help smiling"
+                aria-label="What Frank should do"></textarea>
+      <div class="row">
+        <button id="anim-go" class="toggle" title="Claude writes the performance and it plays (Ctrl+Enter)">animate</button>
+        <button id="anim-replay" disabled>replay</button>
+        <button id="anim-stop">stop</button>
+        <span class="small muted">try:</span>
+        <button class="anim-eg small">spots a spider on the camera and freezes</button>
+        <button class="anim-eg small">slowly realises he's been insulted</button>
+        <button class="anim-eg small">falls asleep mid-thought, then jolts awake</button>
+      </div>
+      <ol id="anim-keys" class="feed small mono"></ol>
     </div>
 
     <div class="card">
@@ -277,6 +298,7 @@ async function start() {
   makeButtons($("events"), [...meta.events, ...meta.engine_events], (n) => post("/event", { name: n }));
   $("legend").innerHTML = CHART.map(([k, c]) => `<span><i style="background: var(${c})"></i>${k}</span>`).join("");
   wireMap();
+  wireAnim();
   poll();
   requestAnimationFrame(frame);
 }
@@ -345,6 +367,7 @@ function frame() {
   }
   readouts(pv);
   drawMap();
+  animTick();
   chart();
   pad(pv.target);
 }
@@ -488,6 +511,68 @@ function drawMap() {
   $("map-release").disabled = !s;
 }
 
+// Prompt to animation (engine/animate.py): Claude writes a short performance from a sentence and
+// the engine plays it (POST /animate); replay and stop. Laptop only: it needs a key.
+let lastAnim = null;
+function showAnim(a) {
+  const ol = $("anim-keys");
+  ol.innerHTML = "";
+  if (!a) return;
+  const head = document.createElement("li");
+  head.textContent = `"${a.title}"  ${a.duration.toFixed(1)} s, ${a.keys.length} keys`;
+  ol.append(head);
+  for (const k of a.keys) {
+    const li = document.createElement("li");
+    li.dataset.t = k.t;
+    const what = k.kind === "tag" ? `${k.tag} ${k.intensity.toFixed(2)}`
+      : k.kind === "feel" ? `map P ${k.p.toFixed(2)} A ${k.a.toFixed(2)} D ${k.d.toFixed(2)}`
+      : k.kind === "event" ? k.event : `look ${Math.round(k.yaw)}° ${Math.round(k.pitch)}°`;
+    li.textContent = `${k.t.toFixed(1).padStart(5)} s  ${k.kind.padEnd(5)}  ${what}`;
+    ol.append(li);
+  }
+}
+async function runAnim(prompt) {
+  prompt = (prompt || "").trim();
+  if (!prompt) { $("anim-prompt").focus(); return; }
+  $("anim-go").disabled = true;
+  $("anim-state").textContent = "Claude is writing it…";
+  $("anim-state").className = "small warnt";
+  const r = await post("/animate", { prompt });
+  $("anim-go").disabled = false;
+  if (r.ok && r.anim) {
+    lastAnim = r.anim;
+    $("anim-replay").disabled = false;
+    $("anim-state").textContent = `playing "${r.anim.title}"`;
+    $("anim-state").className = "small";
+    showAnim(r.anim);
+  } else {
+    $("anim-state").textContent = r.why || "it didn't work";
+    $("anim-state").className = "small warnt";
+  }
+}
+function animTick() {
+  const pf = snap && snap.performance;
+  const now = pf && pf.playing ? pf.elapsed : null;
+  if (pf && !pf.playing && lastAnim && /^playing/.test($("anim-state").textContent)) {
+    $("anim-state").textContent = `played "${lastAnim.title}": the face is back with the conversation`;
+    $("anim-state").className = "small muted";
+  }
+  let cur = null;
+  document.querySelectorAll("#anim-keys li[data-t]").forEach((li) => { if (now !== null && +li.dataset.t <= now) cur = li; li.classList.remove("now"); });
+  if (cur) cur.classList.add("now");
+}
+function wireAnim() {
+  $("anim-go").onclick = () => runAnim($("anim-prompt").value);
+  $("anim-prompt").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); runAnim($("anim-prompt").value); } });
+  $("anim-replay").onclick = async () => {
+    if (!lastAnim) return;
+    const r = await post("/play", { anim: lastAnim });
+    if (r.ok) { $("anim-state").textContent = `playing "${lastAnim.title}"`; $("anim-state").className = "small"; }
+  };
+  $("anim-stop").onclick = () => post("/stop", {});
+  document.querySelectorAll(".anim-eg").forEach((b) => b.onclick = () => { $("anim-prompt").value = b.textContent; runAnim(b.textContent); });
+}
+
 function chart() {
   const c = $("chart"), dpr = fit(c), ctx = c.getContext("2d");
   const w = c.width, h = c.height, css = getComputedStyle(document.documentElement);
@@ -557,7 +642,7 @@ function setTalk(on, send = true) {
 $("talk").onclick = () => setTalk(!talking);
 $("intensity").oninput = () => { $("intensity-v").textContent = (+$("intensity").value).toFixed(2); };
 document.addEventListener("keydown", (e) => {
-  if (!meta || e.ctrlKey || e.metaKey || e.altKey || e.target.tagName === "INPUT" && e.target.type !== "range") return;
+  if (!meta || e.ctrlKey || e.metaKey || e.altKey || e.target.tagName === "INPUT" && e.target.type !== "range" || e.target.tagName === "TEXTAREA") return;
   if (/^[0-9]$/.test(e.key)) {
     const i = (+e.key + 9) % 10, name = meta.tags[i];
     if (name) { post("/tag", { name, intensity: +$("intensity").value }); flash(document.querySelectorAll("#tags button")[i]); e.preventDefault(); }

@@ -17,6 +17,7 @@ The first chart, [charts/frank.json](charts/frank.json), rebuilds the engine's o
 | `charts/*.json` | The charts. `frank.json` is Frank's. |
 | `bridge.py` | `ChartedEngine`: the face engine with its states taken from a chart. A drop-in for `engine.Engine`. |
 | `editor.py`, `editor.html` | The node editor, a local page on port 8830. |
+| `api.py` | The editor's routes without a server: `api.handle(method, path, body, store)`. `editor.py` serves it over HTTP from the files in `charts/` (`FileStore`); the public site (`frank/online`) runs it in the browser on a `MemoryStore`, with `api.ONLINE = True` (vibe-coding off: it needs a key). |
 | `vibe.py` | Sends a request and the chart to Claude, and brings back the changed chart. |
 | `tests/` | `test_chart.py` (the runtime), `test_bridge.py` (chart against engine), `test_vibe.py` (vibe-coding with a stand-in for the API). |
 

@@ -280,6 +280,7 @@ class Api:
 
     def __init__(self, engine, head=None, live=False):
         self.engine, self.preview = engine, Preview(engine)
+        self.player = None   # animate.Player: prompt-to-animation performances
         self.info = dict(tags=TAGS, states=STATES, events=EVENTS, engine_events=ENGINE_EVENTS,
                          joints={k: dict(low=v[0], high=v[1], rest=v[2]) for k, v in JOINTS.items()},
                          engine="stand-in" if isinstance(engine, StandIn) else type(engine).__name__,
@@ -294,10 +295,42 @@ class Api:
                 return 500, dict(ok=False, why=f"{type(e).__name__}: {e}")
             snap["preview"] = dict(talk=preview.level, talking=preview.talking, target=preview.target,
                                    hook=preview.hook)
+            if self.player:
+                snap["performance"] = self.player.status()
             return 200, snap
         if path == "/meta":
             return 200, dict(self.info, talk_hook=preview.hook)
         return None
+
+    def _perform(self, path, body):
+        """POST /animate {prompt}: Claude writes a performance and it plays (needs a key: laptop
+        only); POST /play {anim}: play a timeline again; POST /stop."""
+        try:
+            from engine import animate
+        except Exception as e:
+            return 500, dict(ok=False, why=f"animate: {type(e).__name__}: {e}")
+        if not hasattr(self.engine, "steer"):
+            return 400, dict(ok=False, why="this engine can't perform")
+        if self.player is None:
+            self.player = animate.Player(self.engine)
+        if path == "/stop":
+            self.player.stop()
+            return 200, dict(ok=True)
+        if path == "/play":
+            anim = body.get("anim")
+            if not isinstance(anim, dict):
+                return 400, dict(ok=False, why="send the timeline as anim")
+        else:
+            if self.info.get("online"):
+                return 501, dict(ok=False, why="not available online: it needs a key, so it runs on the laptop")
+            try:
+                anim = animate.generate(body.get("prompt"))
+            except RuntimeError as e:
+                return 400, dict(ok=False, why=str(e))
+            except Exception as e:   # the API's own errors: say them, keep serving
+                return 502, dict(ok=False, why=f"{type(e).__name__}: {e}")
+        self.player.play(anim)
+        return 200, dict(ok=True, anim=self.player.anim)
 
     def post(self, path, body):
         engine, preview = self.engine, self.preview
@@ -326,6 +359,8 @@ class Api:
                     preview.aim(max(-90.0, min(90.0, yaw)), max(-60.0, min(60.0, pitch)))
             elif path == "/talk":
                 preview.talk(body.get("on"))
+            elif path in ("/animate", "/play", "/stop"):   # prompt to face animation (engine/animate.py)
+                return self._perform(path, body)
             elif path == "/steer":   # the emotion map: a point (pleasure, arousal, dominance?) or {release: true}
                 if body.get("release"):
                     getattr(self.engine, "release", lambda: None)()
