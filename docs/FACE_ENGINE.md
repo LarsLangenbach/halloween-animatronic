@@ -204,6 +204,7 @@ The twin alone, full screen, is http://127.0.0.1:8810/?hero=1 (`&spin=0` stops i
 | Animator and rig (`animator.py`, `rig.py`, `rig.json`) | built, `animator OK`, `rig OK` |
 | Preview (`preview.py`, `preview.html`, `face_draw.js`) | built, `preview OK`; port 8820 (8810 is the body twin's) |
 | Orchestrator and chat integration | built, `engine OK` (50 Hz end to end with a stand-in mouth board) |
-| On the head | not yet: sides and directions to check (Running it) |
+| Live editor (8820 inside `chat.py` / `web.py`), the 3D twin as the hero view, the emotion map | built and pushed 2026-10-30 |
+| On the head | not yet: sides and directions to check ([HANDOVER_2026-10-30.md](HANDOVER_2026-10-30.md), step 3) |
 
 The body server and digital twin (`perform/`, another session, 2026-10-30) sit under this without changes: `web.py --mouth socket://127.0.0.1:8811` sends everything the engine and the mouth send through `perform/body.py`, to the board and the twin.
