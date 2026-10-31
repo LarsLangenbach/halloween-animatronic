@@ -268,7 +268,7 @@ function handle(ev) {
     case "ignored": {
       $("#hearing").hidden = true; idle();
       const row = el("div", "ignored");
-      row.append(el("q", null, ev.text), el("div", null, ev.quiet ? "quiet: he ignores it until a line says his name" : `not to him: ${ev.why}`));
+      row.append(el("q", null, ev.text), el("div", null, ev.quiet ? "quiet: he ignores it until someone says his name or asks him to talk" : `not to him: ${ev.why}`));
       add(row); break;
     }
     case "quiet": state.quiet = ev.on; idle(); break;

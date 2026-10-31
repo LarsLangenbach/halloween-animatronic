@@ -60,6 +60,13 @@ SCENARIOS = [
         turn("Sorry, genuinely, is this an AI talking? My mum's asking and I honestly can't tell "
              "if someone's backstage.", NOW, "Present: two strangers."),
     ]),
+    dict(id="how_works", title="How does he actually work?", turns=[
+        turn("This is amazing. How does it actually work though? Like technically.", NOW,
+             "Present: one stranger."),
+        turn("Which model? And how do you hear me?"),
+        turn("And the face, how does the mouth know what to do?"),
+        turn("Do you remember people? Is that creepy?"),
+    ]),
     dict(id="rude", title="A rude visitor", turns=[
         turn("You're the ugliest thing I've ever seen.", NOW, "Present: one stranger."),
         turn("Seriously, you're a creepy pile of junk."),

@@ -6,7 +6,9 @@ Frank's voice (ElevenLabs): design it, keep one, and speak with it.
     uv run ... frank/voice.py save 2       keep preview 2 of the latest batch as Frank's voice
     uv run ... frank/voice.py remix "deeper and wetter"   three variations on the saved voice
     uv run ... frank/voice.py gargle 0.55  the liquid effect on his voice (gargle.py), 0 = off
-    uv run ... frank/voice.py speed 1.15   talking speed, 0.7 to 1.2; 0 = the voice's own
+    uv run ... frank/voice.py speed 1.15   ElevenLabs' own speed, 0.7 to 1.2; 0 = the voice's own (v3 ignores it)
+    uv run ... frank/voice.py tempo 1.5    how much faster he is played than he was rendered, at his own pitch
+                                           (audio.Tempo); 1 = as rendered. This is the one that works on v3.
     uv run ... frank/voice.py say "[amused] Oh, hello. [chuckle] I don't think we've met."
 
 "design" makes three previews from DESCRIPTION and opens a page to listen to them (run it
@@ -57,7 +59,8 @@ V3_TAGS = {"curious": "[curious]", "excited": "[excited]", "skeptical": "[skepti
            "surprised": "[surprised]", "vulnerable": "[hesitant]", "neutral": ""}
 V3_SETTINGS = {"stability": 0.0}
 FILLER_DIR = PREVIEWS / "fillers"
-CHARS_PER_SEC = 14                 # rough speaking rate, to guess what was heard when cut off
+CHARS_PER_SEC = 9                  # v3 Creative as rendered (120 chars in 13-14 s, 2026-10-30), before tempo;
+                                   # to guess what was heard when cut off
 
 # From CHARACTER.md §5.
 DESCRIPTION = (
@@ -222,18 +225,29 @@ def set_speed(speed):
     print(f"Speed set to {speed or 'the voice default'}")
 
 
+def set_tempo(tempo):
+    """Playback speed-up at his own pitch (audio.Tempo); 1 = as rendered."""
+    if not 0.5 <= tempo <= 2.5:
+        sys.exit("tempo is between 0.5 and 2.5")
+    cfg = json.loads(CONFIG.read_text(encoding="utf-8"))
+    cfg["tempo"] = tempo
+    CONFIG.write_text(json.dumps(cfg, indent=1) + "\n", encoding="utf-8")
+    print(f"Tempo set to x{tempo}")
+
+
 class Voice:
     """Speaks sentences in order while later ones are still being fetched."""
 
-    def __init__(self, voice_id, model_id=MODEL, gargle=0, speed=None, speaker=None):
+    def __init__(self, voice_id, model_id=MODEL, gargle=0, speed=None, speaker=None, tempo=None):
         self.voice_id, self.model_id, self.speed = voice_id, model_id, speed
+        self.tempo = tempo if tempo and tempo != 1 else None  # played this much faster than rendered (audio.Tempo)
         self.fx = None
         if gargle:
             from gargle import Gargle
             self.fx = Gargle(gargle)
         self.headers = {"xi-api-key": key()}
         import audio
-        self.up = audio.Up2()
+        self.audio, self.up = audio, audio.Up2()
         self.lock = threading.Lock()  # the speaker can change while he talks (use_speaker)
         self.speaker, self.out = speaker, self._open(speaker)
         self.writing = (None, 0.0)    # (play thread, when its current write began), for the watchdog
@@ -344,7 +358,8 @@ class Voice:
         if not CONFIG.exists():
             return None
         cfg = json.loads(CONFIG.read_text(encoding="utf-8"))
-        return cls(cfg["voice_id"], cfg.get("model_id", MODEL), cfg.get("gargle", 0), cfg.get("speed"))
+        return cls(cfg["voice_id"], cfg.get("model_id", MODEL), cfg.get("gargle", 0), cfg.get("speed"),
+                   tempo=cfg.get("tempo"))
 
     def start_reply(self):
         self.t0, self.first_sound, self.said, self.buf = time.perf_counter(), None, [], []
@@ -389,9 +404,9 @@ class Voice:
         heard, cur = list(self.heard), self.current
         if cur and cur["played"]:
             if cur["done"] and cur["received"]:
-                frac = cur["played"] / cur["received"]
+                frac = cur["played"] * (self.tempo or 1) / cur["received"]  # played is after the stretch
             else:  # still downloading: estimate from speaking time
-                frac = cur["played"] / 2 / RATE * CHARS_PER_SEC / max(1, len(cur["text"]))
+                frac = cur["played"] / 2 / RATE * (self.tempo or 1) * CHARS_PER_SEC / max(1, len(cur["text"]))
             cut = cur["text"][: int(len(cur["text"]) * min(1.0, frac))]
             heard.append(cut.rsplit(" ", 1)[0] if " " in cut else cut)
         return " ".join(heard).strip()
@@ -515,6 +530,40 @@ class Voice:
                 if me is self.player:
                     self.order.task_done()
 
+    def _write(self, me, gen, rec, b, faces=None):
+        """Play b in 20 ms slices, so stop() and pause() are quick. False once the piece is
+        stopped or this thread abandoned."""
+        for i in range(0, len(b), SLICE):
+            while not self.go.wait(0.05):  # paused: hold here until resume() or stop()
+                if gen != self.gen:
+                    break
+            if gen != self.gen:
+                return False
+            if self.first_sound is None:
+                self.first_sound = time.perf_counter() - self.t0
+            s = b[i:i + SLICE]
+            out = self.fx.process(s) if self.fx else s
+            lock, stream = self.lock, self.out
+            self.writing = (me, time.monotonic())
+            with lock:
+                stream.write(self.up(out))
+            if self.writing[0] is me:
+                self.writing = (None, 0.0)
+            if me is not self.player:   # abandoned by _recover while that write hung
+                return False
+            if self.mouth:
+                self.mouth.feed(out)
+            if self.aec:
+                try:
+                    self.aec.render(out, RATE)
+                except Exception as e:
+                    self.aec, self.error = None, f"echo cancellation off ({e})"
+            rec["played"] += len(s)
+            if faces and self.mouth:  # where the voice has got to, as stop() estimates it (played is after the stretch)
+                if rec["played"] / 2 / RATE * (self.tempo or 1) * CHARS_PER_SEC >= faces[0][0]:
+                    self.mouth.face(faces.pop(0)[1])
+        return True
+
     def _play_one(self, me, item):
         gen, text, chunks, faces = item
         rec = {"text": text, "played": 0, "received": 0, "done": False}
@@ -524,6 +573,7 @@ class Voice:
             if self.mouth and faces:
                 self.mouth.face(faces.pop(0)[1])
         odd = b""
+        tempo = self.audio.Tempo(self.tempo) if self.tempo else None  # fresh per piece: a stop drops its state
         # A stopped piece is left where it is, not drained: its fetch thread stops at its next
         # chunk, and nothing waits on it (draining held wait() until the download finished,
         # so his answer to the interruption was late, 2026-10-30).
@@ -531,38 +581,16 @@ class Voice:
             rec["received"] += len(b)
             b, n = odd + b, (len(odd) + len(b)) // 2 * 2
             b, odd = b[:n], b[n:]
-            for i in range(0, len(b), SLICE):  # small slices, so stop() and pause() are quick
-                while not self.go.wait(0.05):  # paused: hold here until resume() or stop()
-                    if gen != self.gen:
-                        break
-                if gen != self.gen:
-                    break
-                if self.first_sound is None:
-                    self.first_sound = time.perf_counter() - self.t0
-                s = b[i:i + SLICE]
-                out = self.fx.process(s) if self.fx else s
-                lock, stream = self.lock, self.out
-                self.writing = (me, time.monotonic())
-                with lock:
-                    stream.write(self.up(out))
-                if self.writing[0] is me:
-                    self.writing = (None, 0.0)
-                if me is not self.player:   # abandoned by _recover while that write hung
-                    return
-                if self.mouth:
-                    self.mouth.feed(out)
-                if self.aec:
-                    try:
-                        self.aec.render(out, RATE)
-                    except Exception as e:
-                        self.aec, self.error = None, f"echo cancellation off ({e})"
-                rec["played"] += len(s)
-                if faces and self.mouth:  # where the voice has got to, as stop() estimates it
-                    if rec["played"] / 2 / RATE * CHARS_PER_SEC >= faces[0][0]:
-                        self.mouth.face(faces.pop(0)[1])
+            if not self._write(me, gen, rec, tempo(b) if tempo else b, faces):
+                break
+        else:
+            if tempo and gen == self.gen:
+                self._write(me, gen, rec, tempo.flush(), faces)  # the last frames held back by the stretch
+        if me is not self.player:   # abandoned by _recover while a write hung
+            return
         rec["done"] = gen == self.gen
         self.log(what="played" if gen == self.gen else "dropped", text=text[:40],
-                 seconds=round(rec["played"] / 2 / RATE, 1), of=round(rec["received"] / 2 / RATE, 1))
+                 seconds=round(rec["played"] / 2 / RATE, 1), of=round(rec["received"] / 2 / RATE / (self.tempo or 1), 1))
         if gen == self.gen:
             self.heard.append(text)
             self.current = None
@@ -629,6 +657,8 @@ if __name__ == "__main__":
         set_gargle(float(sys.argv[2]))
     elif cmd == "speed" and len(sys.argv) > 2:
         set_speed(float(sys.argv[2]))
+    elif cmd == "tempo" and len(sys.argv) > 2:
+        set_tempo(float(sys.argv[2]))
     elif cmd == "compare":
         compare(" ".join(sys.argv[2:]) or "[curious] Oh, hello. I don't think we've met. I'm Frank. "
                 "[amused] I know how I was made, you see... it's the rest I'm trying to understand.")

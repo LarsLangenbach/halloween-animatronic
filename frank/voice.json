@@ -18,5 +18,7 @@
  ],
  "chosen": "2026-10-26 by Anushhka: Mossbeard, plain; 2026-10-28 by Anushhka: eleven_v3 at Creative (stability 0) with acting tags, output/frank/voice/expressive_v3/listen.html row 1: 'v3 at most expressive is good'",
  "speed": 1.2,
- "model_before": "eleven_turbo_v2_5 (2026-10-28, an hour: 0.30 s to first audio but flat); before that eleven_multilingual_v2"
+ "model_before": "eleven_turbo_v2_5 (2026-10-28, an hour: 0.30 s to first audio but flat); before that eleven_multilingual_v2",
+ "tempo": 1.5,
+ "speed_note": "speed is ElevenLabs' setting (max 1.2); eleven_v3 at Creative ignores it (tested 2026-10-30, 3 takes each). tempo is the player's own pitch-preserving speed-up (audio.Tempo) and is what makes him faster."
 }

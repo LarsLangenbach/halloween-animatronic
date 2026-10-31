@@ -14,6 +14,7 @@ someone and forgetting people. The terminal shows what chat.py always shows.
     --talk        microphone on from the start   --mute       no voice
     --no-see      no camera                      --video F    a clip instead of the camera
     --model M     the brain (default sonnet-5.5)   --place P    where he is, for his notes
+    --recent T    what he's lived through lately, for his notes (default: tonight's trip; '' for none)
     --speaker S   his voice's output device, by name (part of it will do) or number;
                   default: the Mac's own output. The page can change it.
     --port N      default 8800
@@ -215,7 +216,8 @@ def main():
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description="Frank in the browser")
     ap.add_argument("--model", default="sonnet-5.5", choices=list(brain.MODELS))
-    ap.add_argument("--place", default="The lab, SCAD Satellite Lab, Savannah")
+    ap.add_argument("--place", default=chat_mod.PLACE, help="where he is, for his notes")
+    ap.add_argument("--recent", default=chat_mod.RECENT, help="what he's lived through lately, for his notes ('' for nothing)")
     ap.add_argument("--mute", action="store_true", help="no voice")
     ap.add_argument("--talk", action="store_true", help="microphone on from the start")
     ap.add_argument("--no-see", action="store_true", help="no camera")
@@ -231,7 +233,7 @@ def main():
     if not brain.available(args.model):
         sys.exit(f"No key for {args.model}: add it to frank/.env")
 
-    chat = chat_mod.Chat(args.model, None, args.place, args.mute)
+    chat = chat_mod.Chat(args.model, None, args.place, args.mute, recent=args.recent)
     hub = Hub()
     chat.listeners.append(hub.publish)
     hub.publish(dict(kind="new", t=time.time(), model=chat.model))  # Chat started before the page could hear

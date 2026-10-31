@@ -7,6 +7,8 @@
 #     frank --mute                   no voice
 #     frank --mouth auto             the mouth Pico on USB: the jaw follows his voice and the eyes are alive (mouth.py, gaze.py)
 #     frank --video clip.mp4         a recording instead of the camera
+#     frank --place "The lab, SCAD Satellite Lab, Savannah" --recent ""
+#                                    back home: where he is and what he's lived through lately (chat.PLACE, chat.RECENT)
 # Ctrl+C stops him.
 
 cd "${0:A:h}/.." || exit 1

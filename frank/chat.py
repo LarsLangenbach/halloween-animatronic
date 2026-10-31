@@ -24,7 +24,8 @@ Once frank/voice.json exists he speaks aloud. Commands:
                     (on), or everything the microphone hears (off)
     /silence        let a silence pass ("(no speech)")
     /quiet [min]    as if he'd been told to be quiet: he ignores everything until a line
-                    says his name (or, with a number, until that many minutes are up)
+                    says his name or asks him to talk again (or, with a number, until that
+                    many minutes are up); everyone leaving doesn't end it
     /wake           bring him back from quiet yourself
     /model <name>   switch brain (a new conversation): haiku-5.5, sonnet-5.5, opus-5.5, gpt-5.4-mini
     /new            a new conversation (the next visitor)
@@ -61,6 +62,13 @@ AWAKENING = date(2026, 10, 26)  # provisional until the creators set it (README,
 TOOL_RESULTS = {"remember_person": "Remembered.", "forget_person": "Forgotten: face and memories deleted.",
                 "go_quiet": "Quiet: you hear nothing more until someone says your name."}
 LOGS = HERE.parent / "output" / "frank" / "chats"
+# Where he is and what he's lived through lately, for his opening notes (--place, --recent).
+# Set for tonight (2026-10-30); the lab was "The lab, SCAD Satellite Lab, Savannah".
+PLACE = "NightHack at Founders Inc., San Francisco"
+RECENT = ("Your recent experiences: Anushhka and Lars brought you from the lab in Savannah to "
+          "San Francisco for NightHack, a night-long hackathon at Founders Inc. You were asleep "
+          "for the whole journey, the flight included, so you know nothing of it firsthand: you "
+          "remember the lab, and then waking here, on 30 October 2026.")
 DIM, BOLD, OFF = "\033[2m", "\033[1m", "\033[0m"
 
 
@@ -120,13 +128,21 @@ PAUSE_LOUD = 0.006 * 32768  # RMS; lower than ears.LOUD, since the echo cancelle
 PAUSE_AFTER_S = 0.25        # loud this long: pause (100 ms microphone chunks, so 3 of them)
 PAUSE_HOLD_S = 1.5          # paused this long with no verdict: carry on
 PAUSE_QUIET_S = 0.3         # paused and the microphone quiet again this long: carry on
-PAUSE_LEARN = 1.5           # a false pause raises the level to this times the run that caused it
+PAUSE_LEARN = 1.5           # a false pause raises the level to this times the run that caused it ...
+PAUSE_LOUD_MAX = 0.03 * 32768  # ... up to this: a visitor over him read 1624 RMS (2026-10-30)
+PAUSE_WORDS_S = 0.7         # a transcript this recent means someone is talking: keep holding ...
+PAUSE_HOLD_MAX_S = 3.0      # ... up to this long in all
+PAUSE_LEARN_S = 1.0         # a pause is judged false this long after the resume, if no words came
 SILENCE_S = 25       # someone's there and nobody has spoken this long: he may say something ...
 SILENCE_SHARE = 0.5  # ... this often (CHARACTER.md: not every silence needs speech)
 # Told to be quiet (the go_quiet tool, or /quiet), he drops everything he hears until a line
-# has his name in it ("Hey Frank, are you there?"), or the time he was given is up and someone
-# speaks again. The ears' transcript spells him Frank; "Frankie" and "Franky" count too.
-WAKE = re.compile(r"\bfrank(?:ie|y)?\b", re.IGNORECASE)
+# has his name in it ("Hey Frank, are you there?") or asks him to talk again, or the time he
+# was given is up and someone speaks again. Nothing else ends it: not everyone leaving, not a
+# new conversation (the eyes lost sight of Anushhka for a moment and he came back talking,
+# 2026-10-30). The ears' transcript spells him Frank; "Frankie" and "Franky" count too.
+WAKE = re.compile(r"\bfrank(?:ie|y)?\b"
+                  r"|\byou (?:can|may) (?:talk|speak)\b|\b(?:talk|speak) (?:now|again)\b"
+                  r"|\bwake up\b|\bcome back\b", re.IGNORECASE)
 QUIET_WHY = "he was asked to be quiet"
 
 
@@ -366,8 +382,8 @@ class Turn:
 
 
 class Chat:
-    def __init__(self, model, speaker, place, mute):
-        self.place, self.speaker = place, speaker
+    def __init__(self, model, speaker, place, mute, recent=RECENT):
+        self.place, self.speaker, self.recent = place, speaker, recent
         self.voice = None if mute else load_voice()
         if self.voice:
             self.voice.log = lambda **k: self.write(event="voice", **k)
@@ -395,13 +411,13 @@ class Chat:
     def start(self, model):
         self.model = model
         self.convo = brain.Conversation(model)
-        self.notes = [now_note(self.place)]
+        self.notes = [now_note(self.place)] + ([self.recent] if self.recent else [])
         present = self.eyes.present_note() if self.eyes else present_note(self.speaker)
         self.notes += [present] if present else []
         self.last_reply = None
-        if self.shushed:
-            self.wake("a new conversation", note=False)
         print(f"{DIM}-- new conversation with {model} --{OFF}")
+        if self.shushed:
+            self.info("still quiet: he was asked to be; a line with his name brings him back")
         self.ui("new", model=model)
         self.write(event="new", model=model)
 
@@ -453,32 +469,31 @@ class Chat:
         self.write(event="quiet", on=True, minutes=minutes, who=who)
         return f"Quiet: you hear nothing more until someone says your name{span}."
 
-    def wake(self, why, note=True):
-        """Back from quiet. With note, the brain is told how long it was and why it ended."""
+    def wake(self, why):
+        """Back from quiet. The brain is told how long it was and why it ended."""
         q, self.shushed = self.shushed, None
         if not q:
             return
         mins = max(1, round((time.time() - q["since"]) / 60))
-        if note:
-            missed = (f" {q['dropped']} thing{'s' if q['dropped'] != 1 else ''} were said meanwhile "
-                      "that you didn't take in." if q["dropped"] else "")
-            self.notes.append(f"Quiet over: you were asked to be quiet about {mins} minute"
-                              f"{'s' if mins != 1 else ''} ago and kept it; {why}.{missed} "
-                              "Carry on without making a thing of it.")
-            self.asked_at = time.time()  # the line that called him counts, whatever the mouths say
+        missed = (f" {q['dropped']} thing{'s' if q['dropped'] != 1 else ''} were said meanwhile "
+                  "that you didn't take in." if q["dropped"] else "")
+        self.notes.append(f"Quiet over: you were asked to be quiet about {mins} minute"
+                          f"{'s' if mins != 1 else ''} ago and kept it; {why}.{missed} "
+                          "Carry on without making a thing of it.")
+        self.asked_at = time.time()  # the line that called him counts, whatever the mouths say
         self.info(f"awake: {why}")
         self.ui("quiet", on=False)
         self.write(event="quiet", on=False, why=why, minutes=mins, dropped=q["dropped"])
 
     def hushed(self, text, final):
-        """While he's been told to be quiet: True if this line is to be let pass. His name
-        brings him back at once; the time being up brings him back on the next line. A final
-        line that passes is shown greyed on the page and logged."""
+        """While he's been told to be quiet: True if this line is to be let pass. His name,
+        or being asked to talk again, brings him back at once; the time being up brings him
+        back on the next line. A final line that passes is shown greyed on the page and logged."""
         q = self.shushed
         if not q:
             return False
         if WAKE.search(text):
-            self.wake("they've just said your name")
+            self.wake("they've just called you back")
             return False
         if q["until"] and time.time() > q["until"]:
             self.wake("the time they asked for is up and someone is speaking again")
@@ -664,7 +679,7 @@ class Chat:
                               on_resumed=lambda: put(("resumed", None)),
                               on_barge=lambda t: put(("barge", t)),
                               on_error=lambda m: self.info(m))
-        self.ears.on_while_speaking = lambda text, echo: self.write(event="while_speaking", heard=text, echo=echo)
+        self.ears.on_while_speaking = self.while_speaking
         self.ears.on_trace = lambda **k: self.write(event="ears", mode=self.ears.mode, **k)
         self.ears.start()
         self.listening = True
@@ -689,32 +704,51 @@ class Chat:
         state = self.eyes.state if self.eyes else None
         return bool(state) and any(p.get("talking") and not p.get("figure") for p in state.get("people", []))
 
+    def while_speaking(self, text, echo):
+        """What the speech service hears while he talks (the ears' echo verdict with it). Words
+        that aren't his mean someone is talking, whatever the verdict: the pause holds for them."""
+        why = self.ears.is_echo.why(text) if self.ears and self.ears.is_echo else {}
+        if why.get("new"):
+            self.words_at = time.monotonic()
+        self.write(event="while_speaking", heard=text, echo=echo, new=why.get("new"))
+
     def _over_him(self):
         """While he talks: a loud microphone for PAUSE_AFTER_S pauses his voice at once, and
         the words decide (PAUSE_*); loud for OVER_HIM_S plus a moving mouth in view is an
         interruption without words, posted as a barge the run loop handles like any other."""
         last = resumed_at = 0.0
         self.pause_level, self.pause_run = PAUSE_LOUD, 0.0  # the level, and the peak of the run that paused him
+        self.words_at, judge = 0.0, None  # when words that weren't his last arrived; (paused_at, resumed_at, run) to judge
         while True:
             time.sleep(0.05)
             ears, voice = self.ears, self.active_voice()
             if not ears:
                 continue
+            now = time.monotonic()
+            if judge and now - judge[1] >= PAUSE_LEARN_S:
+                # No words around the pause: a false alarm (his own echo, a noise), so next time
+                # the microphone must beat that run. Words, even too few to stop him, were a
+                # visitor, and the level stays (fillers taught it 2437 RMS, 2026-10-30).
+                paused_at, _, run = judge
+                judge = None
+                if self.words_at < paused_at:
+                    self.pause_level = min(PAUSE_LOUD_MAX, max(self.pause_level, PAUSE_LEARN * run))
+                    self.write(event="pause_level", level=round(self.pause_level), run=round(run))
             speaking = ears.mode == "speaking"
             if voice and voice.paused is not None:
-                held = time.monotonic() - voice.paused
+                held = now - voice.paused
+                words = now - self.words_at < PAUSE_WORDS_S  # someone is talking: the verdict is coming
                 # While the ears are no longer in speaking mode a barge is on its way (the run
                 # loop stops him, or resumes him if the eyes block it): hold, but never for ever.
-                if speaking and held >= PAUSE_QUIET_S and ears.quiet_for(self.pause_level) >= PAUSE_QUIET_S:
+                if speaking and not words and held >= PAUSE_QUIET_S and ears.quiet_for(self.pause_level) >= PAUSE_QUIET_S:
                     why = "the microphone went quiet"
-                elif held >= PAUSE_HOLD_S:
-                    why = "nothing heard"
+                elif held >= PAUSE_HOLD_S and (not words or held >= PAUSE_HOLD_MAX_S):
+                    why = "no more than fillers" if self.words_at >= now - held else "nothing heard"
                 else:
                     continue
-                # A false alarm (his own echo, a noise): next time the microphone must beat it.
-                self.pause_level = max(self.pause_level, PAUSE_LEARN * self.pause_run)
                 voice.resume(why)
-                resumed_at = time.monotonic()
+                resumed_at = now
+                judge = (now - held, now, self.pause_run)  # looked at PAUSE_LEARN_S from now
                 self.write(event="resume", why=why, held=round(held, 2), level=round(self.pause_level))
                 self.ui("resumed")
                 continue
@@ -977,7 +1011,8 @@ def main():
     ap = argparse.ArgumentParser(description="Talk to Frank")
     ap.add_argument("--model", default="sonnet-5.5", choices=list(brain.MODELS))
     ap.add_argument("--as", dest="speaker", help="speak as a recognised person, e.g. Anushhka")
-    ap.add_argument("--place", default="The lab, SCAD Satellite Lab, Savannah")
+    ap.add_argument("--place", default=PLACE, help="where he is, for his notes")
+    ap.add_argument("--recent", default=RECENT, help="what he's lived through lately, for his notes ('' for nothing)")
     ap.add_argument("--mute", action="store_true", help="text only, no voice")
     ap.add_argument("--talk", action="store_true", help="listen on the microphone")
     ap.add_argument("--see", action="store_true", help="watch through the camera (eyes.py)")
@@ -992,7 +1027,7 @@ def main():
     if not brain.available(args.model):
         sys.exit(f"No key for {args.model}: add it to frank/.env")
 
-    chat = Chat(args.model, args.speaker, args.place, args.mute)
+    chat = Chat(args.model, args.speaker, args.place, args.mute, recent=args.recent)
     start_face(chat, args.mouth, face=not args.no_face, still_eyes=args.still_eyes,
                editor=args.editor_port)
     print(f"{DIM}Talk or type to Frank. /fb <text> gives feedback on his last reply; /help for more.{OFF}\n")
