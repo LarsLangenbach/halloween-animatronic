@@ -608,7 +608,8 @@ class Vision:
             tr.stranger, self.next_stranger = self.next_stranger, self.next_stranger + 1
         if tr.engaged and level == "known" and before[0] != "known" and not self.arrival:
             self._emit("recognised", [f"Recognised: the person {self.place(tr)} is "
-                                      f"{self.gallery.name(pid)}.", self.present_note()], t=t)
+                                      f"{self.gallery.name(pid)}.", self.present_note(),
+                                      self.memory_note(tr)], t=t)
 
     # ----- presence -----
 
@@ -651,8 +652,8 @@ class Vision:
                 self.pending_arrivals.remove((tid, due))
             elif tr.who[0] == "known" or len(tr.prints) >= faces.KNOWN_PRINTS or t >= due:
                 self.pending_arrivals.remove((tid, due))
-                self._emit("arrived", [f"Arrived: {self.label(tr)}, {self.place(tr)}.", self.present_note()],
-                           prompt=True, t=t)
+                self._emit("arrived", [f"Arrived: {self.label(tr)}, {self.place(tr)}.", self.present_note(),
+                                       self.memory_note(tr)], prompt=True, t=t)
 
     def _engage(self, tr, t):
         tr.engaged = True
@@ -681,7 +682,8 @@ class Vision:
         obs = self.arrival["observation"]
         self.arrival = None
         quiet = self.settle_at is not None or t < self.handled_until  # he's just been moved
-        self._emit("arrived", [f"Arrived: {who}.{far}", obs], prompt=not quiet, t=t)
+        memories = [self.memory_note(tr) for tr in engaged]
+        self._emit("arrived", [f"Arrived: {who}.{far}", obs, *memories], prompt=not quiet, t=t)
 
     def _left(self, tr, t):
         name = self.gallery.name(tr.who[1]) if tr.who[0] == "known" else "a stranger"
@@ -694,6 +696,12 @@ class Vision:
         if level == "possible":  # no name: a wrong one would give away who else he knows
             return "someone you may have met before (not sure)"
         return "a stranger"
+
+    def memory_note(self, tr):
+        """His memory of a remembered visitor, sent with their arrival or recognition (None for
+        strangers and creators). remember_person stores it (faces.Gallery.memory)."""
+        level, pid, _ = tr.who
+        return self.gallery.memory(pid) if level == "known" else None
 
     def place(self, tr):
         return "on your left" if tr.yaw > 12 else "on your right" if tr.yaw < -12 else "in front of you"

@@ -6,3 +6,4 @@ __pycache__/
 output/ref/
 frank/.env
 output/frank/
+.DS_Store

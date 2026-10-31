@@ -25,6 +25,7 @@ The key is ELEVENLABS_API_KEY in frank/.env; it needs the Speech to Text permiss
 import array
 import asyncio
 import base64
+import collections
 import json
 import queue
 import re
@@ -41,6 +42,7 @@ URL = "wss://api.elevenlabs.io/v1/speech-to-text/realtime"
 RATE = 16000
 CHUNK = RATE // 10    # 100 ms
 LOUD = 0.015 * 32768  # RMS above this counts as someone talking
+LEVELS_S = 3.0        # how far back the chunk levels are kept (loud_for, quiet_for)
 ECHO_WINDOW = 2.0     # seconds after Frank stops in which his own words are still echo (1.0 let his own
                       # sentence back in as a visitor's line through the laptop speakers, 2026-10-28)
 DEBUG = bool(__import__("os").environ.get("FRANK_EARS_DEBUG"))  # print every message
@@ -55,13 +57,14 @@ def words(text):
     return re.findall(r"[a-z']+", text.lower().replace("-", " "))
 
 
-def echo_check(reply_text):
+def echo_check(reply_text, min_new=3):
     """is_echo(heard) for a reply: True unless the heard text is clearly someone else.
 
     Frank's voice through the speakers comes back slightly misheard, so a word close to
-    one of his (difflib ratio >= 0.75) counts as his. An interruption needs three or more
-    new, non-filler words making up at least half of what was heard, or a stop word (two
-    let his own sentence through the laptop speakers cut him off, 2026-10-28).
+    one of his (difflib ratio >= 0.75) counts as his. An interruption needs `min_new` or
+    more new, non-filler words (three while he talks: two let his own sentence through the
+    laptop speakers cut him off, 2026-10-28; two once his voice is paused, chat.py) making
+    up at least half of what was heard, or a stop word.
     is_echo.why(heard) says what it saw, for the log."""
     import difflib
     own = set(words(reply_text))
@@ -73,7 +76,7 @@ def echo_check(reply_text):
         w = [x for x in words(heard) if x not in FILLERS]
         foreign = [x for x in w if not his(x)]
         stop = [x for x in foreign if x in STOP_WORDS]
-        echo = not stop and (len(foreign) < 3 or len(foreign) / len(w) < 0.5)
+        echo = not stop and (len(foreign) < min_new or len(foreign) / len(w) < 0.5)
         return echo, dict(new=foreign, stop=stop, of=len(w))
 
     def is_echo(heard):
@@ -95,6 +98,8 @@ class Ears:
         self.is_echo, self.echo_until = None, 0.0
         self.last_voice = 0.0        # when the microphone last heard someone (perf_counter)
         self.loud_since = None       # when the current run of loud chunks began (perf_counter)
+        self.floor = 1.0             # the room's noise floor (RMS), kept in _mic
+        self.levels = collections.deque()  # (perf_counter, rms, floor) per 100 ms chunk, LEVELS_S back
         self.on_while_speaking = lambda text, echo: None  # chat.py logs what arrives while he talks
         self.on_trace = lambda **k: None  # chat.py logs the turn-ending steps (partial, commit, resumed, final)
         self.ready = threading.Event()
@@ -120,9 +125,31 @@ class Ears:
         if not self.ready.wait(10):
             self.on_error("ears: no connection to the speech-to-text service after 10 s")
 
-    def loud_for(self):
-        """How long the microphone has been continuously loud, in seconds (0 if it isn't)."""
-        return time.perf_counter() - self.loud_since if self.loud_since else 0.0
+    def loud_for(self, level=None):
+        """How long the microphone has been continuously loud, in seconds (0 if it isn't).
+        With `level`, loud means RMS above that level (and 3x the noise floor) instead of
+        LOUD: chat.py's pause trigger, which learns its own level."""
+        if level is None:
+            return time.perf_counter() - self.loud_since if self.loud_since else 0.0
+        return self._trailing(lambda rms, floor: rms > max(level, 3 * floor))
+
+    def quiet_for(self, level):
+        """How long the microphone has been continuously below `level`, in seconds."""
+        return self._trailing(lambda rms, floor: rms <= max(level, 3 * floor))
+
+    def peak(self, seconds):
+        """The loudest chunk (RMS) in the last `seconds`."""
+        since = time.perf_counter() - seconds
+        return max((rms for t, rms, _ in self.levels if t >= since), default=0.0)
+
+    def _trailing(self, test):
+        """How long the trailing chunks have all passed `test`, from the oldest of them."""
+        began = None
+        for t, rms, floor in reversed(self.levels):
+            if not test(rms, floor):
+                break
+            began = t
+        return time.perf_counter() - began if began is not None else 0.0
 
     def off(self):
         self.mode = "off"
@@ -161,12 +188,16 @@ class Ears:
             rms = (sum(x * x for x in a) / len(a)) ** 0.5 if a else 0.0
             # The room's noise floor: drops at once, rises slowly (about 2 % a second), so
             # a noisy event doesn't count as someone talking all the time.
-            self.floor = min(rms, getattr(self, "floor", rms) * 1.002) or 1.0
+            self.floor = min(rms, self.floor * 1.002 if self.levels else rms) or 1.0
+            now = time.perf_counter()
             if rms > max(LOUD, 3 * self.floor):
-                self.last_voice = time.perf_counter()
-                self.loud_since = self.loud_since or self.last_voice
+                self.last_voice = now
+                self.loud_since = self.loud_since or now
             else:
                 self.loud_since = None
+            self.levels.append((now, rms, self.floor))
+            while self.levels and now - self.levels[0][0] > LEVELS_S:
+                self.levels.popleft()
         self.audio.put(pcm)
 
     async def _run(self):

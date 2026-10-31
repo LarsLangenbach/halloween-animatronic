@@ -218,6 +218,7 @@ def main():
     ap.add_argument("--speaker", help="the voice's output device, by name or number")
     ap.add_argument("--port", type=int, default=8800)
     ap.add_argument("--mouth", help="the mouth Pico's serial port, or auto: the jaw follows his voice (mouth.py)")
+    ap.add_argument("--still-eyes", action="store_true", help="with --mouth: the eyes do not look around and blink (gaze.py)")
     args = ap.parse_args()
     brain.load_env()
     if not brain.available(args.model):
@@ -234,8 +235,9 @@ def main():
             print(f"(speaker {args.speaker!r} not found, so the Mac's default output: {e})")
     if args.mouth and chat.voice:
         import mouth
-        chat.voice.mouth = mouth.Mouth(args.mouth, log=lambda **k: chat.write(event="mouth", **k))
-        print(f"Mouth on {chat.voice.mouth.port} ({chat.voice.mouth.program}).")
+        chat.voice.mouth = mouth.Mouth(args.mouth, log=lambda **k: chat.write(event="mouth", **k),
+                                       eyes=not args.still_eyes)
+        print(f"Mouth on {chat.voice.mouth.port} ({chat.voice.mouth.program}); eyes {'alive' if chat.voice.mouth.gaze else 'still'}.")
     if not args.no_see:
         chat.see(preview="web", source=args.video)
     if args.talk:

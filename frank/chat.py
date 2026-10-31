@@ -23,10 +23,15 @@ Once frank/voice.json exists he speaks aloud. Commands:
     /gate           with --see: answer only lines from a mouth that moved in front of him
                     (on), or everything the microphone hears (off)
     /silence        let a silence pass ("(no speech)")
+    /quiet [min]    as if he'd been told to be quiet: he ignores everything until a line
+                    says his name (or, with a number, until that many minutes are up)
+    /wake           bring him back from quiet yourself
     /model <name>   switch brain (a new conversation): haiku-5.5, sonnet-5.5, opus-5.5, gpt-5.4-mini
     /new            a new conversation (the next visitor)
     /mute           voice off or on again
     /talk           microphone on or off
+    /eyes [pause|alive]  with --mouth: hold the eyes open and still (pause), or let them look
+                    around and blink again (alive); alone, it switches
     /quit
 Edits to system_prompt.md apply from the next turn. Every session is saved to
 output/frank/chats/<date_time>.jsonl.
@@ -35,6 +40,7 @@ output/frank/chats/<date_time>.jsonl.
 import argparse
 import json
 import queue
+import re
 import sys
 import threading
 import time
@@ -52,7 +58,8 @@ except ImportError:
     pass
 
 AWAKENING = date(2026, 10, 26)  # provisional until the creators set it (README, "Still open")
-TOOL_RESULTS = {"remember_person": "Remembered.", "forget_person": "Forgotten: face and memories deleted."}
+TOOL_RESULTS = {"remember_person": "Remembered.", "forget_person": "Forgotten: face and memories deleted.",
+                "go_quiet": "Quiet: you hear nothing more until someone says your name."}
 LOGS = HERE.parent / "output" / "frank" / "chats"
 DIM, BOLD, OFF = "\033[2m", "\033[1m", "\033[0m"
 
@@ -101,8 +108,26 @@ OVER_HIM_S = 0.3     # the microphone loud this long while a mouth in front of h
                      # interruption, without waiting for words (the echo canceller can swallow a
                      # visitor's words while his voice plays; none reached the code, 2026-10-29)
 OVER_HIM = "(someone talking over him)"
+# Before any of that: the microphone loud (after echo cancellation) for PAUSE_AFTER_S while
+# he talks pauses his voice at once, and the words that follow decide. A visitor's words
+# interrupt him for good; his own echo, or nothing within PAUSE_HOLD_S, or the microphone
+# quiet again for PAUSE_QUIET_S, and he carries on where he left off (a hesitation). The
+# first partial transcripts are too short for the echo filter, so waiting for the words
+# alone left him talking over the visitor for a second or two (2026-10-30). Once paused
+# his voice isn't in the microphone, so the echo filter needs only two new words.
+PAUSE_LOUD = 0.006 * 32768  # RMS; lower than ears.LOUD, since the echo canceller thins a
+                            # visitor's voice while his plays. Raised when a pause proves false
+PAUSE_AFTER_S = 0.25        # loud this long: pause (100 ms microphone chunks, so 3 of them)
+PAUSE_HOLD_S = 1.5          # paused this long with no verdict: carry on
+PAUSE_QUIET_S = 0.3         # paused and the microphone quiet again this long: carry on
+PAUSE_LEARN = 1.5           # a false pause raises the level to this times the run that caused it
 SILENCE_S = 25       # someone's there and nobody has spoken this long: he may say something ...
 SILENCE_SHARE = 0.5  # ... this often (CHARACTER.md: not every silence needs speech)
+# Told to be quiet (the go_quiet tool, or /quiet), he drops everything he hears until a line
+# has his name in it ("Hey Frank, are you there?"), or the time he was given is up and someone
+# speaks again. The ears' transcript spells him Frank; "Frankie" and "Franky" count too.
+WAKE = re.compile(r"\bfrank(?:ie|y)?\b", re.IGNORECASE)
+QUIET_WHY = "he was asked to be quiet"
 
 
 def load_voice():
@@ -179,8 +204,10 @@ class Turn:
         ears get this before he has written anything); .why(heard) explains."""
         import ears
         spoken = lambda: f"{getattr(self, 'filler_words', '')} {self.text}"  # noqa: E731
-        check = lambda heard: ears.echo_check(spoken())(heard)  # noqa: E731
-        check.why = lambda heard: ears.echo_check(spoken()).why(heard)
+        voice = self.chat.active_voice()
+        min_new = lambda: 2 if voice and voice.paused is not None else 3  # noqa: E731  (chat.PAUSE_*)
+        check = lambda heard: ears.echo_check(spoken(), min_new())(heard)  # noqa: E731
+        check.why = lambda heard: ears.echo_check(spoken(), min_new()).why(heard)
         return check
 
     def _run(self):
@@ -317,6 +344,7 @@ class Chat:
         self.filled_last = False  # the last turn had a "Hmm."
         self.asked_at = 0.0      # when his last reply ended, if it was a question
         self.quiet_since, self.silence_said = time.time(), 0.0
+        self.shushed = None      # told to be quiet: dict(since, until, dropped) until he's called back
         self.listeners = []      # web.py's: each gets every ui() event
         self.events = queue.Queue()  # (kind, value) from the keyboard, the ears, the eyes and turns
         self.prompt_mtime = (HERE / "system_prompt.md").stat().st_mtime
@@ -331,6 +359,8 @@ class Chat:
         present = self.eyes.present_note() if self.eyes else present_note(self.speaker)
         self.notes += [present] if present else []
         self.last_reply = None
+        if self.shushed:
+            self.wake("a new conversation", note=False)
         print(f"{DIM}-- new conversation with {model} --{OFF}")
         self.ui("new", model=model)
         self.write(event="new", model=model)
@@ -343,17 +373,19 @@ class Chat:
         self.info("watching: the eyes start in a few seconds")
 
     def run_tools(self, calls):
-        """remember_person and forget_person, done with the eyes on whoever said the last
-        line. What happened goes to the brain with the next turn."""
-        if not self.eyes:
-            return
+        """go_quiet, and (with the eyes on) remember_person and forget_person, done on
+        whoever said the last line. What happened goes to the brain with the next turn."""
         said, window = self.last_line
         window = window or (time.time() - 20, time.time())  # a typed line
         for cid, name, args in calls:
             if not brain.valid_input(name, args):
                 text = "Not done: the request was malformed."
+            elif name == "go_quiet":
+                text = self.shush(args.get("minutes"), who="asked by the visitor")
+            elif not self.eyes:
+                continue  # the fixed answers in TOOL_RESULTS, as in the bake-off
             elif name == "remember_person":
-                consent = f'{datetime.now():%Y-%m-%d %H:%M}, after saying: "{said}"'
+                consent = f'{datetime.now():%Y-%m-%d %H:%M}, gave their name when asked, saying: "{said}"'
                 r = self.eyes.enroll(args["first_name"].strip(), *window, consent=consent,
                                      note=args.get("notes", ""))
                 why = "already" if r.get("already") else "ok" if r.get("ok") else r.get("why")
@@ -367,6 +399,56 @@ class Chat:
             print(f"{DIM}({name}: {text}){OFF}")
             self.ui("tool", name=name, text=text)
             self.write(event="tool", name=name, input=args, result=text)
+
+    def shush(self, minutes=None, who="the console"):
+        """Be quiet from now: nothing he hears gets an answer until wake(). Returns what
+        the brain is told."""
+        minutes = minutes or None
+        until = time.time() + minutes * 60 if minutes else None
+        self.shushed = dict(since=time.time(), until=until, dropped=0)
+        self.prompt_due = False  # nothing he saw is worth breaking the quiet for
+        span = f" or {minutes:g} minute{'s' if minutes != 1 else ''} have passed" if minutes else ""
+        self.info(f"quiet ({who}): he ignores everything until a line says his name{span}")
+        self.ui("quiet", on=True, until=until)
+        self.write(event="quiet", on=True, minutes=minutes, who=who)
+        return f"Quiet: you hear nothing more until someone says your name{span}."
+
+    def wake(self, why, note=True):
+        """Back from quiet. With note, the brain is told how long it was and why it ended."""
+        q, self.shushed = self.shushed, None
+        if not q:
+            return
+        mins = max(1, round((time.time() - q["since"]) / 60))
+        if note:
+            missed = (f" {q['dropped']} thing{'s' if q['dropped'] != 1 else ''} were said meanwhile "
+                      "that you didn't take in." if q["dropped"] else "")
+            self.notes.append(f"Quiet over: you were asked to be quiet about {mins} minute"
+                              f"{'s' if mins != 1 else ''} ago and kept it; {why}.{missed} "
+                              "Carry on without making a thing of it.")
+            self.asked_at = time.time()  # the line that called him counts, whatever the mouths say
+        self.info(f"awake: {why}")
+        self.ui("quiet", on=False)
+        self.write(event="quiet", on=False, why=why, minutes=mins, dropped=q["dropped"])
+
+    def hushed(self, text, final):
+        """While he's been told to be quiet: True if this line is to be let pass. His name
+        brings him back at once; the time being up brings him back on the next line. A final
+        line that passes is shown greyed on the page and logged."""
+        q = self.shushed
+        if not q:
+            return False
+        if WAKE.search(text):
+            self.wake("they've just said your name")
+            return False
+        if q["until"] and time.time() > q["until"]:
+            self.wake("the time they asked for is up and someone is speaking again")
+            return False
+        if final:
+            q["dropped"] += 1
+            print(f"\r\033[K{DIM}(quiet) {text}{OFF}")
+            self.ui("ignored", text=text, why=QUIET_WHY, quiet=True)
+            self.write(event="ignored", said=text, why="quiet")
+        return True
 
     def saw(self, ev, busy, spec):
         """What the eyes report; True if Frank should react now, though nobody spoke."""
@@ -390,6 +472,8 @@ class Chat:
             return False
         self.notes += ev["notes"]
         if ev["prompt"]:
+            if self.shushed:
+                return False  # he was told to be quiet: what he saw waits in the notes
             if not busy and not spec and self.speech_t0 is None:
                 return True
             self.prompt_due = True  # held until he's free (it was dropped before, 2026-10-28)
@@ -449,11 +533,18 @@ class Chat:
                     speakers=speakers, speaker=self.voice.speaker if self.voice else None,
                     default_speaker=default, seeing=bool(self.eyes),
                     eyes_error=self.eyes.error if self.eyes else None, gate=self.gate,
-                    place=self.place)
+                    quiet=bool(self.shushed), place=self.place, gaze=self.gaze_state())
+
+    def gaze_state(self):
+        """The eye animation: 'alive', 'paused', 'still' (no saved poses) or None (no mouth)."""
+        mouth = self.voice.mouth if self.voice else None
+        if not mouth:
+            return None
+        return mouth.gaze.state if mouth.gaze else "still"
 
     def write(self, **rec):
         with self.log.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(dict(t=datetime.now().isoformat(timespec="seconds"), **rec),
+            f.write(json.dumps(dict(t=datetime.now().isoformat(timespec="milliseconds"), **rec),
                                ensure_ascii=False, default=str) + "\n")
 
     def reload_prompt(self):
@@ -559,14 +650,43 @@ class Chat:
         return bool(state) and any(p.get("talking") and not p.get("figure") for p in state.get("people", []))
 
     def _over_him(self):
-        """While he talks: loud microphone for OVER_HIM_S plus a moving mouth in view is an
-        interruption, posted as a barge the run loop handles like any other."""
-        last = 0.0
+        """While he talks: a loud microphone for PAUSE_AFTER_S pauses his voice at once, and
+        the words decide (PAUSE_*); loud for OVER_HIM_S plus a moving mouth in view is an
+        interruption without words, posted as a barge the run loop handles like any other."""
+        last = resumed_at = 0.0
+        self.pause_level, self.pause_run = PAUSE_LOUD, 0.0  # the level, and the peak of the run that paused him
         while True:
             time.sleep(0.05)
-            if (self.ears and self.ears.mode == "speaking" and self.eyes and self.gate
-                    and self.ears.loud_for() >= OVER_HIM_S and self.talking_now()
-                    and time.time() - last > 2.0):
+            ears, voice = self.ears, self.active_voice()
+            if not ears:
+                continue
+            speaking = ears.mode == "speaking"
+            if voice and voice.paused is not None:
+                held = time.monotonic() - voice.paused
+                # While the ears are no longer in speaking mode a barge is on its way (the run
+                # loop stops him, or resumes him if the eyes block it): hold, but never for ever.
+                if speaking and held >= PAUSE_QUIET_S and ears.quiet_for(self.pause_level) >= PAUSE_QUIET_S:
+                    why = "the microphone went quiet"
+                elif held >= PAUSE_HOLD_S:
+                    why = "nothing heard"
+                else:
+                    continue
+                # A false alarm (his own echo, a noise): next time the microphone must beat it.
+                self.pause_level = max(self.pause_level, PAUSE_LEARN * self.pause_run)
+                voice.resume(why)
+                resumed_at = time.monotonic()
+                self.write(event="resume", why=why, held=round(held, 2), level=round(self.pause_level))
+                self.ui("resumed")
+                continue
+            if (speaking and voice and time.monotonic() - resumed_at > PAUSE_QUIET_S
+                    and ears.loud_for(self.pause_level) >= PAUSE_AFTER_S):
+                self.pause_run = ears.peak(PAUSE_AFTER_S + 0.1)
+                if voice.pause("loud microphone"):
+                    self.write(event="pause", level=round(self.pause_level), peak=round(self.pause_run),
+                               floor=round(ears.floor), mouths=self.talking_now() if self.eyes else None)
+                    self.ui("paused")
+            if (speaking and self.eyes and self.gate and ears.loud_for() >= OVER_HIM_S
+                    and self.talking_now() and time.time() - last > 2.0):
                 last = time.time()
                 self.events.put(("barge", OVER_HIM))
 
@@ -591,6 +711,18 @@ class Chat:
         elif cmd == "silence":
             self.notes.append("Silence: 15 seconds since anyone spoke.")
             return "(no speech)"
+        elif cmd == "quiet":
+            try:
+                minutes = float(arg) if arg else None
+            except ValueError:
+                self.info("usage: /quiet, or /quiet <minutes>")
+                return
+            self.shush(minutes)
+        elif cmd == "wake":
+            if self.shushed:
+                self.wake("the console called you back")
+            else:
+                self.info("he isn't quiet")
         elif cmd == "model":
             if arg not in brain.MODELS:
                 self.info(f"choose from {', '.join(brain.MODELS)}")
@@ -607,6 +739,22 @@ class Chat:
             self.gate = not self.gate
             self.info("answering only lines from a mouth that moved in front of him" if self.gate
                       else "answering everything the microphone hears")
+        elif cmd == "eyes":
+            gaze = self.voice and self.voice.mouth and self.voice.mouth.gaze
+            if not gaze:
+                self.info("the eyes aren't running: start with --mouth, with the eye poses saved")
+                return
+            if arg == "pause":
+                state = gaze.pause()
+            elif arg == "alive":
+                state = gaze.alive()
+            elif not arg:
+                state = gaze.alive() if gaze.paused else gaze.pause()
+            else:
+                self.info("usage: /eyes pause, /eyes alive, or /eyes to switch")
+                return
+            self.info("eyes paused: open, centred and still" if state == "paused"
+                      else "eyes alive: looking around and blinking")
         elif cmd == "talk":
             if not self.ears:
                 self.listen()
@@ -678,7 +826,10 @@ class Chat:
                 text, window = value
                 if busy and not current.interrupted:
                     continue
-                if not self.to_him(text, window, final=False):
+                if self.shushed:
+                    if self.hushed(text, final=False):
+                        continue  # his name wakes him now, so the early turn gets the note
+                elif not self.to_him(text, window, final=False):
                     continue
                 if spec:
                     spec.cancel()
@@ -698,7 +849,11 @@ class Chat:
                     spec = None
             elif kind == "heard":
                 text, window = value
-                if not self.to_him(text, window, final=True):  # a video, or people behind them
+                if self.shushed:
+                    passed = self.hushed(text, final=True)  # a wake sets asked_at: the line counts
+                else:
+                    passed = not self.to_him(text, window, final=True)  # a video, or people behind them
+                if passed:
                     if spec:
                         spec.cancel()
                         spec = None
@@ -739,6 +894,10 @@ class Chat:
                         self.ui("ignored", text=value, why=f"while he spoke; {who.get('why')}", mouths=who.get("mouths"))
                         if self.ears:
                             self.ears.speaking(current.is_echo)  # carry on
+                        voice = self.active_voice()
+                        if voice and voice.paused is not None:
+                            voice.resume("not an interruption")
+                            self.ui("resumed")
                         continue
                     self.turn_who = None  # the interrupting line is looked at when it ends
                     heard = current.interrupt(f"visitor: {value[:40]}")
@@ -754,6 +913,8 @@ class Chat:
                 if self.ears and self.listening and not value.interrupted:
                     self.ears.listen(after=0.4)
             elif kind == "tick":
+                if self.shushed:
+                    continue  # told to be quiet: no filling silences, no reacting to the eyes
                 if not busy and not spec and (self.free_prompt() or self.silence_prompt()):
                     begin("(no speech)")
             elif kind == "typed":
@@ -765,6 +926,8 @@ class Chat:
                         begin(said)
                 elif busy:
                     self.info("Frank is talking: speak to interrupt him, or type when he's done")
+                elif self.hushed(value, final=True):
+                    continue
                 else:
                     begin(self.as_said(value))
 
@@ -781,6 +944,7 @@ def main():
     ap.add_argument("--video", help="with --see: a video file instead of the camera")
     ap.add_argument("--no-preview", action="store_true", help="with --see: no camera window")
     ap.add_argument("--mouth", help="the mouth Pico's serial port, or auto: the jaw follows his voice (mouth.py)")
+    ap.add_argument("--still-eyes", action="store_true", help="with --mouth: the eyes do not look around and blink (gaze.py)")
     args = ap.parse_args()
     brain.load_env()
     if not brain.available(args.model):
@@ -789,8 +953,9 @@ def main():
     chat = Chat(args.model, args.speaker, args.place, args.mute)
     if args.mouth and chat.voice:
         import mouth
-        chat.voice.mouth = mouth.Mouth(args.mouth, log=lambda **k: chat.write(event="mouth", **k))
-        print(f"{DIM}Mouth on {chat.voice.mouth.port} ({chat.voice.mouth.program}).{OFF}")
+        chat.voice.mouth = mouth.Mouth(args.mouth, log=lambda **k: chat.write(event="mouth", **k),
+                                       eyes=not args.still_eyes)
+        print(f"{DIM}Mouth on {chat.voice.mouth.port} ({chat.voice.mouth.program}); eyes {'alive' if chat.voice.mouth.gaze else 'still'}.{OFF}")
     print(f"{DIM}Talk or type to Frank. /fb <text> gives feedback on his last reply; /help for more.{OFF}\n")
     if args.see or args.video:
         chat.see(preview=not args.no_preview, source=args.video)

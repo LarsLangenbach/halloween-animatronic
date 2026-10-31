@@ -122,6 +122,8 @@
     <button id="mic" class="toggle" aria-pressed="false" title="Listen on the laptop's microphone">Microphone</button>
     <button id="gate" class="toggle" aria-pressed="true" title="On: he answers only someone in front of him whose mouth moved. Off: he answers everything the microphone hears.">Mouth check</button>
     <button id="voice" class="toggle" aria-pressed="false" title="His voice on or off">Voice</button>
+    <button id="eyes-pause" class="toggle" aria-pressed="false" title="Hold his eyes still: centred, lids at their OPEN pose, no blinking" hidden>Pause eyes</button>
+    <button id="eyes-alive" class="toggle" aria-pressed="true" title="His eyes look around and blink" hidden>Eyes alive</button>
     <label>Speaker <select id="speaker" aria-label="Speaker for his voice"></select></label>
     <button id="beep" title="A short tone through the chosen speaker">Test sound</button>
     <label>Brain <select id="model" aria-label="Brain"></select></label>
@@ -200,7 +202,7 @@ function setStatus(s) {
   p.textContent = s;
   p.className = "pill" + (s === "Listening" ? " on" : s === "Thinking" || s === "Speaking" || s === "Hearing" ? " busy" : "");
 }
-const idle = () => setStatus(state.listening ? "Listening" : "Idle");
+const idle = () => setStatus(state.quiet ? "Quiet" : state.listening ? "Listening" : "Idle");
 
 // ----- the conversation -----
 function visitorLine(said, t) {
@@ -250,13 +252,16 @@ function handle(ev) {
       }
       bubble = null; idle(); break;
     case "interrupted": if (bubble) bubble.classList.add("cut"); break;
+    case "paused": setStatus("Paused"); break;
+    case "resumed": setStatus("Speaking"); break;
     case "tool": system(`${ev.name}: ${ev.text}`, "tool"); break;
     case "ignored": {
       $("#hearing").hidden = true; idle();
       const row = el("div", "ignored");
-      row.append(el("q", null, ev.text), el("div", null, `not to him: ${ev.why}`));
+      row.append(el("q", null, ev.text), el("div", null, ev.quiet ? "quiet: he ignores it until a line says his name" : `not to him: ${ev.why}`));
       add(row); break;
     }
+    case "quiet": state.quiet = ev.on; idle(); break;
     case "enrol": $("#enrol-msg").textContent = ev.text; break;
     case "info": system(ev.text); break;
     case "error": system(ev.text, "error"); break;
@@ -279,6 +284,10 @@ function render() {
   $("#gate").setAttribute("aria-pressed", String(!!state.gate));
   $("#gate").hidden = !state.seeing;
   $("#voice").setAttribute("aria-pressed", String(!!state.voice));
+  const gazeOn = state.gaze === "alive" || state.gaze === "paused";   // the mouth is up and the eye poses are saved
+  $("#eyes-pause").hidden = $("#eyes-alive").hidden = !gazeOn;
+  $("#eyes-pause").setAttribute("aria-pressed", String(state.gaze === "paused"));
+  $("#eyes-alive").setAttribute("aria-pressed", String(state.gaze === "alive"));
   const sel = $("#model");
   if (sel.options.length !== (state.models || []).length) {
     sel.replaceChildren(...(state.models || []).map((m) => { const o = el("option", null, m); o.value = m; return o; }));
@@ -376,6 +385,8 @@ document.querySelectorAll("[data-prefix]").forEach((b) => b.onclick = () => { co
 $("#mic").onclick = () => say("/talk").then(() => setTimeout(poll, 300));
 $("#gate").onclick = () => say("/gate").then(() => setTimeout(poll, 300));
 $("#voice").onclick = () => say("/mute").then(() => setTimeout(poll, 300));
+$("#eyes-pause").onclick = () => say("/eyes pause").then(() => setTimeout(poll, 300));
+$("#eyes-alive").onclick = () => say("/eyes alive").then(() => setTimeout(poll, 300));
 $("#new").onclick = () => say("/new");
 $("#speaker").onchange = async (e) => {
   const r = await post("/speaker", { id: e.target.value });

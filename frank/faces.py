@@ -147,8 +147,9 @@ class Gallery:
             self._load()
 
     def _load(self):
-        self.people = {pid: dict(name=name, role=role) for pid, name, role in
-                       self.db.execute("SELECT id, name, role FROM people")}
+        self.people = {pid: dict(name=name, role=role, met=at[:10], note=note)
+                       for pid, name, role, at, note in
+                       self.db.execute("SELECT id, name, role, enrolled_at, first_note FROM people")}
         rows = self.db.execute("SELECT person_id, print FROM face_templates").fetchall()
         self.owner = np.array([r[0] for r in rows], dtype=int)
         self.prints = (np.stack([np.frombuffer(r[1], np.float32) for r in rows]) if rows
@@ -169,6 +170,16 @@ class Gallery:
 
     def role(self, pid):
         return self.people.get(pid, {}).get("role")
+
+    def memory(self, pid):
+        """What Frank is told when he sees a remembered visitor again ("Memory of Amelia: met
+        2026-10-30; talked about her garden."), or None for a creator or a stranger. Until the
+        memory store exists, this is remember_person's note from the day they met."""
+        p = self.people.get(pid)
+        if not p or p["role"] != "visitor":
+            return None
+        note = p["note"].strip().rstrip(".")
+        return f"Memory of {p['name']}: met {p['met']}" + (f"; {note}." if note else ".")
 
     def add(self, name, role, prints, consent="", note=""):
         with self.db:

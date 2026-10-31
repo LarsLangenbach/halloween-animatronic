@@ -18,6 +18,10 @@ the mouth slider window) are saved, the mouth blends between those instead: brig
 the shape (OO dark .. AH .. EE bright) and loudness moves the whole mouth from rest to it. A thread sends the servos their angles 50 times a
 second (the jaw) and 25 times a second (the rest), only when they change.
 
+The eyes are alive the whole time (gaze.py, eye_anim.py through the link): looking around and
+blinking from the moment the mouth is up, also while he speaks, until close(). Mouth(eyes=False)
+or --still-eyes leaves them still.
+
 The Pico runs pico_servo_ctl.py as main.py (lines "<GP pin> <deg>": the jaw angles are sent
 per servo; Mouth.link("<pin> <deg>") reaches the eye board through the same board, 2026-10-29) or TalkingHead's cogley_mouth_main.py (it answers `where`; then its own `jaw <0..1>`
 moves both jaw servos in its jawdir and jawdeg, and `rest` is its start-up pose). The same two
@@ -29,7 +33,7 @@ it fast enough for syllables.
     uv run --no-project --with pyserial --with numpy --with httpx --with sounddevice --with scipy python frank/mouth.py [PORT] --say "Hello. [amused] Who's there?"
         speaks the line in his voice with the jaw moving
 PORT: the Pico's serial port, or "auto" (the default) to pick the first USB serial port.
-In chat.py: --mouth auto (or the port).
+--still-eyes: no eye animation. In chat.py: --mouth auto (or the port).
 """
 
 import glob
@@ -132,7 +136,7 @@ def level_db(pcm):
 
 
 class Mouth:
-    def __init__(self, port="auto", log=None):
+    def __init__(self, port="auto", log=None, eyes=True):
         import serial
         if port in (None, "auto"):
             port = find_port()
@@ -174,8 +178,25 @@ class Mouth:
         self.sent = {}
         self.awake = False
         self.closed = False
+        self.gaze = None   # gaze.Gaze: the eyes looking around and blinking, through the link
         self.rest()
         threading.Thread(target=self._run, daemon=True).start()
+        if eyes:
+            self.eyes_alive()
+
+    def eyes_alive(self):
+        """Start the eyes looking around and blinking (gaze.py) until close(). Without the saved
+        eye poses they stay still, and the reason is printed and logged."""
+        if self.gaze:
+            return self.gaze
+        sys.path.insert(0, HERE)
+        import gaze
+        try:
+            self.gaze = gaze.Gaze(self, log=self.log)
+        except ValueError as e:
+            print(f"eyes stay still: {e}")
+            self.log(what="eyes", state="still", why=str(e))
+        return self.gaze
 
     def _ask_where(self):
         self.ser.reset_input_buffer()
@@ -349,6 +370,8 @@ class Mouth:
             time.sleep(TICK)
 
     def close(self):
+        if self.gaze:
+            self.gaze.stop()
         self.closed = True
         time.sleep(TICK * 2)
         self.open = self.lips = self.width = self.mood = 0.0
@@ -409,8 +432,9 @@ def _say(mouth, text):
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     port = args[0] if args else "auto"
-    m = Mouth(port)
-    print(f"mouth: {m.port}, board program {m.program}; closed {m.poses['mouth_closed']}, open {m.poses['mouth_open']}")
+    m = Mouth(port, eyes="--still-eyes" not in sys.argv)
+    print(f"mouth: {m.port}, board program {m.program}; closed {m.poses['mouth_closed']}, open {m.poses['mouth_open']}; "
+          f"eyes {'alive' if m.gaze else 'still'}")
     try:
         if "--say" in sys.argv:
             _say(m, sys.argv[sys.argv.index("--say") + 1])

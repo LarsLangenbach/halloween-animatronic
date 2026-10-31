@@ -44,6 +44,7 @@ MODEL = "eleven_v4_turbo"  # ~100 ms, reads bracketed delivery cues
 RATE = 24000               # pcm_24000: 16-bit mono
 FIRST_CHARS, NEXT_CHARS = 30, 160  # sentences are grouped into pieces at least this long
 SLICE = RATE // 50 * 2             # 20 ms of audio per write, so a stop is near-instant
+STALL_S = 1.0                      # a 20 ms write that takes this long means the output is dead (_watch)
 # Backchannel: short sounds in his own voice, played while the brain is still thinking, so
 # a slow reply sounds like a pause rather than a freeze. All are fillers to the ears
 # (ears.FILLERS), so coming back through the microphone they can't interrupt him.
@@ -235,6 +236,8 @@ class Voice:
         self.up = audio.Up2()
         self.lock = threading.Lock()  # the speaker can change while he talks (use_speaker)
         self.speaker, self.out = speaker, self._open(speaker)
+        self.writing = (None, 0.0)    # (play thread, when its current write began), for the watchdog
+        self.player = None            # the play thread; a stalled one is abandoned (_recover)
         import aec  # everything played is the echo canceller's reference (aec.py)
         self.aec = aec if aec.available() else None
         if self.aec:
@@ -245,8 +248,14 @@ class Voice:
         self.fillers = self._load_fillers()
         self.last_filler = None
         self.error, self.gen = None, 0  # stop() bumps gen; older pieces are dropped
+        self.go = threading.Event()    # clear while paused (pause()): the play thread holds a slice
+        self.go.set()
+        self.paused = None             # when the pause began (monotonic), or None
+        self.quiet = False             # after stop(): say() and filler() are ignored until start_reply()
         self.start_reply()
-        threading.Thread(target=self._play, daemon=True).start()
+        self.player = threading.Thread(target=self._play, daemon=True)
+        self.player.start()
+        threading.Thread(target=self._watch, daemon=True).start()
 
     @staticmethod
     def _open(speaker):
@@ -263,12 +272,58 @@ class Voice:
     def use_speaker(self, speaker):
         """Play through another output device from the next slice on."""
         new = self._open(speaker)
-        with self.lock:
+        if not self.lock.acquire(timeout=STALL_S):   # the play thread is stuck in a write
+            self._recover(f"switching the speaker while the output was stuck", speaker, new)
+            return
+        try:
             old, self.out, self.speaker = self.out, new, speaker
+        finally:
+            self.lock.release()
         old.stop()
         old.close()
         if self.aec:
             self.aec.output_latency = getattr(new, "latency", 0.05)
+
+    def _watch(self):
+        """Every so often: has the play thread been inside one 20 ms write for over STALL_S? That
+        is the sound card stream no longer taking audio (2026-10-30: plugging the EarPods in
+        while Frank ran left every piece fetched and never played), and a blocked write never
+        returns. Then the stream and the thread are abandoned and new ones take over."""
+        while True:
+            time.sleep(STALL_S / 4)
+            thread, began = self.writing
+            if thread is not None and thread is self.player and time.monotonic() - began > STALL_S:
+                self._recover("the sound output stopped taking audio (did the output device change?)")
+            elif self.player is not None and not self.player.is_alive():   # it died (a bug): carry on
+                self.log(what="player_died")
+                print("voice: the play thread died; starting another")
+                self.player = threading.Thread(target=self._play, daemon=True)
+                self.player.start()
+
+    def _recover(self, why, speaker=None, new=None):
+        """Abandon the stuck play thread and its stream; open a new stream (on `speaker`, else the
+        one in use, else the Mac's default output) and start a new play thread on the queue. The
+        piece that was playing is lost; the rest of the reply follows on the new stream."""
+        speaker = self.speaker if speaker is None and new is None else speaker
+        if new is None:
+            try:
+                new = self._open(speaker)
+            except Exception as e:  # that device is gone: the Mac's current default output
+                speaker, new = None, self._open(None)
+                why += f"; speaker {self.speaker!r} not available ({e})"
+        lost = (self.current or {}).get("text", "")[:40]
+        self.log(what="stalled", why=why, lost=lost, speaker=speaker)
+        print(f"voice: {why}; playing on again through {speaker or 'the default output'}")
+        self.lock = threading.Lock()   # the stuck thread holds the old one
+        self.out, self.speaker = new, speaker
+        if self.aec:
+            self.aec.output_latency = getattr(new, "latency", 0.05)
+        self.current = None
+        if self.mouth:
+            self.mouth.flush()
+        self.player = threading.Thread(target=self._play, daemon=True)
+        self.order.task_done()        # the stuck thread's piece, which it will never finish
+        self.player.start()
 
     def beep(self):
         """A short tone through the speaker: is it the right one, and loud enough?"""
@@ -276,8 +331,13 @@ class Voice:
         import audio
         t = np.arange(int(audio.DEVICE_RATE * 0.35)) / audio.DEVICE_RATE
         tone = 0.3 * np.sin(2 * np.pi * 440 * t) * np.minimum(1, np.minimum(t, t[-1] - t) / 0.02)
-        with self.lock:
+        if not self.lock.acquire(timeout=STALL_S):   # the play thread is stuck in a write
+            self._recover("the sound output was stuck when the test sound was asked for")
+            self.lock.acquire()
+        try:
             self.out.write((tone * 32767).astype(np.int16).tobytes())
+        finally:
+            self.lock.release()
 
     @classmethod
     def from_config(cls):
@@ -288,18 +348,42 @@ class Voice:
 
     def start_reply(self):
         self.t0, self.first_sound, self.said, self.buf = time.perf_counter(), None, [], []
-        self.last_face = None
+        self.last_face, self.quiet = None, False
         self.heard, self.current = [], None  # pieces played in full; the piece playing now
 
     @property
     def busy(self):
         return self.order.unfinished_tasks > 0 or bool(self.buf)
 
+    def pause(self, why=""):
+        """Hold the voice where it is (someone may be talking over him): the slice being
+        written finishes, then nothing more plays until resume() or stop(). Returns False if
+        nothing was playing."""
+        if self.paused is not None or self.current is None:
+            return False
+        self.paused = time.monotonic()
+        self.go.clear()
+        if self.mouth:
+            self.mouth.flush()
+        self.log(what="pause", why=why, playing=(self.current or {}).get("text", "")[:60],
+                 at=round((self.current or {}).get("played", 0) / 2 / RATE, 2))
+        return True
+
+    def resume(self, why=""):
+        """Carry on from where pause() held him."""
+        if self.paused is None:
+            return
+        held = time.monotonic() - self.paused
+        self.paused = None
+        self.go.set()
+        self.log(what="resume", why=why, held=round(held, 2))
+
     def stop(self, reason=""):
         """Go quiet now (an interruption) and return roughly what the listener heard."""
         self.log(what="stop", reason=reason, playing=(self.current or {}).get("text", "")[:60])
         self.gen += 1
-        self.buf = []
+        self.buf, self.quiet, self.paused = [], True, None
+        self.go.set()  # a paused play thread wakes, sees the new gen and drops its piece
         if self.mouth:
             self.mouth.flush()
         heard, cur = list(self.heard), self.current
@@ -316,6 +400,8 @@ class Voice:
         """Queue a sentence. Sentences are grouped into pieces of at least FIRST_CHARS
         (the first) and NEXT_CHARS (the rest): one-word requests ("Oh.") come out in a
         different intonation, so the voice stops sounding like itself."""
+        if self.quiet:  # stopped: a sentence that was already on its way is dropped
+            return
         if self.model_id == "eleven_v3":
             tag = V3_TAGS.get(face or "", "") if face != getattr(self, "last_face", None) or not self.buf else ""
             self.last_face = face
@@ -347,7 +433,7 @@ class Voice:
         """Play a short "Hmm." now, before whatever the reply sends next, and return its
         words (for the echo filter). Only when nothing of the reply has been sent yet, so it
         never lands in the middle of a sentence; never the same one twice running."""
-        if not self.fillers or self.said:
+        if not self.fillers or self.said or self.quiet:
             return None
         import random
         name, clip = random.choice([f for f in self.fillers if f[0] != self.last_filler] or self.fillers)
@@ -355,7 +441,7 @@ class Voice:
         chunks = queue.Queue()
         chunks.put(clip)
         chunks.put(None)
-        self.order.put((self.gen, "", chunks))  # no text: not part of what he said
+        self.order.put((self.gen, "", chunks, None))  # no text: not part of what he said
         return name.replace("_", " ")
 
     def end_reply(self):
@@ -415,44 +501,66 @@ class Voice:
             chunks.put(None)
 
     def _play(self):
-        while True:
-            gen, text, chunks, face = self.order.get()
-            rec = {"text": text, "played": 0, "received": 0, "done": False}
-            if gen == self.gen:
-                self.current = rec
-                if self.mouth:
-                    self.mouth.face(face)
-            odd = b""
-            while (b := chunks.get()) is not None:
-                rec["received"] += len(b)
-                if gen != self.gen:
-                    continue  # stopped: drain without playing
-                b, n = odd + b, (len(odd) + len(b)) // 2 * 2
-                b, odd = b[:n], b[n:]
-                for i in range(0, len(b), SLICE):  # small slices, so stop() is quick
+        me = threading.current_thread()
+        while me is self.player:
+            item = self.order.get()
+            try:
+                self._play_one(me, item)
+            except Exception as e:
+                self.error = f"voice: a piece failed ({e!r})"
+                self.log(what="piece_failed", error=repr(e), text=str(item[1:2])[:40])
+                print(self.error)
+                if me is self.player:
+                    self.order.task_done()
+
+    def _play_one(self, me, item):
+        gen, text, chunks, face = item
+        rec = {"text": text, "played": 0, "received": 0, "done": False}
+        if gen == self.gen:
+            self.current = rec
+            if self.mouth:
+                self.mouth.face(face)
+        odd = b""
+        # A stopped piece is left where it is, not drained: its fetch thread stops at its next
+        # chunk, and nothing waits on it (draining held wait() until the download finished,
+        # so his answer to the interruption was late, 2026-10-30).
+        while gen == self.gen and (b := chunks.get()) is not None:
+            rec["received"] += len(b)
+            b, n = odd + b, (len(odd) + len(b)) // 2 * 2
+            b, odd = b[:n], b[n:]
+            for i in range(0, len(b), SLICE):  # small slices, so stop() and pause() are quick
+                while not self.go.wait(0.05):  # paused: hold here until resume() or stop()
                     if gen != self.gen:
                         break
-                    if self.first_sound is None:
-                        self.first_sound = time.perf_counter() - self.t0
-                    s = b[i:i + SLICE]
-                    out = self.fx.process(s) if self.fx else s
-                    with self.lock:
-                        self.out.write(self.up(out))
-                    if self.mouth:
-                        self.mouth.feed(out)
-                    if self.aec:
-                        try:
-                            self.aec.render(out, RATE)
-                        except Exception as e:
-                            self.aec, self.error = None, f"echo cancellation off ({e})"
-                    rec["played"] += len(s)
-            rec["done"] = True
-            self.log(what="played" if gen == self.gen else "dropped", text=text[:40],
-                     seconds=round(rec["played"] / 2 / RATE, 1), of=round(rec["received"] / 2 / RATE, 1))
-            if gen == self.gen:
-                self.heard.append(text)
-                self.current = None
-            self.order.task_done()
+                if gen != self.gen:
+                    break
+                if self.first_sound is None:
+                    self.first_sound = time.perf_counter() - self.t0
+                s = b[i:i + SLICE]
+                out = self.fx.process(s) if self.fx else s
+                lock, stream = self.lock, self.out
+                self.writing = (me, time.monotonic())
+                with lock:
+                    stream.write(self.up(out))
+                if self.writing[0] is me:
+                    self.writing = (None, 0.0)
+                if me is not self.player:   # abandoned by _recover while that write hung
+                    return
+                if self.mouth:
+                    self.mouth.feed(out)
+                if self.aec:
+                    try:
+                        self.aec.render(out, RATE)
+                    except Exception as e:
+                        self.aec, self.error = None, f"echo cancellation off ({e})"
+                rec["played"] += len(s)
+        rec["done"] = gen == self.gen
+        self.log(what="played" if gen == self.gen else "dropped", text=text[:40],
+                 seconds=round(rec["played"] / 2 / RATE, 1), of=round(rec["received"] / 2 / RATE, 1))
+        if gen == self.gen:
+            self.heard.append(text)
+            self.current = None
+        self.order.task_done()
 
 
 def _slug(text):

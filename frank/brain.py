@@ -37,19 +37,32 @@ MAX_TOKENS = 4096  # replies are a few sentences; this is only a ceiling
 
 TOOLS = [
     dict(name="remember_person",
-         description="Remember the visitor Frank is talking to, after they have said yes and "
-                     "confirmed they are 18 or over. Links their face to their first name and "
-                     "starts a memory of them.",
+         description="Remember the visitor Frank is talking to, as soon as they have told him "
+                     "their first name. Links their face to the name so he knows them next time, "
+                     "and starts a memory of them. Not for children, and not for anyone already "
+                     "recognised.",
          schema={"type": "object", "additionalProperties": False,
                  "required": ["first_name", "notes"],
                  "properties": {
                      "first_name": {"type": "string"},
                      "notes": {"type": "string",
-                               "description": "One or two sentences on what you talked about."}}}),
+                               "description": "A few words on them: how you met, what they said "
+                                              "so far. One or two sentences at most."}}}),
     dict(name="forget_person",
          description="Delete everything stored about the visitor Frank is talking to "
                      "(face and memories), because they asked.",
          schema={"type": "object", "additionalProperties": False, "properties": {}}),
+    dict(name="go_quiet",
+         description="Fall silent because someone asked Frank to be quiet, to stop talking or "
+                     "to give them a moment. From the end of this reply he hears nothing and "
+                     "answers nothing until someone says his name (\"Frank, are you there?\") "
+                     "or the time they asked for is up. Say at most a word or two in the same "
+                     "reply, or nothing.",
+         schema={"type": "object", "additionalProperties": False,
+                 "properties": {
+                     "minutes": {"type": "number",
+                                 "description": "How long they asked for, if they said. Leave "
+                                                "it out when they didn't."}}}),
 ]
 # Tool inputs stream as they're generated, so they arrive unvalidated: check before acting.
 ANTHROPIC_TOOLS = [{"name": t["name"], "description": t["description"],
@@ -81,6 +94,11 @@ def valid_input(name, args):
     if name == "remember_person":
         return (isinstance(args, dict) and isinstance(args.get("first_name"), str)
                 and args["first_name"].strip() != "" and isinstance(args.get("notes"), str))
+    if name == "go_quiet":
+        minutes = args.get("minutes") if isinstance(args, dict) else None
+        return isinstance(args, dict) and (minutes is None or (isinstance(minutes, (int, float))
+                                                                and not isinstance(minutes, bool)
+                                                                and 0 <= minutes <= 24 * 60))
     return isinstance(args, dict)
 
 
