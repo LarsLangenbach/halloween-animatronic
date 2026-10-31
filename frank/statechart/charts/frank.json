@@ -1,0 +1,151 @@
+{
+  "format": "frank-statechart/1",
+  "name": "frank",
+  "host": "frank-engine",
+  "description": "Frank's conversation states, as the face engine's orchestrator ran them on 2026-10-30 (frank/engine/orchestrator.py, Engine._state and Engine.event), rebuilt as a statechart. The social region picks the animator's profile; body and senses react to being carried and to darkness.",
+  "context": {},
+  "root": {
+    "id": "frank",
+    "type": "parallel",
+    "note": "Three things at once: the conversation, being handled, and whether he can see.",
+    "transitions": [
+      {"event": "chuckle", "actions": [{"do": "tag", "tag": "amused", "intensity": 0.7}],
+       "note": "a [chuckle] in his reply shows on his face"}
+    ],
+    "states": {
+      "social": {
+        "initial": "auto",
+        "priority": 1,
+        "note": "Whose turn it is. Its leaves give the animator its profile.",
+        "transitions": [
+          {"event": "interrupted", "guard": "not in_state(\"interrupted\")", "target": "interrupted",
+           "note": "the voice's flush and the chat's event arrive together: one interruption, one flinch"},
+          {"event": "arrived", "guard": "in_state(\"idle\") or in_state(\"person\") or in_state(\"farewell\")",
+           "target": "greeting", "actions": [{"do": "nudge", "p": 0.05, "a": 0.25}],
+           "note": "someone new while he is free: greet them"},
+          {"event": "arrived", "actions": [{"do": "nudge", "p": 0.05, "a": 0.25}],
+           "note": "someone new while he is busy: just a lift in arousal"},
+          {"event": "session_end", "target": "farewell", "actions": [{"do": "nudge", "a": -0.1}]},
+          {"event": "left", "guard": "people == 0", "target": "farewell", "actions": [{"do": "nudge", "a": -0.1}]},
+          {"event": "left", "actions": [{"do": "nudge", "a": -0.1}]}
+        ],
+        "states": {
+          "auto": {
+            "initial": "idle",
+            "note": "Picked from what is happening, every tick: his voice, his reply being written, who is there.",
+            "states": {
+              "idle": {
+                "profile": "idle",
+                "transitions": [
+                  {"when": "speaking", "target": "speaking"},
+                  {"when": "thinking", "target": "thinking"},
+                  {"when": "present", "target": "listening"},
+                  {"when": "people > 0", "target": "person"}
+                ]
+              },
+              "person": {
+                "profile": "person",
+                "transitions": [
+                  {"when": "speaking", "target": "speaking"},
+                  {"when": "thinking", "target": "thinking"},
+                  {"when": "present", "target": "listening"},
+                  {"when": "people == 0", "target": "idle"}
+                ]
+              },
+              "listening": {
+                "profile": "listening",
+                "transitions": [
+                  {"when": "speaking", "target": "speaking"},
+                  {"when": "thinking", "target": "thinking"},
+                  {"when": "not present and not no_vision and people > 0", "target": "person"},
+                  {"when": "not present and not no_vision and people == 0", "target": "idle",
+                   "note": "with no vision he assumes the visitor is still there"}
+                ]
+              },
+              "thinking": {
+                "profile": "thinking",
+                "transitions": [
+                  {"when": "speaking", "target": "speaking"},
+                  {"when": "not thinking", "target": "listening"}
+                ]
+              },
+              "speaking": {
+                "profile": "speaking",
+                "transitions": [
+                  {"when": "not speaking and thinking", "target": "thinking"},
+                  {"when": "not speaking", "target": "listening"}
+                ]
+              }
+            }
+          },
+          "greeting": {
+            "profile": "greeting",
+            "entry": [
+              {"do": "anim", "event": "greet"},
+              {"do": "tag", "tag": "curious", "intensity": 0.6, "delay": 0.15}
+            ],
+            "transitions": [
+              {"after": 1.8, "target": "auto"},
+              {"event": "hearing", "guard": "not thinking and not speaking", "target": "auto",
+               "note": "they started talking: stop greeting and listen"}
+            ]
+          },
+          "interrupted": {
+            "profile": "interrupted",
+            "entry": [
+              {"do": "anim", "event": "flinch"},
+              {"do": "nudge", "p": -0.05, "a": 0.1}
+            ],
+            "transitions": [
+              {"after": 0.6, "target": "auto"}
+            ]
+          },
+          "farewell": {
+            "profile": "farewell",
+            "entry": [
+              {"do": "anim", "event": "long_blink"}
+            ],
+            "transitions": [
+              {"after": 2.5, "target": "auto"}
+            ]
+          }
+        }
+      },
+      "body": {
+        "initial": "settled",
+        "note": "Being picked up or carried.",
+        "transitions": [
+          {"event": "moved", "target": "handled", "actions": [
+            {"do": "tag", "tag": "surprised", "intensity": 0.8},
+            {"do": "tag", "tag": "irritated", "intensity": 0.6, "delay": 1.6},
+            {"do": "nudge", "p": -0.1, "a": 0.3, "d": -0.1}
+          ]},
+          {"event": "still", "target": "settled", "actions": [
+            {"do": "tag", "tag": "curious", "intensity": 0.5, "delay": 0.3}
+          ]}
+        ],
+        "states": {
+          "settled": {},
+          "handled": {}
+        }
+      },
+      "senses": {
+        "initial": "seeing",
+        "note": "Whether his camera sees anything.",
+        "transitions": [
+          {"event": "dark", "target": "blind", "actions": [
+            {"do": "nudge", "a": -0.3},
+            {"do": "tag", "tag": "confused", "intensity": 0.5, "delay": 0.4}
+          ]},
+          {"event": "light", "target": "seeing", "actions": [
+            {"do": "anim", "event": "blink"}
+          ]}
+        ],
+        "states": {
+          "seeing": {},
+          "blind": {}
+        }
+      }
+    }
+  }
+}

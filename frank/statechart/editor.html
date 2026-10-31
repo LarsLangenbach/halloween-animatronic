@@ -1,0 +1,1474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frank Statecharts</title>
+<style>
+:root{
+  --bg:#f3f4f1; --panel:#ffffff; --ink:#1c2220; --muted:#66706b; --line:#d3d8d4; --soft:#eceee9;
+  --accent:#c2410c; --sel:#2563eb; --ok:#15803d; --warn:#b45309; --err:#b91c1c;
+  --dot:#c9cec9; --state:#ffffff; --box:#f9faf7; --active:#16a34a; --fired:#f59e0b;
+  --add:#16a34a; --chg:#d97706;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#111413; --panel:#191d1b; --ink:#e3e8e5; --muted:#98a29d; --line:#2e3532; --soft:#222826;
+  --accent:#f59e0b; --sel:#60a5fa; --ok:#4ade80; --warn:#fbbf24; --err:#f87171;
+  --dot:#262c29; --state:#1f2522; --box:#161a18; --active:#4ade80; --fired:#fbbf24; --add:#4ade80; --chg:#fbbf24;
+  color-scheme: dark;
+}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.danger{color:var(--err)}
+button:disabled{opacity:.45;cursor:default}
+input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:4px 7px;min-width:0}
+textarea{resize:vertical;width:100%}
+code,.mono{font-family:ui-monospace,Consolas,monospace;font-size:12.5px}
+#app{display:grid;grid-template-rows:auto 1fr;height:100%}
+#bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--line);background:var(--panel)}
+#bar .brand{font-weight:700;margin-right:6px}
+#bar .brand span{color:var(--accent)}
+#bar .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+#dirty{color:var(--accent);font-weight:700;min-width:10px}
+#issues-badge{border-radius:99px;padding:2px 10px}
+#issues-badge.err{border-color:var(--err);color:var(--err)}
+#issues-badge.warn{border-color:var(--warn);color:var(--warn)}
+#issues-badge.ok{border-color:var(--ok);color:var(--ok)}
+main{display:grid;grid-template-columns:1fr 380px;min-height:0}
+#stage{position:relative;min-width:0;min-height:0;overflow:hidden}
+#svg{width:100%;height:100%;display:block;touch-action:none;user-select:none;cursor:default}
+#svg.panning{cursor:grabbing}
+#side{border-left:1px solid var(--line);background:var(--panel);display:grid;grid-template-rows:auto 1fr;min-height:0}
+#tabs{display:flex;border-bottom:1px solid var(--line)}
+#tabs button{flex:1;border:0;border-radius:0;padding:9px 4px;background:none;border-bottom:2px solid transparent}
+#tabs button.on{border-bottom-color:var(--accent);font-weight:600}
+.panel{overflow:auto;padding:12px 14px 40px;display:none}
+.panel.on{display:block}
+h3{margin:4px 0 10px;font-size:15px}
+h4{margin:14px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.f{display:grid;grid-template-columns:96px 1fr;gap:6px;align-items:center;margin:6px 0}
+.f>span{color:var(--muted);font-size:13px}
+.f small{grid-column:2;color:var(--muted);font-size:12px}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.muted{color:var(--muted)}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:0 8px;font-size:12px;color:var(--muted)}
+.list{display:grid;gap:4px}
+.item{border:1px solid var(--line);border-radius:6px;padding:5px 8px;cursor:pointer;background:var(--bg)}
+.item:hover{border-color:var(--muted)}
+.issue{font-size:13px}
+.issue.error{border-left:3px solid var(--err)}
+.issue.warning{border-left:3px solid var(--warn)}
+.act{border:1px solid var(--line);border-radius:6px;padding:6px;margin:4px 0;display:grid;gap:5px;background:var(--bg)}
+.act .head{display:flex;gap:5px;align-items:center}
+.act .head select{flex:1}
+.act .params{display:grid;grid-template-columns:auto 1fr;gap:4px 6px;align-items:center;font-size:13px}
+.act .params span{color:var(--muted)}
+.mini{padding:1px 7px;font-size:12px}
+.err-text{color:var(--err);font-size:12.5px}
+.card{border:1px solid var(--line);border-radius:8px;padding:10px;margin:10px 0;background:var(--bg)}
+.bubble{border-radius:10px;padding:8px 10px;margin:8px 0;white-space:pre-wrap}
+.bubble.me{background:var(--soft);margin-left:30px}
+.bubble.claude{border:1px solid var(--line)}
+.bubble.error{border:1px solid var(--err);color:var(--err)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}
+.chips button{font-size:12px;padding:2px 8px;border-radius:99px}
+.diff li{margin:2px 0}
+.add{color:var(--add)} .chg{color:var(--chg)} .rem{color:var(--err)}
+#sim-now .profile{font-size:22px;font-weight:700;color:var(--accent)}
+.ctx{display:grid;grid-template-columns:1fr auto;gap:4px 8px;align-items:center}
+.evs{display:flex;flex-wrap:wrap;gap:5px}
+.evs button{font-size:12.5px}
+#sim-log{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:var(--bg)}
+#sim-log div{font-size:12.5px;border-bottom:1px dashed var(--line);padding:2px 0}
+#sim-log .t{color:var(--muted);font-variant-numeric:tabular-nums;margin-right:6px}
+#sim-log .event{color:var(--sel)} #sim-log .transition{font-weight:600} #sim-log .action{color:var(--accent)}
+#sim-log .error{color:var(--err)} #sim-log .dim{color:var(--muted)}
+#json-text{height:60vh;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;white-space:pre}
+#toast{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:7px 14px;border-radius:8px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:80%}
+#toast.on{opacity:.95}
+#toast.err{background:var(--err);color:#fff}
+#banner{position:absolute;left:12px;right:12px;top:10px;display:none;gap:8px;align-items:center;flex-wrap:wrap;background:var(--panel);border:1px solid var(--accent);border-radius:8px;padding:8px 12px;box-shadow:0 4px 18px #0002}
+#banner.on{display:flex}
+#hint{position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--muted);pointer-events:none}
+#help{position:absolute;right:12px;top:10px;width:330px;display:none;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:13px;box-shadow:0 4px 18px #0002}
+#help.on{display:block}
+#help li{margin:3px 0}
+/* svg */
+.grid-dot{fill:var(--dot)}
+.st rect.body{fill:var(--state);stroke:var(--line);stroke-width:1.5}
+.st.container rect.body{fill:var(--box)}
+.st .hdr{stroke:var(--line);stroke-width:1}
+.st text{fill:var(--ink);font-size:13px}
+.st text.title{font-weight:600}
+.st text.sub{fill:var(--muted);font-size:11.5px}
+.st text.badge{fill:var(--muted);font-size:11px}
+.st[class*=" p-"] rect.body{fill:color-mix(in srgb,var(--pc) 16%,var(--state));stroke:color-mix(in srgb,var(--pc) 70%,var(--line))}
+.st.container[class*=" p-"] rect.body{fill:color-mix(in srgb,var(--pc) 6%,var(--box))}
+.p-idle{--pc:#8a94a6} .p-person{--pc:#5b9bd5} .p-greeting{--pc:#e0a03a} .p-listening{--pc:#3fae86}
+.p-thinking{--pc:#9a7fd1} .p-speaking{--pc:#e07a5f} .p-interrupted{--pc:#d64545} .p-farewell{--pc:#a0866a}
+.st.k-parallel rect.body{stroke-dasharray:7 4}
+.st.k-final rect.inner{fill:none;stroke:var(--muted);stroke-width:1}
+.st.k-history circle{fill:var(--state);stroke:var(--muted);stroke-width:1.5}
+.st.sel rect.body,.st.sel circle{stroke:var(--sel)!important;stroke-width:2.5}
+.st.active rect.body,.st.active circle{stroke:var(--active)!important;stroke-width:3.5;filter:drop-shadow(0 0 5px color-mix(in srgb,var(--active) 60%,transparent))}
+.st.add rect.body{stroke:var(--add)!important;stroke-width:3;stroke-dasharray:none}
+.st.chg rect.body{stroke:var(--chg)!important;stroke-width:3}
+.st .port{fill:var(--panel);stroke:var(--accent);stroke-width:2;opacity:0;cursor:crosshair}
+.st:hover>.port,.st.sel>.port{opacity:1}
+.st .handle{fill:var(--sel);cursor:nwse-resize}
+.st .dot-err{fill:var(--err)} .st .dot-warn{fill:var(--warn)}
+.init-dot{fill:var(--ink)} .init-line{stroke:var(--ink);stroke-width:1.5;fill:none}
+.edge path.line{fill:none;stroke:var(--muted);stroke-width:1.6}
+.edge.after path.line{stroke-dasharray:7 4}
+.edge.when path.line{stroke-dasharray:2 4;stroke-linecap:round}
+.edge.stay path.line{stroke:color-mix(in srgb,var(--muted) 70%,transparent)}
+.edge text{font-size:11.5px;fill:var(--ink);paint-order:stroke;stroke:var(--bg);stroke-width:4px;stroke-linejoin:round;cursor:pointer}
+.edge path.hit{fill:none;stroke:transparent;stroke-width:14;cursor:pointer}
+.edge.sel path.line{stroke:var(--sel);stroke-width:2.6}
+.edge.sel text{fill:var(--sel);font-weight:600}
+.edge.issue text{fill:var(--err)}
+.edge.add path.line{stroke:var(--add);stroke-width:2.6} .edge.add text{fill:var(--add)}
+.edge.fired path.line{stroke:var(--fired);stroke-width:4}
+.edge.fired text{fill:var(--fired);font-weight:700}
+.temp{stroke:var(--accent);stroke-width:2;stroke-dasharray:5 4;fill:none;pointer-events:none}
+.drop{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-dasharray:6 4;pointer-events:none}
+@media (max-width:820px){ main{grid-template-columns:1fr;grid-template-rows:55% 45%} #side{border-left:0;border-top:1px solid var(--line)} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="bar">
+    <div class="brand">Frank <span>statecharts</span></div>
+    <select id="chart-pick" title="Chart file"></select>
+    <button id="b-new" title="A new chart file">New</button>
+    <button id="b-saveas" title="Save under another name">Save as</button>
+    <button id="b-save" class="primary" title="Save (Ctrl+S). The running face engine loads it within a second.">Save</button>
+    <span id="dirty" title="Unsaved changes"></span>
+    <div class="sep"></div>
+    <button id="b-undo" title="Undo (Ctrl+Z)">Undo</button>
+    <button id="b-redo" title="Redo (Ctrl+Y)">Redo</button>
+    <button id="b-fit" title="Fit the chart in view (F)">Fit</button>
+    <button id="b-tidy" title="Lay everything out again">Tidy</button>
+    <div class="sep"></div>
+    <button id="b-add-atomic" title="Add a state inside the selected group">+ State</button>
+    <button id="b-add-compound" title="Add a group: states inside, one active at a time">+ Group</button>
+    <button id="b-add-parallel" title="Add parallel regions: all active at once">+ Parallel</button>
+    <button id="b-add-final" title="Add a final state">+ Final</button>
+    <button id="b-add-history" title="Add a history state: returns to where the group was">+ History</button>
+    <div class="sep"></div>
+    <button id="issues-badge" title="Problems the checker found">checking…</button>
+    <button id="b-help" title="Mouse and keys">?</button>
+  </header>
+  <main>
+    <section id="stage">
+      <svg id="svg" aria-label="Statechart canvas">
+        <defs>
+          <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1.1" class="grid-dot"/></pattern>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8b948f"/></marker>
+          <marker id="arr-sel" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3b82f6"/></marker>
+          <marker id="arr-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/></marker>
+          <marker id="arr-add" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#22c55e"/></marker>
+          <marker id="dot-end" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5"><circle cx="5" cy="5" r="4" fill="#8b948f"/></marker>
+        </defs>
+        <g id="vp"></g>
+      </svg>
+      <div id="banner"></div>
+      <div id="help">
+        <b>Mouse</b>
+        <ul>
+          <li>Drag a state to move it; drop it into a group to put it inside.</li>
+          <li>Drag the small circle on a state's right edge onto another state to add a transition.</li>
+          <li>Double-click empty space (or inside a group) for a new state.</li>
+          <li>Drag the background to pan; scroll to zoom.</li>
+          <li>Drag the blue corner of a selected state to resize it.</li>
+        </ul>
+        <b>Keys</b>
+        <ul>
+          <li><code>Delete</code> the selection, <code>Ctrl+Z</code>/<code>Ctrl+Y</code> undo/redo, <code>Ctrl+S</code> save, <code>F</code> fit, <code>Esc</code> deselect.</li>
+        </ul>
+        <b>Lines</b>
+        <ul>
+          <li>Solid: an event. Dashed: a timer (after). Dotted: a condition (when). A loop with a dot: actions only, no change of state.</li>
+          <li>A black dot and arrow mark a group's first state.</li>
+        </ul>
+        <b>Simulate</b> runs the chart on a clock of its own (green = active). <b>Vibe</b> asks Claude to change it; you see what changed before you accept. Saved charts are picked up by the running face engine within a second.
+      </div>
+      <div id="hint"></div>
+      <div id="toast"></div>
+    </section>
+    <aside id="side">
+      <nav id="tabs">
+        <button data-tab="inspect" class="on">Inspect</button>
+        <button data-tab="sim">Simulate</button>
+        <button data-tab="vibe">Vibe</button>
+        <button data-tab="json">JSON</button>
+      </nav>
+      <div id="p-inspect" class="panel on"></div>
+      <div id="p-sim" class="panel"></div>
+      <div id="p-vibe" class="panel"></div>
+      <div id="p-json" class="panel"></div>
+    </aside>
+  </main>
+</div>
+<script>
+"use strict";
+// ---------------------------------------------------------------- basics
+const $ = (s, r = document) => r.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+function S(tag, attrs = {}, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function H(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === undefined || v === null || v === false) continue;
+    if (k === "class") e.className = v;
+    else if (k === "text") e.textContent = v;
+    else if (k.startsWith("on") && typeof v === "function") e.addEventListener(k.slice(2), v);
+    else if (k === "value") e.value = v;
+    else if (v === true) { e.setAttribute(k, ""); if (k in e) e[k] = true; }
+    else e.setAttribute(k, v);
+  }
+  for (const c of kids.flat()) {
+    if (c === null || c === undefined || c === false) continue;
+    e.appendChild(typeof c === "string" || typeof c === "number" ? document.createTextNode(String(c)) : c);
+  }
+  return e;
+}
+async function api(method, path, body) {
+  const opt = { method, headers: {} };
+  if (method !== "GET") {
+    opt.headers["X-Statechart-Editor"] = "1";
+    opt.headers["Content-Type"] = "application/json";
+    opt.body = JSON.stringify(body || {});
+  }
+  const r = await fetch(path, opt);
+  let data = null;
+  try { data = await r.json(); } catch (_) { /* not json */ }
+  if (!r.ok) { const e = new Error((data && data.error) || r.statusText); e.status = r.status; e.data = data; throw e; }
+  return data;
+}
+let toastTimer = null;
+function toast(msg, kind = "") {
+  const t = $("#toast"); t.textContent = msg; t.className = "on " + kind;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.className = ""), kind === "err" ? 6000 : 3000);
+}
+function banner(msg, buttons) {
+  const b = $("#banner"); b.textContent = ""; b.className = "on";
+  b.append(H("span", { text: msg }));
+  for (const [label, fn] of buttons) b.append(H("button", { text: label, onclick: () => { hideBanner(); fn(); } }));
+}
+function hideBanner() { $("#banner").className = ""; }
+const clone = (x) => JSON.parse(JSON.stringify(x));
+const ID_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const NAME_RE = /^[A-Za-z0-9_-]{1,60}$/;
+
+// ---------------------------------------------------------------- app state
+const app = {
+  vocab: { profiles: {}, events: {}, context: {}, actions: {} }, vibeOn: false, model: "",
+  name: null, doc: null, idx: null, mtime: null, saved: "",
+  issues: [], sel: null, view: { x: 40, y: 40, k: 1 }, undo: [], redo: [],
+  sim: null, preview: null, flash: new Map(), tab: "inspect", jsonDirty: false,
+  vibe: { history: [], job: null, proposal: null },
+};
+const cur = () => (app.preview ? app.preview.doc : app.doc);
+const curIdx = () => (app.preview ? app.preview.idx : app.idx);
+const dirty = () => app.doc && JSON.stringify(app.doc) !== app.saved;
+
+// ---------------------------------------------------------------- the chart's tree
+function kindOf(st) { return st.type || (st.states && Object.keys(st.states).length ? "compound" : "atomic"); }
+const rootIdOf = (d) => d.root.id || "root";
+function buildIndex(d) {
+  const ix = new Map(); let order = 0;
+  (function walk(id, st, parent, depth) {
+    if (ix.has(id) || !st || typeof st !== "object") return;
+    const children = Object.keys(st.states || {});
+    ix.set(id, { id, st, parent, depth, order: order++, children, kind: kindOf(st) });
+    for (const c of children) walk(c, st.states[c], id, depth + 1);
+  })(rootIdOf(d), d.root, null, 0);
+  return ix;
+}
+function ancestorsOf(ix, id) { const out = []; let p = ix.get(id) ? ix.get(id).parent : null; while (p != null) { out.push(p); p = ix.get(p).parent; } return out; }
+const isDesc = (ix, id, of) => ancestorsOf(ix, id).includes(of);
+const isContainer = (n) => n && (n.kind === "compound" || n.kind === "parallel");
+function initialOf(n) { return n.st.initial && n.children.includes(n.st.initial) ? n.st.initial : n.children[0]; }
+function profileOf(ix, id) {
+  for (const s of [id, ...ancestorsOf(ix, id)]) { const p = ix.get(s).st.profile; if (p) return p; }
+  return null;
+}
+function trigger(tr) { const k = ["event", "after", "when"].filter((x) => x in tr); return k.length === 1 ? k[0] : null; }
+function trLabel(tr) {
+  const k = trigger(tr);
+  let t = k === "event" ? (tr.event || "?") : k === "after" ? `after ${tr.after}s` : k === "when" ? `when ${tr.when}` : "?";
+  if (tr.guard) t += ` [${tr.guard}]`;
+  return t;
+}
+function allEvents(d) {
+  const set = new Set(Object.keys(app.vocab.events || {}));
+  for (const n of buildIndex(d).values()) {
+    for (const tr of n.st.transitions || []) if (tr.event) set.add(tr.event);
+    for (const list of [n.st.entry, n.st.exit, ...(n.st.transitions || []).map((t) => t.actions)])
+      for (const a of list || []) if (a && a.do === "raise" && a.event) set.add(a.event);
+  }
+  return [...set];
+}
+function contextSpec(d) { return { ...(app.vocab.context || {}), ...((d && d.context) || {}) }; }
+
+// ---------------------------------------------------------------- layout
+const HEAD = 30, PAD = 18, GAPX = 74, GAPY = 58, LEAF_H = 54, HIST = 36, MARK = 30;
+const validBox = (b) => b && [b.x, b.y, b.w, b.h].every(Number.isFinite);
+const textW = (s, px = 13) => String(s).length * px * 0.6;
+function leafSize(n) {
+  if (n.kind === "history") return { w: HIST, h: HIST };
+  return { w: Math.round(Math.max(140, Math.min(280, textW(n.id) + 50))), h: LEAF_H };
+}
+function measure(ix, id, sizes) {
+  const n = ix.get(id);
+  if (!n.children.length) { const s = leafSize(n); sizes.set(id, s); return s; }
+  const kids = n.children.map((c) => measure(ix, c, sizes));
+  let s;
+  if (n.kind === "parallel") {
+    const h = Math.max(...kids.map((k) => k.h));
+    n.children.forEach((c) => (sizes.get(c).h = h));
+    s = { w: kids.reduce((a, k) => a + k.w, 0) + GAPX * (kids.length - 1) + 2 * PAD, h: h + HEAD + PAD, row: true };
+  } else {
+    const cols = kids.length <= 3 ? kids.length : Math.ceil(Math.sqrt(kids.length));
+    const rows = Math.ceil(kids.length / cols);
+    const colW = Array(cols).fill(0), rowH = Array(rows).fill(0);
+    kids.forEach((k, i) => { const c = i % cols, r = Math.floor(i / cols); colW[c] = Math.max(colW[c], k.w); rowH[r] = Math.max(rowH[r], k.h); });
+    s = { w: colW.reduce((a, b) => a + b, 0) + GAPX * (cols - 1) + 2 * PAD + MARK,
+          h: rowH.reduce((a, b) => a + b, 0) + GAPY * (rows - 1) + HEAD + PAD + 10, cols, colW, rowH };
+  }
+  s.w = Math.max(s.w, textW(id) + 60);
+  sizes.set(id, s);
+  return s;
+}
+function place(ix, id, x, y, sizes, L) {
+  const n = ix.get(id), s = sizes.get(id);
+  L[id] = { x: Math.round(x), y: Math.round(y), w: Math.round(s.w), h: Math.round(s.h) };
+  if (!n.children.length) return;
+  if (s.row) {
+    let cx = x + PAD;
+    for (const c of n.children) { place(ix, c, cx, y + HEAD, sizes, L); cx += sizes.get(c).w + GAPX; }
+  } else {
+    n.children.forEach((c, i) => {
+      const col = i % s.cols, r = Math.floor(i / s.cols);
+      const cx = x + PAD + MARK + s.colW.slice(0, col).reduce((a, b) => a + b, 0) + GAPX * col;
+      const cy = y + HEAD + 10 + s.rowH.slice(0, r).reduce((a, b) => a + b, 0) + GAPY * r;
+      place(ix, c, cx, cy, sizes, L);
+    });
+  }
+}
+function autoLayout(d, ix) { const sizes = new Map(); measure(ix, rootIdOf(d), sizes); d.layout = {}; place(ix, rootIdOf(d), 0, 0, sizes, d.layout); }
+function fitParents(d, ix, id) {
+  const L = d.layout;
+  for (const a of ancestorsOf(ix, id)) {
+    const A = L[a]; if (!validBox(A)) continue;
+    const kids = ix.get(a).children.map((c) => L[c]).filter(validBox);
+    if (!kids.length) continue;
+    const minX = Math.min(...kids.map((k) => k.x)) - PAD - (ix.get(a).kind === "compound" ? MARK : 0);
+    const minY = Math.min(...kids.map((k) => k.y)) - HEAD - 6;
+    const maxX = Math.max(...kids.map((k) => k.x + k.w)) + PAD;
+    const maxY = Math.max(...kids.map((k) => k.y + k.h)) + PAD;
+    if (minX < A.x) { A.w += A.x - minX; A.x = minX; }
+    if (minY < A.y) { A.h += A.y - minY; A.y = minY; }
+    if (maxX > A.x + A.w) A.w = maxX - A.x;
+    if (maxY > A.y + A.h) A.h = maxY - A.y;
+  }
+}
+function placeNew(d, ix, id, at) {
+  const n = ix.get(id), L = d.layout;
+  const size = n.children.length ? { w: 240, h: 150 } : leafSize(n);
+  if (n.parent == null) { L[id] = { x: 0, y: 0, ...size }; return; }
+  const P = L[n.parent];
+  let x, y;
+  if (at) { x = at.x - size.w / 2; y = at.y - size.h / 2; }
+  else {
+    const sibs = ix.get(n.parent).children.filter((c) => c !== id && validBox(L[c]));
+    if (sibs.length) { x = Math.min(...sibs.map((c) => L[c].x)); y = Math.max(...sibs.map((c) => L[c].y + L[c].h)) + GAPY; }
+    else { x = P.x + PAD + MARK; y = P.y + HEAD + 10; }
+  }
+  L[id] = { x: Math.round(x), y: Math.round(y), w: size.w, h: size.h };
+  fitParents(d, ix, id);
+}
+function ensureLayout(d, ix) {
+  if (!d.layout || typeof d.layout !== "object") d.layout = {};
+  const missing = [...ix.keys()].filter((id) => !validBox(d.layout[id]));
+  if (!missing.length) return false;
+  if (missing.length > ix.size / 2) autoLayout(d, ix);
+  else for (const id of missing) placeNew(d, ix, id);
+  return true;
+}
+
+// ---------------------------------------------------------------- undo and changes
+function pushUndo() { app.undo.push(JSON.stringify(app.doc)); if (app.undo.length > 200) app.undo.shift(); app.redo = []; }
+function undo() { if (!app.undo.length || app.preview) return; app.redo.push(JSON.stringify(app.doc)); app.doc = JSON.parse(app.undo.pop()); afterChange(); }
+function redo() { if (!app.redo.length || app.preview) return; app.undo.push(JSON.stringify(app.doc)); app.doc = JSON.parse(app.redo.pop()); afterChange(); }
+function commit(fn) {
+  if (app.preview) { toast("Accept or discard Claude's change first"); return; }
+  pushUndo();
+  try { fn(); } catch (e) { app.doc = JSON.parse(app.undo.pop()); toast(e.message, "err"); }
+  afterChange();
+}
+function afterChange() {
+  app.idx = buildIndex(app.doc);
+  ensureLayout(app.doc, app.idx);
+  if (app.sel && app.sel.type === "state" && !app.idx.has(app.sel.id)) app.sel = null;
+  if (app.sel && app.sel.type === "tr") {
+    const n = app.idx.get(app.sel.src);
+    if (!n || !(n.st.transitions || [])[app.sel.i]) app.sel = null;
+  }
+  if (app.sim) app.sim.stale = true;
+  app.jsonDirty = false;
+  render(); renderInspector(); renderSimSoon(); renderJson(); updateDirty(); scheduleCheck();
+}
+function updateDirty() {
+  $("#dirty").textContent = dirty() ? "●" : "";
+  $("#b-undo").disabled = !app.undo.length; $("#b-redo").disabled = !app.redo.length;
+  document.title = (dirty() ? "● " : "") + (app.name || "") + " · Frank Statecharts";
+}
+
+// ---------------------------------------------------------------- edits
+function uniqueId(base, taken = new Set()) {
+  let id = base, i = 1;
+  while (app.idx.has(id) || taken.has(id)) id = `${base}${++i}`;
+  taken.add(id);
+  return id;
+}
+function newStateObject(kind, taken) {
+  const st = {};
+  if (kind === "parallel") {
+    st.type = "parallel"; st.states = {};
+    for (let r = 0; r < 2; r++) {
+      const rid = uniqueId("region", taken), cid = uniqueId("state", taken);
+      st.states[rid] = { initial: cid, states: { [cid]: {} } };
+    }
+  } else if (kind === "compound") {
+    const cid = uniqueId("state", taken); st.initial = cid; st.states = { [cid]: {} };
+  } else if (kind === "final") st.type = "final";
+  else if (kind === "history") { st.type = "history"; st.history = "shallow"; }
+  return st;
+}
+function containerFor(sel) {
+  const ix = app.idx, root = rootIdOf(app.doc);
+  if (!sel) return root;
+  const id = sel.type === "state" ? sel.id : sel.src;
+  const n = ix.get(id);
+  if (!n) return root;
+  if (isContainer(n)) return id;
+  return n.parent || root;
+}
+function addState(kind, parentId, at) {
+  if (app.preview) return toast("Accept or discard Claude's change first");
+  const p = app.idx.get(parentId);
+  if (!isContainer(p)) return toast("States go inside a group or parallel state", "err");
+  if (kind === "history" && p.kind !== "compound") return toast("A history state goes inside a group (not a parallel state)", "err");
+  let newId;
+  commit(() => {
+    const taken = new Set();
+    newId = uniqueId({ atomic: "state", compound: "group", parallel: "regions", final: "done", history: "history" }[kind], taken);
+    p.st.states = p.st.states || {};
+    p.st.states[newId] = newStateObject(kind, taken);
+    app.idx = buildIndex(app.doc);
+    placeNew(app.doc, app.idx, newId, at);
+    const n = app.idx.get(newId);
+    const stack = [...n.children];
+    while (stack.length) { const c = stack.shift(); placeNew(app.doc, app.idx, c); stack.push(...app.idx.get(c).children); }
+    app.sel = { type: "state", id: newId };
+  });
+}
+function forEachState(fn) { for (const n of buildIndex(app.doc).values()) fn(n.st, n); }
+function deleteState(id) {
+  const n = app.idx.get(id);
+  if (!n || n.parent == null) return toast("The root can't be deleted", "err");
+  commit(() => {
+    const gone = new Set([id]);
+    const stack = [...n.children];
+    while (stack.length) { const c = stack.pop(); gone.add(c); stack.push(...app.idx.get(c).children); }
+    const p = app.idx.get(n.parent).st;
+    delete p.states[id];
+    if (p.initial === id) delete p.initial;
+    if (!Object.keys(p.states).length) delete p.states;
+    forEachState((st) => {
+      if (st.transitions) st.transitions = st.transitions.filter((tr) => !gone.has(tr.target));
+      if (st.transitions && !st.transitions.length) delete st.transitions;
+      if (st.type === "history" && gone.has(st.target)) delete st.target;
+    });
+    for (const g of gone) delete app.doc.layout[g];
+    app.sel = null;
+  });
+}
+function renameState(old, nw) {
+  nw = nw.trim();
+  if (nw === old) return;
+  if (!ID_RE.test(nw)) return toast("An id is letters, digits and _, not starting with a digit", "err"), renderInspector();
+  if (app.idx.has(nw)) return toast(`There is already a state called ${nw}`, "err"), renderInspector();
+  commit(() => {
+    const n = app.idx.get(old);
+    if (n.parent == null) app.doc.root.id = nw;
+    else {
+      const p = app.idx.get(n.parent).st;
+      p.states = Object.fromEntries(Object.entries(p.states).map(([k, v]) => [k === old ? nw : k, v]));
+    }
+    const re = new RegExp(`in_state\\(\\s*(["'])${old}\\1\\s*\\)`, "g");
+    const fix = (s) => (typeof s === "string" ? s.replace(re, `in_state("${nw}")`) : s);
+    forEachState((st) => {
+      if (st.initial === old) st.initial = nw;
+      if (st.type === "history" && st.target === old) st.target = nw;
+      for (const tr of st.transitions || []) {
+        if (tr.target === old) tr.target = nw;
+        if (tr.guard) tr.guard = fix(tr.guard);
+        if (tr.when) tr.when = fix(tr.when);
+      }
+      for (const list of [st.entry, st.exit, ...(st.transitions || []).map((t) => t.actions)])
+        for (const a of list || []) if (a && a.expr) a.expr = fix(a.expr);
+    });
+    if (app.doc.layout[old]) { app.doc.layout[nw] = app.doc.layout[old]; delete app.doc.layout[old]; }
+    app.sel = { type: "state", id: nw };
+  });
+}
+function setKind(id, kind) {
+  const n = app.idx.get(id), st = n.st;
+  if (kind === n.kind) return;
+  if ((kind === "atomic" || kind === "final" || kind === "history") && n.children.length)
+    return toast(`Move or delete its child states first: a ${kind} state has none`, "err"), renderInspector();
+  if (kind === "history" && (n.parent == null || app.idx.get(n.parent).kind !== "compound"))
+    return toast("A history state must sit inside a group", "err"), renderInspector();
+  if (n.parent == null && (kind === "final" || kind === "history" || kind === "atomic"))
+    return toast("The root must be a group or parallel", "err"), renderInspector();
+  commit(() => {
+    delete st.type; delete st.history;
+    if (kind === "parallel") { st.type = "parallel"; delete st.initial; }
+    if (kind === "final") st.type = "final";
+    if (kind === "history") { st.type = "history"; st.history = "shallow"; }
+    if (kind === "atomic") delete st.initial;
+    if ((kind === "compound" || kind === "parallel") && !n.children.length) {
+      const taken = new Set(); const fresh = newStateObject(kind, taken);
+      st.states = fresh.states; if (fresh.initial) st.initial = fresh.initial;
+      app.idx = buildIndex(app.doc);
+      const stack = [...app.idx.get(id).children];
+      while (stack.length) { const c = stack.shift(); placeNew(app.doc, app.idx, c); stack.push(...app.idx.get(c).children); }
+    }
+  });
+}
+function reparent(id, np) {
+  const n = app.idx.get(id);
+  if (!n || n.parent === np || id === np || isDesc(app.idx, np, id)) return false;
+  const target = app.idx.get(np);
+  if (!isContainer(target)) return false;
+  if (n.kind === "history" && target.kind !== "compound") { toast("A history state goes inside a group", "err"); return false; }
+  const old = app.idx.get(n.parent).st;
+  const obj = old.states[id];
+  delete old.states[id];
+  if (old.initial === id) delete old.initial;
+  if (!Object.keys(old.states).length) delete old.states;
+  target.st.states = target.st.states || {};
+  target.st.states[id] = obj;
+  app.idx = buildIndex(app.doc);
+  fitParents(app.doc, app.idx, id);
+  return true;
+}
+function trList(src) { const st = app.idx.get(src).st; return (st.transitions = st.transitions || []); }
+function addTransition(src, target, trig) {
+  commit(() => {
+    const list = trList(src);
+    const tr = { ...(trig || { event: "" }) };
+    if (target) tr.target = target;
+    list.push(tr);
+    app.sel = { type: "tr", src, i: list.length - 1 };
+  });
+  focusSoon('[data-k="tr-value"]');
+}
+function deleteTransition(src, i) {
+  commit(() => {
+    const st = app.idx.get(src).st; st.transitions.splice(i, 1);
+    if (!st.transitions.length) delete st.transitions;
+    app.sel = { type: "state", id: src };
+  });
+}
+function deleteSelection() {
+  if (!app.sel) return;
+  if (app.sel.type === "state") deleteState(app.sel.id);
+  else deleteTransition(app.sel.src, app.sel.i);
+}
+
+// ---------------------------------------------------------------- canvas
+const svg = $("#svg"), vp = $("#vp");
+function applyView() {
+  vp.setAttribute("transform", `translate(${app.view.x},${app.view.y}) scale(${app.view.k})`);
+  $("#hint").textContent = `${Math.round(app.view.k * 100)}% · drag states · drag the small circle on a state to connect · double-click for a new state · ? for help`;
+}
+function toCanvas(e) {
+  const r = svg.getBoundingClientRect();
+  return { x: (e.clientX - r.left - app.view.x) / app.view.k, y: (e.clientY - r.top - app.view.y) / app.view.k };
+}
+function fit() {
+  const d = cur(); if (!d) return;
+  const b = d.layout[rootIdOf(d)]; if (!validBox(b)) return;
+  const W = svg.clientWidth || 800, Hh = svg.clientHeight || 600;
+  const k = Math.max(0.15, Math.min(1.3, (W - 60) / b.w, (Hh - 60) / b.h));
+  app.view = { k, x: (W - b.w * k) / 2 - b.x * k, y: Math.max(20, (Hh - b.h * k) / 2) - b.y * k };
+  applyView();
+}
+const center = (b) => ({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
+function borderPoint(b, toward) {
+  const c = center(b); let dx = toward.x - c.x, dy = toward.y - c.y;
+  if (Math.abs(dx) < 1e-6 && Math.abs(dy) < 1e-6) dy = -1;
+  const s = Math.min((b.w / 2) / Math.max(Math.abs(dx), 1e-9), (b.h / 2) / Math.max(Math.abs(dy), 1e-9));
+  return { x: c.x + dx * s, y: c.y + dy * s };
+}
+const clampN = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+function issuesFor(id, i) { return app.issues.filter((x) => x.id === id && (i === undefined ? x.tr == null : x.tr === i)); }
+function edgeGeometry(L, ix, src, tr, slot) {
+  const S_ = L[src], tgt = tr.target;
+  if (!validBox(S_)) return null;
+  if (!tgt || tgt === src) {   // a loop above the state: actions only, or leave and come back
+    const ax = S_.x + S_.w - 26 - slot.loop * 30, y = S_.y;
+    return { d: `M${ax - 9},${y} C${ax - 12},${y - 38} ${ax + 18},${y - 38} ${ax + 13},${y}`,
+             lx: ax + 2, ly: y - 32 - (slot.loop % 2) * 14, anchor: "middle", loop: true };
+  }
+  const T = L[tgt]; if (!validBox(T)) return null;
+  const off = slot.pair * 16;
+  if (isDesc(ix, tgt, src)) {   // from a group's frame down into one of its states
+    const x = clampN(center(T).x + off, S_.x + 14, S_.x + S_.w - 14);
+    const p1 = { x, y: S_.y + HEAD - 6 }, p2 = { x: clampN(x, T.x + 8, T.x + T.w - 8), y: T.y };
+    return { d: `M${p1.x},${p1.y} C${p1.x},${p1.y + 30} ${p2.x},${p2.y - 30} ${p2.x},${p2.y}`, lx: p1.x + 5, ly: p1.y + 15, anchor: "start" };
+  }
+  if (isDesc(ix, src, tgt)) {   // from inside up to the frame of a group around it
+    const x = clampN(center(S_).x + off, T.x + 14, T.x + T.w - 14);
+    const p1 = { x: clampN(x, S_.x + 8, S_.x + S_.w - 8), y: S_.y }, p2 = { x, y: T.y + HEAD - 6 };
+    return { d: `M${p1.x},${p1.y} C${p1.x},${p1.y - 30} ${p2.x},${p2.y + 30} ${p2.x},${p2.y}`, lx: p1.x + 5, ly: p1.y - 10, anchor: "start" };
+  }
+  const cs = center(S_), ct = center(T);
+  const dx = ct.x - cs.x, dy = ct.y - cs.y, len = Math.hypot(dx, dy) || 1;
+  const bend = 22 + slot.pair * 30;
+  const cp = { x: (cs.x + ct.x) / 2 - (dy / len) * bend, y: (cs.y + ct.y) / 2 + (dx / len) * bend };
+  const p1 = borderPoint(S_, cp), p2 = borderPoint(T, cp);
+  return { d: `M${p1.x},${p1.y} Q${cp.x},${cp.y} ${p2.x},${p2.y}`,
+           lx: 0.25 * p1.x + 0.5 * cp.x + 0.25 * p2.x, ly: 0.25 * p1.y + 0.5 * cp.y + 0.25 * p2.y - 4, anchor: "middle" };
+}
+function render() {
+  const d = cur(); if (!d) return;
+  const ix = curIdx(), L = d.layout || {};
+  vp.textContent = "";
+  S("rect", { x: -20000, y: -20000, width: 40000, height: 40000, fill: "url(#dots)" }, vp);
+  const simOn = app.sim && app.sim.snap && !app.preview;
+  const active = new Set(simOn ? app.sim.snap.active : []);
+  const diff = app.preview ? app.preview.diff : null;
+  const now = performance.now();
+  const states = [...ix.values()].sort((a, b) => a.depth - b.depth || a.order - b.order);
+  const gStates = S("g", {}, vp), gEdges = S("g", {}, vp), gTop = S("g", {}, vp);
+  for (const n of states) {
+    const b = L[n.id]; if (!validBox(b)) continue;
+    const prof = n.st.profile;
+    const cls = ["st", `k-${n.kind}`, isContainer(n) ? "container" : "", prof ? `p-${prof}` : "",
+      app.sel && app.sel.type === "state" && app.sel.id === n.id ? "sel" : "", active.has(n.id) ? "active" : "",
+      diff && diff.added.has(n.id) ? "add" : "", diff && diff.changed.has(n.id) ? "chg" : ""].filter(Boolean).join(" ");
+    const g = S("g", { class: cls, "data-state": n.id }, gStates);
+    const tip = S("title", {}, g); tip.textContent = n.st.note ? `${n.id}: ${n.st.note}` : n.id;
+    if (n.kind === "history") {
+      S("circle", { cx: b.x + b.w / 2, cy: b.y + b.h / 2, r: Math.min(b.w, b.h) / 2 }, g);
+      const t = S("text", { x: b.x + b.w / 2, y: b.y + b.h / 2 + 4, "text-anchor": "middle", class: "title" }, g);
+      t.textContent = n.st.history === "deep" ? "H*" : "H";
+    } else {
+      S("rect", { class: "body", x: b.x, y: b.y, width: b.w, height: b.h, rx: 10 }, g);
+      if (n.kind === "final") S("rect", { class: "inner", x: b.x + 4, y: b.y + 4, width: b.w - 8, height: b.h - 8, rx: 7 }, g);
+      if (isContainer(n)) {
+        S("path", { class: "hdr", d: `M${b.x},${b.y + HEAD} H${b.x + b.w}` }, g);
+        const t = S("text", { x: b.x + 12, y: b.y + 20, class: "title" }, g);
+        t.textContent = (n.kind === "parallel" ? "∥ " : "") + n.id;
+        const bits = [prof ? prof : null, n.st.priority != null ? `priority ${n.st.priority}` : null].filter(Boolean);
+        if (bits.length) { const s2 = S("text", { x: b.x + b.w - 10, y: b.y + 20, "text-anchor": "end", class: "sub" }, g); s2.textContent = bits.join(" · "); }
+      } else {
+        const t = S("text", { x: b.x + b.w / 2, y: b.y + (prof ? 22 : 31), "text-anchor": "middle", class: "title" }, g);
+        t.textContent = n.id;
+        if (prof) { const s2 = S("text", { x: b.x + b.w / 2, y: b.y + 38, "text-anchor": "middle", class: "sub" }, g); s2.textContent = prof; }
+      }
+      const marks = [];
+      if ((n.st.entry || []).length) marks.push(`in ${n.st.entry.length}`);
+      if ((n.st.exit || []).length) marks.push(`out ${n.st.exit.length}`);
+      if ((n.st.transitions || []).some((tr) => "after" in tr)) marks.push("⏱");
+      if (marks.length) {
+        const m = S("text", { x: b.x + 8, y: b.y + b.h - 7, class: "badge" }, g);
+        m.textContent = marks.join("  ");
+      }
+    }
+    const iss = issuesFor(n.id).concat(app.issues.filter((x) => x.id === n.id && x.tr != null));
+    if (iss.length) S("circle", { cx: b.x + b.w - 7, cy: b.y + 7, r: 5, class: iss.some((x) => x.level === "error") ? "dot-err" : "dot-warn" }, g);
+    if (n.parent != null) {
+      const p = ix.get(n.parent);
+      if (p.kind === "compound" && initialOf(p) === n.id) {
+        const y = b.y + b.h / 2;
+        S("circle", { cx: b.x - 22, cy: y, r: 5, class: "init-dot" }, gTop);
+        S("path", { d: `M${b.x - 17},${y} H${b.x - 2}`, class: "init-line", "marker-end": "url(#arr)" }, gTop);
+      }
+    }
+    if (!app.preview && n.kind !== "history" && n.kind !== "final") S("circle", { class: "port", cx: b.x + b.w, cy: b.y + Math.min(b.h / 2, 46), r: 6, "data-port": n.id }, g);
+    if (!app.preview && app.sel && app.sel.type === "state" && app.sel.id === n.id && n.parent != null)
+      S("rect", { class: "handle", x: b.x + b.w - 9, y: b.y + b.h - 9, width: 9, height: 9, "data-handle": n.id }, g);
+  }
+  const pairs = new Map(), loops = new Map();
+  for (const n of states) {
+    (n.st.transitions || []).forEach((tr, i) => {
+      let slot;
+      if (!tr.target || tr.target === n.id) { const k = loops.get(n.id) || 0; loops.set(n.id, k + 1); slot = { loop: k }; }
+      else { const key = `${n.id}>${tr.target}`; const k = pairs.get(key) || 0; pairs.set(key, k + 1); slot = { pair: k }; }
+      const geo = edgeGeometry(L, ix, n.id, tr, slot); if (!geo) return;
+      const key = `${n.id}|${i}`;
+      const kind = trigger(tr);
+      const isSel = app.sel && app.sel.type === "tr" && app.sel.src === n.id && app.sel.i === i;
+      const fired = !app.preview && (app.flash.get(key) || 0) > now;
+      const added = diff && diff.newTr.has(key);
+      const cls = ["edge", kind === "after" ? "after" : kind === "when" ? "when" : "event", !tr.target ? "stay" : "",
+        isSel ? "sel" : "", fired ? "fired" : "", added ? "add" : "", issuesFor(n.id, i).length ? "issue" : ""].filter(Boolean).join(" ");
+      const g = S("g", { class: cls, "data-edge": key }, gEdges);
+      const tip = S("title", {}, g);
+      tip.textContent = `${n.id} → ${tr.target || "(stays)"}: ${trLabel(tr)}${(tr.actions || []).length ? ` / ${tr.actions.map((a) => a.do).join(", ")}` : ""}${tr.note ? `\n${tr.note}` : ""}`;
+      const marker = !tr.target ? "url(#dot-end)" : isSel ? "url(#arr-sel)" : fired ? "url(#arr-hot)" : added ? "url(#arr-add)" : "url(#arr)";
+      S("path", { class: "line", d: geo.d, "marker-end": marker }, g);
+      S("path", { class: "hit", d: geo.d }, g);
+      let text = trLabel(tr);
+      if (text.length > 30) text = text.slice(0, 29) + "…";
+      if ((tr.actions || []).length) text += ` / ${tr.actions.length}`;
+      const t = S("text", { x: geo.lx, y: geo.ly, "text-anchor": geo.anchor }, g);
+      t.textContent = text;
+    });
+  }
+  app.tempLine = S("path", { class: "temp", d: "" }, gTop);
+  app.dropBox = S("rect", { class: "drop", x: 0, y: 0, width: 0, height: 0, visibility: "hidden", rx: 12 }, gTop);
+  applyView();
+}
+function stateAt(p, opts = {}) {
+  const ix = curIdx(), L = cur().layout;
+  const list = [...ix.values()].sort((a, b) => b.depth - a.depth || b.order - a.order);
+  for (const n of list) {
+    if (opts.exclude && opts.exclude.has(n.id)) continue;
+    if (opts.containers && !isContainer(n)) continue;
+    const b = L[n.id];
+    if (validBox(b) && p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) return n.id;
+  }
+  return null;
+}
+function subtreeIds(id) { const out = [id], stack = [...app.idx.get(id).children]; while (stack.length) { const c = stack.pop(); out.push(c); stack.push(...app.idx.get(c).children); } return out; }
+function select(sel) { app.sel = sel; render(); renderInspector(); if (sel && !app.preview && app.tab !== "inspect" && app.tab !== "sim") setTab("inspect"); }
+
+let drag = null, lastDown = { t: 0, x: 0, y: 0 };
+function doubleClickAt(p) {   // a new state where empty space (or a group's inside) is double-clicked
+  if (app.preview) return;
+  const hit = stateAt(p);
+  if (hit && !isContainer(app.idx.get(hit))) return;
+  addState("atomic", stateAt(p, { containers: true }) || rootIdOf(app.doc), p);
+}
+svg.addEventListener("pointerdown", (e) => {
+  if (e.button !== 0 && e.button !== 1) return;
+  const p = toCanvas(e), t = e.target;
+  const hnd = t.closest("[data-handle]"), port = t.closest("[data-port]"), edge = t.closest("[data-edge]"), st = t.closest("[data-state]");
+  // our own double-click: the canvas is redrawn between the two clicks, which can stop the browser's dblclick
+  const quick = e.timeStamp - lastDown.t < 400 && Math.hypot(e.clientX - lastDown.x, e.clientY - lastDown.y) < 6;
+  lastDown = { t: e.timeStamp, x: e.clientX, y: e.clientY };
+  if (quick && e.button === 0 && !hnd && !port && !edge && (!st || isContainer(curIdx().get(st.dataset.state)))) {
+    lastDown.t = 0; drag = null; doubleClickAt(p); return;
+  }
+  if (e.button === 1 || (!hnd && !port && !edge && !st)) {
+    drag = { mode: "pan", c0: { x: e.clientX, y: e.clientY }, v0: { ...app.view }, moved: false };
+    svg.classList.add("panning");
+  } else if (hnd && !app.preview) {
+    const id = hnd.dataset.handle;
+    drag = { mode: "resize", id, p0: p, b0: { ...app.doc.layout[id] }, moved: false };
+  } else if (port && !app.preview) {
+    drag = { mode: "connect", src: port.dataset.port, p0: p };
+  } else if (edge) {
+    const [src, i] = edge.dataset.edge.split("|");
+    select({ type: "tr", src, i: +i });
+    return;
+  } else if (st) {
+    const id = st.dataset.state;
+    select({ type: "state", id });
+    if (!app.preview && id !== rootIdOf(app.doc)) {
+      const ids = subtreeIds(id);
+      drag = { mode: "move", id, p0: p, orig: Object.fromEntries(ids.map((s) => [s, { ...app.doc.layout[s] }])), ids: new Set(ids), moved: false };
+    }
+  }
+  if (drag) svg.setPointerCapture(e.pointerId);
+});
+svg.addEventListener("pointermove", (e) => {
+  if (!drag) return;
+  const p = toCanvas(e);
+  if (drag.mode === "pan") {
+    const dx = e.clientX - drag.c0.x, dy = e.clientY - drag.c0.y;
+    if (Math.hypot(dx, dy) > 3) drag.moved = true;
+    app.view.x = drag.v0.x + dx; app.view.y = drag.v0.y + dy; applyView();
+  } else if (drag.mode === "move") {
+    const dx = p.x - drag.p0.x, dy = p.y - drag.p0.y;
+    if (!drag.moved && Math.hypot(dx, dy) * app.view.k < 4) return;
+    if (!drag.moved) { pushUndo(); drag.moved = true; }
+    for (const [s, b] of Object.entries(drag.orig)) app.doc.layout[s] = { ...b, x: Math.round(b.x + dx), y: Math.round(b.y + dy) };
+    render();
+    const into = stateAt(p, { containers: true, exclude: drag.ids });
+    const parent = app.idx.get(drag.id).parent;
+    if (into && into !== parent) {
+      const b = app.doc.layout[into];
+      Object.entries({ x: b.x - 4, y: b.y - 4, width: b.w + 8, height: b.h + 8, visibility: "visible" }).forEach(([k, v]) => app.dropBox.setAttribute(k, v));
+    }
+  } else if (drag.mode === "resize") {
+    const dx = p.x - drag.p0.x, dy = p.y - drag.p0.y;
+    if (!drag.moved) { pushUndo(); drag.moved = true; }
+    const n = app.idx.get(drag.id);
+    let minW = 60, minH = 36;
+    if (n.children.length) {
+      const kids = n.children.map((c) => app.doc.layout[c]).filter(validBox);
+      minW = Math.max(...kids.map((k) => k.x + k.w)) - drag.b0.x + PAD;
+      minH = Math.max(...kids.map((k) => k.y + k.h)) - drag.b0.y + PAD;
+    }
+    app.doc.layout[drag.id] = { ...drag.b0, w: Math.round(Math.max(minW, drag.b0.w + dx)), h: Math.round(Math.max(minH, drag.b0.h + dy)) };
+    render();
+  } else if (drag.mode === "connect") {
+    const b = app.doc.layout[drag.src];
+    const from = borderPoint(b, p);
+    app.tempLine.setAttribute("d", `M${from.x},${from.y} L${p.x},${p.y}`);
+  }
+});
+svg.addEventListener("pointerup", (e) => {
+  if (!drag) return;
+  const p = toCanvas(e), dr = drag; drag = null;
+  svg.classList.remove("panning");
+  if (dr.mode === "pan") { if (!dr.moved) select(null); return; }
+  if (dr.mode === "move") {
+    if (!dr.moved) return;
+    const into = stateAt(p, { containers: true, exclude: dr.ids });
+    const parent = app.idx.get(dr.id).parent;
+    if (into && into !== parent) { if (!reparent(dr.id, into)) fitParents(app.doc, app.idx, dr.id); }
+    else fitParents(app.doc, app.idx, dr.id);
+    app.redo = [];
+    afterChange();
+    return;
+  }
+  if (dr.mode === "resize") { if (dr.moved) { fitParents(app.doc, app.idx, dr.id); afterChange(); } return; }
+  if (dr.mode === "connect") {
+    app.tempLine.setAttribute("d", "");
+    const target = stateAt(p);   // dropped on empty space (the root's background): nothing
+    if (target && (target !== rootIdOf(app.doc) || dr.src === target)) addTransition(dr.src, target);
+  }
+});
+svg.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const r = svg.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  const k0 = app.view.k, k = clampN(k0 * Math.exp(-e.deltaY * 0.0015), 0.12, 3);
+  app.view.x = mx - ((mx - app.view.x) * k) / k0; app.view.y = my - ((my - app.view.y) * k) / k0; app.view.k = k;
+  applyView();
+}, { passive: false });
+document.addEventListener("keydown", (e) => {
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || "");
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); save(); return; }
+  if (typing) return;
+  if (mod && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+  else if (mod && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); }
+  else if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); if (!app.preview) deleteSelection(); }
+  else if (e.key === "f" || e.key === "F") fit();
+  else if (e.key === "Escape") { if (drag && drag.mode === "connect") { drag = null; app.tempLine.setAttribute("d", ""); } select(null); }
+});
+
+// ---------------------------------------------------------------- inspector
+function field(label, input, hint) { return H("label", { class: "f" }, H("span", { text: label }), input, hint ? H("small", { text: hint }) : null); }
+function textIn(k, value, commitFn, attrs = {}) {
+  return H("input", { type: "text", value: value == null ? "" : String(value), "data-k": k, ...attrs, onchange: (e) => commitFn(e.target.value) });
+}
+function numIn(k, value, commitFn, attrs = {}) {
+  return H("input", { type: "number", step: "any", value: value == null ? "" : String(value), "data-k": k, ...attrs,
+    onchange: (e) => commitFn(e.target.value === "" ? null : Number(e.target.value)) });
+}
+function selectIn(k, value, options, commitFn) {
+  const s = H("select", { "data-k": k, onchange: (e) => commitFn(e.target.value) });
+  for (const o of options) { const [v, l] = Array.isArray(o) ? o : [o, o]; s.append(H("option", { value: v, text: l })); }
+  s.value = value == null ? "" : String(value);
+  return s;
+}
+function areaIn(k, value, commitFn, rows = 2) { return H("textarea", { rows, "data-k": k, value: value || "", onchange: (e) => commitFn(e.target.value) }); }
+function focusSoon(sel) { setTimeout(() => { const el = $(sel); if (el) { el.focus(); if (el.select) el.select(); } }, 30); }
+function setOrDelete(obj, key, v) { if (v === null || v === undefined || v === "") delete obj[key]; else obj[key] = v; }
+function renderInspector() {
+  const box = $("#p-inspect");
+  const focusK = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.k : null;
+  box.textContent = "";
+  if (!app.doc) return;
+  if (app.preview) { box.append(H("p", { class: "muted", text: "Previewing Claude's change: accept or discard it in the Vibe tab before editing." })); return; }
+  const s = app.sel;
+  if (s && s.type === "state" && app.idx.has(s.id)) box.append(...stateForm(s.id));
+  else if (s && s.type === "tr") box.append(...transitionForm(s.src, s.i));
+  else box.append(...chartForm());
+  if (focusK) { const el = box.querySelector(`[data-k="${CSS.escape(focusK)}"]`); if (el) el.focus(); }
+}
+function issueList(list) {
+  if (!list.length) return null;
+  return H("div", { class: "list" }, list.map((x) => H("div", {
+    class: `item issue ${x.level}`, text: `${x.id ? x.id + (x.tr != null ? ` → #${x.tr + 1}` : "") + ": " : ""}${x.msg}`,
+    onclick: () => x.id && app.idx.has(x.id) && select(x.tr != null ? { type: "tr", src: x.id, i: x.tr } : { type: "state", id: x.id }),
+  })));
+}
+function chartForm() {
+  const d = app.doc, out = [];
+  out.push(H("h3", { text: `Chart: ${d.name || app.name}` }));
+  out.push(field("Name", textIn("c-name", d.name, (v) => commit(() => setOrDelete(d, "name", v.trim())))));
+  out.push(field("About", areaIn("c-desc", d.description, (v) => commit(() => setOrDelete(d, "description", v.trim())), 4)));
+  out.push(H("p", { class: "muted", text: `Host: ${d.host || "frank-engine"}. The engine runs it through frank/statechart/bridge.py and loads a saved change within a second.` }));
+  out.push(H("h4", { text: `Problems (${app.issues.length})` }));
+  out.push(issueList(app.issues) || H("p", { class: "muted", text: "None. The chart is ready to run." }));
+  out.push(H("h4", { text: "Context the host updates every tick" }));
+  for (const [k, v] of Object.entries(app.vocab.context || {})) out.push(H("div", { class: "item" }, H("code", { text: k }), " ", H("span", { class: "muted", text: `${v.type}: ${v.doc || ""}` })));
+  out.push(H("h4", { text: "Extra context this chart keeps" }));
+  const ctx = d.context || {};
+  for (const [k, v] of Object.entries(ctx)) {
+    out.push(H("div", { class: "row" }, H("code", { text: k }),
+      selectIn(`ctx-type-${k}`, v.type || "bool", ["bool", "number", "string"], (t) => commit(() => { ctx[k].type = t; })),
+      textIn(`ctx-def-${k}`, JSON.stringify(v.default ?? null), (t) => commit(() => { try { ctx[k].default = JSON.parse(t); } catch (_) { ctx[k].default = t; } }), { style: "width:80px", title: "default" }),
+      H("button", { class: "mini danger", text: "×", onclick: () => commit(() => { delete ctx[k]; }) })));
+  }
+  out.push(H("button", { class: "mini", text: "+ variable", onclick: () => {
+    const k = prompt("Variable name (letters, digits, _):"); if (!k) return;
+    if (!ID_RE.test(k)) return toast("Not a valid name", "err");
+    commit(() => { d.context = d.context || {}; d.context[k] = { type: "bool", default: false }; });
+  } }));
+  out.push(H("h4", { text: "Events the host sends" }));
+  out.push(H("div", { class: "list" }, Object.entries(app.vocab.events || {}).map(([k, v]) => H("div", { class: "item" }, H("code", { text: k }), " ", H("span", { class: "muted", text: v })))));
+  return out;
+}
+function stateForm(id) {
+  const n = app.idx.get(id), st = n.st, out = [];
+  const path = [...ancestorsOf(app.idx, id)].reverse().concat([id]).join(" › ");
+  out.push(H("h3", {}, "State ", H("span", { class: "pill", text: n.kind })));
+  out.push(H("p", { class: "muted mono", text: path }));
+  out.push(field("Id", textIn("s-id", id, (v) => renameState(id, v))));
+  const kinds = n.parent == null ? ["compound", "parallel"] : ["atomic", "compound", "parallel", "final", "history"];
+  out.push(field("Type", selectIn("s-type", n.kind, kinds, (v) => setKind(id, v))));
+  if (n.kind !== "history") {
+    const inherited = n.parent != null ? profileOf(app.idx, n.parent) : null;
+    const profs = [["", inherited ? `(from parent: ${inherited})` : "(none)"], ...Object.keys(app.vocab.profiles || {})];
+    if (st.profile && !(st.profile in (app.vocab.profiles || {}))) profs.push([st.profile, `${st.profile} (unknown)`]);
+    out.push(field("Profile", selectIn("s-profile", st.profile || "", profs, (v) => commit(() => setOrDelete(st, "profile", v))),
+      st.profile && app.vocab.profiles[st.profile] ? app.vocab.profiles[st.profile] : "What the face does while this is active."));
+    out.push(field("Priority", numIn("s-prio", st.priority, (v) => commit(() => setOrDelete(st, "priority", v))), "Higher wins when parallel regions disagree."));
+  }
+  if (n.kind === "compound") out.push(field("Starts in", selectIn("s-init", initialOf(n), n.children.filter((c) => app.idx.get(c).kind !== "history"),
+    (v) => commit(() => { st.initial = v; }))));
+  if (n.kind === "history") {
+    out.push(field("Remembers", selectIn("s-hist", st.history || "shallow", [["shallow", "its child (shallow)"], ["deep", "the exact state (deep)"]], (v) => commit(() => { st.history = v; }))));
+    const opts = [["", "(the group's first state)"], ...subtreeIds(n.parent).filter((x) => x !== n.parent && x !== id)];
+    out.push(field("Default", selectIn("s-htgt", st.target || "", opts, (v) => commit(() => setOrDelete(st, "target", v)))));
+  }
+  out.push(field("Note", areaIn("s-note", st.note, (v) => commit(() => setOrDelete(st, "note", v.trim())))));
+  if (n.kind !== "history") {
+    out.push(H("h4", { text: "On entry" }), actionsEditor(st, "entry", "s-entry"));
+    out.push(H("h4", { text: "On exit" }), actionsEditor(st, "exit", "s-exit"));
+    out.push(H("h4", { text: "Transitions out, in order" }));
+    const trs = st.transitions || [];
+    out.push(H("div", { class: "list" }, trs.map((tr, i) => H("div", { class: "item", onclick: () => select({ type: "tr", src: id, i }) },
+      `${i + 1}. ${trLabel(tr)} → `, H("b", { text: tr.target || "(stays)" }), (tr.actions || []).length ? H("span", { class: "muted", text: ` / ${tr.actions.map((a) => a.do).join(", ")}` }) : null))));
+    out.push(H("div", { class: "row", style: "margin-top:6px" },
+      H("button", { class: "mini", text: "+ on event", onclick: () => addTransition(id, null, { event: "" }) }),
+      H("button", { class: "mini", text: "+ after time", onclick: () => addTransition(id, null, { after: 1 }) }),
+      H("button", { class: "mini", text: "+ when", onclick: () => addTransition(id, null, { when: "True" }) })));
+    const incoming = [];
+    for (const m of app.idx.values()) (m.st.transitions || []).forEach((tr, i) => { if (tr.target === id) incoming.push([m.id, i, tr]); });
+    if (incoming.length) {
+      out.push(H("h4", { text: "Transitions in" }));
+      out.push(H("div", { class: "list" }, incoming.map(([src, i, tr]) => H("div", { class: "item", onclick: () => select({ type: "tr", src, i }) }, H("b", { text: src }), ` → ${trLabel(tr)}`))));
+    }
+  }
+  out.push(H("h4", { text: "Knobs" }), knobsEditor(st));
+  const iss = app.issues.filter((x) => x.id === id);
+  if (iss.length) out.push(H("h4", { text: "Problems" }), issueList(iss));
+  const btns = H("div", { class: "row", style: "margin-top:14px" });
+  if (n.parent != null && app.idx.get(n.parent).kind === "compound" && initialOf(app.idx.get(n.parent)) !== id && n.kind !== "history")
+    btns.append(H("button", { text: "Make it the first state", onclick: () => commit(() => { app.idx.get(n.parent).st.initial = id; }) }));
+  if (isContainer(n)) btns.append(H("button", { text: "+ child state", onclick: () => addState("atomic", id) }));
+  if (n.parent != null) btns.append(H("button", { class: "danger", text: "Delete", onclick: () => deleteState(id) }));
+  out.push(btns);
+  return out;
+}
+function transitionForm(src, i) {
+  const n = app.idx.get(src), tr = n && (n.st.transitions || [])[i];
+  if (!tr) { app.sel = null; return chartForm(); }
+  const out = [], kind = trigger(tr) || "event";
+  out.push(H("h3", {}, "Transition ", H("span", { class: "pill", text: `#${i + 1} of ${src}` })));
+  const setTrigger = (k) => commit(() => {
+    const keep = { event: tr.event ?? "", after: tr.after ?? 1, when: tr.when ?? "True" }[k];
+    delete tr.event; delete tr.after; delete tr.when; tr[k] = keep;
+  });
+  out.push(field("Trigger", selectIn("tr-kind", kind, [["event", "on an event"], ["after", "after a time"], ["when", "when a condition is true"]], setTrigger)));
+  if (kind === "event") {
+    const dl = H("datalist", { id: "ev-list" }, allEvents(app.doc).map((ev) => H("option", { value: ev })));
+    out.push(dl, field("Event", textIn("tr-value", tr.event, (v) => commit(() => { tr.event = v.trim(); }), { list: "ev-list", placeholder: "event name" }),
+      app.vocab.events[tr.event] || (tr.event ? "Not a host event: raise it yourself, or check the spelling." : "Pick one of the host's events.")));
+  } else if (kind === "after") {
+    out.push(field("Seconds", numIn("tr-value", tr.after, (v) => commit(() => { tr.after = v == null ? 0 : v; }), { min: 0 }), "Counted from when the state was entered."));
+  } else {
+    out.push(field("Condition", textIn("tr-value", tr.when, (v) => commit(() => { tr.when = v.trim(); }), { class: "mono" }), "Checked every tick, e.g. people > 0 and not speaking"));
+  }
+  out.push(field("Only if", textIn("tr-guard", tr.guard, (v) => commit(() => setOrDelete(tr, "guard", v.trim())), { class: "mono", placeholder: "always" }),
+    `Context: ${Object.keys(contextSpec(app.doc)).join(", ")}; in_state("id")`));
+  const ids = [...app.idx.values()].filter((m) => m.kind !== "history" || m.parent).map((m) => [m.id, "· ".repeat(m.depth) + m.id]);
+  out.push(field("Goes to", selectIn("tr-target", tr.target || "", [["", "(stays: actions only)"], ...ids], (v) => commit(() => setOrDelete(tr, "target", v)))));
+  if (tr.target && (tr.target === src || isDesc(app.idx, tr.target, src))) {
+    const def = tr.target === src;
+    const cb = H("input", { type: "checkbox", "data-k": "tr-reenter", onchange: (e) => commit(() => { if (e.target.checked === def) delete tr.reenter; else tr.reenter = e.target.checked; }) });
+    cb.checked = tr.reenter ?? def;
+    out.push(field("Re-enter", cb, `Leave ${src} and enter it again (restarts its timers and entry actions).`));
+  }
+  out.push(field("From", selectIn("tr-src", src, [...app.idx.values()].filter((m) => m.kind !== "history").map((m) => m.id), (v) => {
+    if (v === src) return;
+    commit(() => { n.st.transitions.splice(i, 1); if (!n.st.transitions.length) delete n.st.transitions; const l = trList(v); l.push(tr); app.sel = { type: "tr", src: v, i: l.length - 1 }; });
+  })));
+  out.push(H("h4", { text: "Actions" }), actionsEditor(tr, "actions", "tr-acts"));
+  out.push(field("Note", areaIn("tr-note", tr.note, (v) => commit(() => setOrDelete(tr, "note", v.trim())))));
+  const iss = app.issues.filter((x) => x.id === src && x.tr === i);
+  if (iss.length) out.push(H("h4", { text: "Problems" }), issueList(iss));
+  out.push(H("div", { class: "row", style: "margin-top:14px" },
+    H("button", { text: "↑ earlier", disabled: i === 0, onclick: () => commit(() => { const l = n.st.transitions; [l[i - 1], l[i]] = [l[i], l[i - 1]]; app.sel = { type: "tr", src, i: i - 1 }; }) }),
+    H("button", { text: "↓ later", disabled: i === n.st.transitions.length - 1, onclick: () => commit(() => { const l = n.st.transitions; [l[i + 1], l[i]] = [l[i], l[i + 1]]; app.sel = { type: "tr", src, i: i + 1 }; }) }),
+    H("button", { text: `Back to ${src}`, onclick: () => select({ type: "state", id: src }) }),
+    H("button", { class: "danger", text: "Delete", onclick: () => deleteTransition(src, i) })));
+  return out;
+}
+function defaultAction(doName) {
+  const a = { do: doName }, spec = (app.vocab.actions[doName] || {}).params || {};
+  for (const [p, ps] of Object.entries(spec)) {
+    if (!ps.required) continue;
+    a[p] = ps.type === "enum" ? ps.values[0] : ps.type === "number" ? (ps.default ?? 0) : "";
+  }
+  return a;
+}
+function actionsEditor(obj, key, k) {
+  const wrap = H("div", {});
+  const list = obj[key] || [];
+  const names = Object.keys(app.vocab.actions || {});
+  list.forEach((a, ai) => {
+    const spec = (app.vocab.actions[a.do] || {}).params || {};
+    const opts = names.includes(a.do) ? names : [...names, a.do];
+    const head = H("div", { class: "head" },
+      selectIn(`${k}-${ai}-do`, a.do, opts, (v) => commit(() => { list[ai] = defaultAction(v); })),
+      H("button", { class: "mini", text: "↑", disabled: ai === 0, onclick: () => commit(() => { [list[ai - 1], list[ai]] = [list[ai], list[ai - 1]]; }) }),
+      H("button", { class: "mini danger", text: "×", onclick: () => commit(() => { list.splice(ai, 1); if (!list.length) delete obj[key]; }) }));
+    const params = H("div", { class: "params" });
+    for (const [p, ps] of Object.entries(spec)) {
+      const set = (v) => commit(() => { if (v === null || v === "" || v === undefined) { if (!ps.required) delete a[p]; else a[p] = v ?? ""; } else a[p] = v; });
+      let input;
+      if (ps.type === "enum") input = selectIn(`${k}-${ai}-${p}`, a[p] ?? "", [...(ps.required ? [] : [["", "(default)"]]), ...ps.values], set);
+      else if (ps.type === "number") input = numIn(`${k}-${ai}-${p}`, a[p], set, { placeholder: ps.default != null ? String(ps.default) : "", min: ps.min, max: ps.max });
+      else if (ps.type === "any") input = textIn(`${k}-${ai}-${p}`, a[p] === undefined ? "" : JSON.stringify(a[p]), (v) => { let x = v; try { x = v === "" ? undefined : JSON.parse(v); } catch (_) { /* a plain string */ } set(x); });
+      else input = textIn(`${k}-${ai}-${p}`, a[p], set, p === "expr" ? { class: "mono" } : {});
+      params.append(H("span", { text: p, title: ps.doc || "" }), input);
+    }
+    const doc = (app.vocab.actions[a.do] || {}).doc;
+    wrap.append(H("div", { class: "act" }, head, doc ? H("small", { class: "muted", text: doc }) : null, params));
+  });
+  wrap.append(H("button", { class: "mini", text: "+ action", onclick: () => commit(() => { obj[key] = list.concat([defaultAction(names[0] || "log")]); }) }));
+  return wrap;
+}
+function knobsEditor(st) {
+  const wrap = H("div", {});
+  const knobs = st.knobs || {};
+  for (const [kk, v] of Object.entries(knobs)) {
+    wrap.append(H("div", { class: "row" }, H("code", { text: kk }),
+      textIn(`knob-${kk}`, JSON.stringify(v), (t) => commit(() => { try { knobs[kk] = JSON.parse(t); } catch (_) { knobs[kk] = t; } }), { style: "width:110px" }),
+      H("button", { class: "mini danger", text: "×", onclick: () => commit(() => { delete knobs[kk]; if (!Object.keys(knobs).length) delete st.knobs; }) })));
+  }
+  wrap.append(H("button", { class: "mini", text: "+ knob", onclick: () => {
+    const kk = prompt("Knob name:"); if (!kk) return;
+    commit(() => { st.knobs = st.knobs || {}; st.knobs[kk] = 0; });
+  } }));
+  return wrap;
+}
+
+// ---------------------------------------------------------------- checks
+let checkTimer = null, checkSeq = 0;
+function scheduleCheck() { clearTimeout(checkTimer); checkTimer = setTimeout(runCheck, 250); }
+async function runCheck() {
+  const seq = ++checkSeq;
+  try {
+    const r = await api("POST", "/api/check", { chart: app.doc });
+    if (seq !== checkSeq) return;
+    app.issues = r.issues || [];
+  } catch (e) { app.issues = [{ level: "error", id: null, tr: null, msg: e.message }]; }
+  showIssueBadge(); render();
+  if (!app.sel) renderInspector();
+}
+function showIssueBadge() {
+  const b = $("#issues-badge");
+  const e = app.issues.filter((x) => x.level === "error").length, w = app.issues.length - e;
+  b.textContent = e ? `${e} error${e > 1 ? "s" : ""}${w ? `, ${w} warning${w > 1 ? "s" : ""}` : ""}` : w ? `${w} warning${w > 1 ? "s" : ""}` : "no problems";
+  b.className = e ? "err" : w ? "warn" : "ok";
+}
+
+// ---------------------------------------------------------------- simulator
+let simRenderTimer = null;
+function renderSimSoon() { clearTimeout(simRenderTimer); simRenderTimer = setTimeout(renderSim, 50); }
+async function startSim() {
+  stopSim();
+  try {
+    const r = await api("POST", "/api/sim", { chart: app.doc });
+    app.sim = { sid: r.sid, snap: r.snap, log: [], playing: false, speed: 1, pending: 0, queue: null, stale: false };
+    absorb(r); renderSim(); render();
+  } catch (e) { toast(e.message, "err"); }
+}
+function stopSim() { if (app.sim) app.sim.playing = false; app.sim = null; }
+function simOp(body) {
+  // one request at a time, in order: a quick run of clicks queues up instead of being dropped
+  const s = app.sim; if (!s) return Promise.resolve();
+  s.pending = (s.pending || 0) + 1;
+  s.queue = (s.queue || Promise.resolve()).then(async () => {
+    if (app.sim !== s) return;
+    try { absorb(await api("POST", `/api/sim/${s.sid}`, body)); }
+    catch (e) { toast(e.message, "err"); if (e.status === 404 && app.sim === s) { stopSim(); renderSim(); render(); } }
+    finally { s.pending--; }
+  });
+  return s.queue;
+}
+function absorb(r) {
+  const s = app.sim; if (!s) return;
+  const before = JSON.stringify(s.snap ? s.snap.active : []);
+  s.snap = r.snap;
+  s.log.push(...r.log, ...r.out.map((a) => ({ t: a.t, kind: "host", action: a })));
+  if (s.log.length > 800) s.log.splice(0, s.log.length - 800);
+  const now = performance.now();
+  for (const [k, until] of app.flash) if (until < now) app.flash.delete(k);
+  for (const [src, i] of r.snap.fired || []) app.flash.set(`${src}|${i}`, now + 700);
+  if ((r.snap.fired || []).length || JSON.stringify(r.snap.active) !== before) { render(); setTimeout(render, 720); }
+  updateSim();
+}
+setInterval(() => { const s = app.sim; if (s && s.playing && !s.pending) simOp({ op: "advance", dt: 0.05 * s.speed }); }, 50);
+function renderSim() {
+  const p = $("#p-sim"); p.textContent = "";
+  if (!app.doc) return;
+  if (!app.sim) {
+    p.append(H("h3", { text: "Simulate" }),
+      H("p", { class: "muted", text: "Runs this chart on a clock of its own, with the same runtime as the face engine. Send events, change the context and watch the active states (green) and the actions it would take." }),
+      H("button", { class: "primary", text: "▶ Start", onclick: startSim }));
+    return;
+  }
+  const s = app.sim;
+  p.append(H("div", { class: "row" },
+    H("button", { class: "primary", id: "sim-play", text: s.playing ? "⏸ Pause" : "▶ Play", onclick: () => { s.playing = !s.playing; $("#sim-play").textContent = s.playing ? "⏸ Pause" : "▶ Play"; } }),
+    selectIn("sim-speed", String(s.speed), [["0.25", "¼×"], ["1", "1×"], ["2", "2×"], ["5", "5×"]], (v) => { s.speed = Number(v); }),
+    H("button", { text: "+0.1 s", onclick: () => simOp({ op: "advance", dt: 0.1 }) }),
+    H("button", { text: "+1 s", onclick: () => simOp({ op: "advance", dt: 1 }) }),
+    H("button", { text: "+5 s", onclick: () => simOp({ op: "advance", dt: 5 }) }),
+    H("button", { text: "↺ Restart", onclick: startSim })));
+  p.append(H("div", { id: "sim-stale" }));
+  p.append(H("div", { id: "sim-now", class: "card" }));
+  p.append(H("h4", { text: "Context" }));
+  const ctx = H("div", { class: "ctx", id: "sim-ctx" });
+  for (const [k, spec] of Object.entries(contextSpec(app.doc))) {
+    let input;
+    if ((spec.type || "bool") === "bool") input = H("input", { type: "checkbox", "data-var": k, onchange: (e) => simOp({ op: "set", vars: { [k]: e.target.checked } }) });
+    else if (spec.type === "number") input = H("input", { type: "number", step: "any", style: "width:80px", "data-var": k, onchange: (e) => simOp({ op: "set", vars: { [k]: Number(e.target.value) } }) });
+    else input = H("input", { type: "text", style: "width:110px", "data-var": k, onchange: (e) => simOp({ op: "set", vars: { [k]: e.target.value } }) });
+    ctx.append(H("span", { title: spec.doc || "" }, H("code", { text: k }), spec.doc ? H("small", { class: "muted", text: ` ${spec.doc}` }) : null), input);
+  }
+  p.append(ctx);
+  p.append(H("h4", { text: "Send an event" }));
+  p.append(H("div", { class: "evs" }, allEvents(app.doc).map((ev) => H("button", { text: ev, title: app.vocab.events[ev] || "raised by the chart", onclick: () => simOp({ op: "send", event: ev }) }))));
+  const evIn = H("input", { type: "text", placeholder: "event", style: "width:110px" });
+  const dataIn = H("input", { type: "text", placeholder: '{"key": 1}', class: "mono", style: "width:120px" });
+  p.append(H("div", { class: "row", style: "margin-top:6px" }, evIn, dataIn, H("button", { text: "Send", onclick: () => {
+    let data = {};
+    if (dataIn.value.trim()) { try { data = JSON.parse(dataIn.value); } catch (_) { return toast("The data isn't JSON", "err"); } }
+    if (evIn.value.trim()) simOp({ op: "send", event: evIn.value.trim(), data });
+  } })));
+  const showAll = H("input", { type: "checkbox", id: "sim-all", onchange: updateSim });
+  p.append(H("h4", {}, "Log ", H("label", { class: "muted", style: "text-transform:none;font-weight:400" }, showAll, " show entering and leaving")));
+  p.append(H("div", { id: "sim-log" }));
+  updateSim();
+}
+function fmtAction(a) { const { do: d, t, ...rest } = a; return `${d} ${Object.entries(rest).map(([k, v]) => `${k}=${typeof v === "object" ? JSON.stringify(v) : v}`).join(" ")}`; }
+function updateSim() {
+  const s = app.sim; if (!s || !$("#sim-now")) return;
+  const snap = s.snap || {};
+  $("#sim-stale").innerHTML = "";
+  if (s.stale) $("#sim-stale").append(H("p", { class: "err-text" }, "The chart changed since this simulation started. ", H("button", { class: "mini", text: "Restart with it", onclick: startSim })));
+  const timers = (snap.timers || []).map((tm) => `${tm.state || "raise " + tm.raise} in ${(tm.due - snap.t).toFixed(2)} s`);
+  const now = $("#sim-now"); now.textContent = "";
+  now.append(H("div", { class: "row" }, H("span", { class: "muted", text: `t = ${(snap.t || 0).toFixed(2)} s · profile` }), H("span", { class: "profile", text: snap.profile || "(none)" })),
+    H("div", {}, H("span", { class: "muted", text: "In: " }), (snap.leaves || []).join(", ")),
+    Object.keys(snap.knobs || {}).length ? H("div", {}, H("span", { class: "muted", text: "Knobs: " }), JSON.stringify(snap.knobs)) : null,
+    timers.length ? H("div", {}, H("span", { class: "muted", text: "Timers: " }), timers.join(", ")) : null,
+    snap.error ? H("div", { class: "err-text", text: snap.error }) : null);
+  for (const el of document.querySelectorAll("#sim-ctx [data-var]")) {
+    if (el === document.activeElement) continue;
+    const v = (snap.context || {})[el.dataset.var];
+    if (el.type === "checkbox") el.checked = !!v; else el.value = v ?? "";
+  }
+  const all = $("#sim-all") && $("#sim-all").checked;
+  const log = $("#sim-log"); log.textContent = "";
+  for (const e of s.log.slice(-300).reverse()) {
+    if (!all && (e.kind === "enter" || e.kind === "exit")) continue;
+    let text, cls = e.kind;
+    if (e.kind === "event") text = `event ${e.event}${e.data ? " " + JSON.stringify(e.data) : ""}`;
+    else if (e.kind === "transition") text = `${e.source} → ${e.target || "(stays)"}  [${e.trigger}]`;
+    else if (e.kind === "host") { text = `→ engine: ${fmtAction(e.action)}`; cls = "action"; }
+    else if (e.kind === "action") continue;
+    else if (e.kind === "raise") text = `raise ${e.event}${e.delay ? ` in ${e.delay}s` : ""}`;
+    else if (e.kind === "set") text = `set ${e.var} = ${JSON.stringify(e.value)}`;
+    else if (e.kind === "enter" || e.kind === "exit") { text = `${e.kind} ${e.state}`; cls = "dim"; }
+    else text = e.msg || JSON.stringify(e);
+    log.append(H("div", { class: cls }, H("span", { class: "t", text: Number(e.t).toFixed(2) }), text));
+  }
+}
+
+// ---------------------------------------------------------------- vibe
+const CHIPS = ["Explain this chart in plain words", "Review it for problems", "Make greetings more theatrical",
+  "After 2 minutes alone, let him get bored and sleepy", "When he's carried, make him look alarmed until he's set down"];
+function renderVibe() {
+  const p = $("#p-vibe"); p.textContent = "";
+  p.append(H("h3", { text: "Vibe-code it" }));
+  if (!app.vibeOn) {
+    p.append(H("p", { class: "muted" }, "Asking Claude is off: the editor was started without the anthropic package. Start it with ",
+      H("code", { text: "uv run --no-project --with anthropic python frank/statechart/editor.py" }), " (the key comes from frank/.env)."));
+  } else p.append(H("p", { class: "muted", text: `Say what you want in plain words. Claude (${app.model}) sends back a changed chart; you see what changed on the canvas before you accept it. Nothing is saved until you press Save.` }));
+  const v = app.vibe;
+  for (const h of v.history) {
+    p.append(H("div", { class: "bubble me", text: h.request }));
+    if (h.error) p.append(H("div", { class: "bubble error", text: h.error }));
+    else p.append(H("div", { class: "bubble claude", text: h.summary + (h.outcome ? `\n\n(${h.outcome})` : "") }));
+  }
+  if (v.job) {
+    p.append(H("div", { class: "bubble me", text: v.job.request }));
+    const part = (v.job.partial || "").split("```")[0].trim();
+    const lines = ((v.job.partial || "").split("```json")[1] || "").split("\n").length;
+    p.append(H("div", { class: "bubble claude" }, H("span", { class: "muted", text: `Claude is working… ${Math.round(v.job.seconds || 0)} s` }),
+      part ? H("div", { text: part }) : null, lines > 1 ? H("div", { class: "muted", text: `writing the chart: ${lines} lines` }) : null));
+  }
+  if (v.proposal) p.append(proposalCard(v.proposal));
+  const input = H("textarea", { id: "vibe-in", rows: 3, placeholder: "e.g. when someone he recognises arrives, raise both brows and look delighted", disabled: !app.vibeOn || !!v.job });
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); sendVibe(input.value); } });
+  p.append(input, H("div", { class: "row", style: "justify-content:space-between;margin-top:6px" },
+    H("span", { class: "muted", text: "Ctrl+Enter sends" }),
+    H("button", { class: "primary", text: "Ask Claude", disabled: !app.vibeOn || !!v.job, onclick: () => sendVibe(input.value) })));
+  p.append(H("div", { class: "chips" }, CHIPS.map((c) => H("button", { text: c, disabled: !app.vibeOn || !!v.job, onclick: () => sendVibe(c) }))));
+}
+async function sendVibe(text) {
+  text = (text || "").trim(); if (!text || app.vibe.job) return;
+  if (app.vibe.proposal) discardProposal();
+  try {
+    const r = await api("POST", "/api/vibe", { chart: app.doc, request: text,
+      history: app.vibe.history.filter((h) => h.summary).map((h) => ({ request: h.request, summary: h.summary })) });
+    app.vibe.job = { id: r.job, request: text, partial: "", seconds: 0 };
+    renderVibe(); pollVibe();
+  } catch (e) { toast(e.message, "err"); }
+}
+async function pollVibe() {
+  const v = app.vibe; if (!v.job) return;
+  try {
+    const st = await api("GET", `/api/vibe/${v.job.id}`);
+    v.job.partial = st.partial; v.job.seconds = st.seconds;
+    if (st.state === "running") { renderVibe(); setTimeout(pollVibe, 700); return; }
+    const res = st.result || {}, req = v.job.request;
+    v.job = null;
+    if (!res.ok) v.history.push({ request: req, error: res.error || "something went wrong" });
+    else {
+      const entry = { request: req, summary: res.summary || "(no summary)" };
+      v.history.push(entry);
+      if (res.chart) { v.proposal = prepareProposal(res.chart, res.issues || [], entry); showPreview(true); setTab("vibe"); }
+    }
+    renderVibe();
+  } catch (e) { v.job = null; toast(e.message, "err"); renderVibe(); }
+}
+function computeDiff(a, b) {
+  const ia = buildIndex(a), ib = buildIndex(b);
+  const strip = (n) => JSON.stringify({ ...n.st, states: undefined, transitions: undefined, kids: n.children, parent: n.parent });
+  const added = new Set([...ib.keys()].filter((k) => !ia.has(k)));
+  const removed = [...ia.keys()].filter((k) => !ib.has(k));
+  const changed = new Set([...ib.keys()].filter((k) => ia.has(k) && strip(ia.get(k)) !== strip(ib.get(k))));
+  const newTr = new Set(); let trAdded = 0, trRemoved = 0;
+  for (const [k, n] of ib) {
+    const old = ia.has(k) ? (ia.get(k).st.transitions || []).map((t) => JSON.stringify(t)) : [];
+    (n.st.transitions || []).forEach((t, i) => { if (!old.includes(JSON.stringify(t))) { newTr.add(`${k}|${i}`); trAdded++; } });
+  }
+  for (const [k, n] of ia) {
+    const now = ib.has(k) ? (ib.get(k).st.transitions || []).map((t) => JSON.stringify(t)) : [];
+    for (const t of n.st.transitions || []) if (!now.includes(JSON.stringify(t))) trRemoved++;
+  }
+  const ctx = JSON.stringify(a.context || {}) !== JSON.stringify(b.context || {});
+  return { added, removed, changed, newTr, trAdded, trRemoved, ctx };
+}
+function prepareProposal(chart, issues, entry) {
+  const d = clone(chart), ix = buildIndex(d);
+  d.layout = {};
+  for (const id of ix.keys()) if (validBox((app.doc.layout || {})[id])) d.layout[id] = { ...app.doc.layout[id] };
+  ensureLayout(d, ix);
+  for (const id of ix.keys()) fitParents(d, ix, id);
+  return { doc: d, idx: ix, issues, diff: computeDiff(app.doc, d), entry };
+}
+function showPreview(on) {
+  const pr = app.vibe.proposal;
+  app.preview = on && pr ? { doc: pr.doc, idx: pr.idx, diff: pr.diff } : null;
+  render(); renderInspector();
+}
+function proposalCard(pr) {
+  const d = pr.diff, errs = pr.issues.filter((x) => x.level === "error");
+  const items = [];
+  if (d.added.size) items.push(H("li", { class: "add", text: `+ ${d.added.size} new state${d.added.size > 1 ? "s" : ""}: ${[...d.added].join(", ")}` }));
+  if (d.removed.length) items.push(H("li", { class: "rem", text: `− removed: ${d.removed.join(", ")}` }));
+  if (d.changed.size) items.push(H("li", { class: "chg", text: `~ changed: ${[...d.changed].join(", ")}` }));
+  if (d.trAdded || d.trRemoved) items.push(H("li", { text: `transitions: ${d.trAdded} new or changed, ${d.trRemoved} removed or replaced` }));
+  if (d.ctx) items.push(H("li", { class: "chg", text: "~ the chart's context variables" }));
+  if (!items.length) items.push(H("li", { class: "muted", text: "no changes" }));
+  return H("div", { class: "card" },
+    H("b", { text: "Claude's change" }), H("ul", { class: "diff" }, items),
+    errs.length ? H("p", { class: "err-text", text: `${errs.length} error(s) remain: ${errs.slice(0, 3).map((x) => x.msg).join("; ")}` }) : null,
+    H("div", { class: "row" },
+      H("button", { text: app.preview ? "Hide on canvas" : "Show on canvas", onclick: () => { showPreview(!app.preview); renderVibe(); } }),
+      H("button", { class: "primary", text: "Accept", onclick: acceptProposal }),
+      H("button", { text: "Discard", onclick: () => { discardProposal(); renderVibe(); } })));
+}
+function acceptProposal() {
+  const pr = app.vibe.proposal; if (!pr) return;
+  app.preview = null; app.vibe.proposal = null;
+  pushUndo(); app.doc = pr.doc;
+  if (pr.entry) pr.entry.outcome = "accepted";
+  afterChange(); renderVibe();
+  toast("Applied. Press Save to keep it (Undo takes it back).");
+}
+function discardProposal() {
+  const pr = app.vibe.proposal; if (pr && pr.entry) pr.entry.outcome = "discarded";
+  app.vibe.proposal = null; app.preview = null; render(); renderInspector();
+}
+
+// ---------------------------------------------------------------- json
+function withoutLayout(d) { const c = clone(d); delete c.layout; return c; }
+function renderJson() {
+  const p = $("#p-json");
+  if (!$("#json-text")) {
+    p.append(H("h3", { text: "The chart as JSON" }),
+      H("p", { class: "muted", text: "The file without its layout. Edit it here and apply, or edit the file itself (in VS Code, or ask Claude Code): the editor reloads it when it changes on disk." }),
+      H("textarea", { id: "json-text", spellcheck: "false", oninput: () => (app.jsonDirty = true) }),
+      H("div", { class: "row", style: "margin-top:6px" },
+        H("button", { class: "primary", text: "Apply", onclick: applyJson }),
+        H("button", { text: "Revert", onclick: () => { app.jsonDirty = false; renderJson(); } }),
+        H("button", { text: "Copy", onclick: () => navigator.clipboard.writeText($("#json-text").value).then(() => toast("Copied")) })));
+  }
+  if (!app.jsonDirty && app.doc) $("#json-text").value = JSON.stringify(withoutLayout(app.doc), null, 2);
+}
+function applyJson() {
+  let parsed;
+  try { parsed = JSON.parse($("#json-text").value); } catch (e) { return toast(`Not valid JSON: ${e.message}`, "err"); }
+  if (!parsed || typeof parsed !== "object" || !parsed.root) return toast('A chart needs a "root" state', "err");
+  commit(() => { const lay = app.doc.layout; app.doc = parsed; app.doc.layout = lay; });
+}
+
+// ---------------------------------------------------------------- files
+async function refreshCharts(select) {
+  const list = await api("GET", "/api/charts");
+  const pick = $("#chart-pick"); pick.textContent = "";
+  for (const c of list) pick.append(H("option", { value: c.name, text: c.name }));
+  if (select) pick.value = select;
+  return list;
+}
+async function openChart(name, quiet) {
+  if (!quiet && dirty() && !confirm("Discard the unsaved changes?")) { $("#chart-pick").value = app.name; return; }
+  const r = await api("GET", `/api/charts/${encodeURIComponent(name)}`);
+  app.name = name; app.doc = r.chart; app.mtime = r.mtime; app.issues = r.issues || [];
+  app.undo = []; app.redo = []; app.sel = null; app.preview = null; app.vibe.proposal = null; stopSim();
+  app.idx = buildIndex(app.doc);
+  ensureLayout(app.doc, app.idx);
+  app.saved = JSON.stringify(app.doc);
+  $("#chart-pick").value = name;
+  try { localStorage.setItem("statechart-last", name); } catch (_) { /* private mode */ }
+  location.hash = name;
+  app.jsonDirty = false;
+  render(); fit(); renderInspector(); renderSim(); renderVibe(); renderJson(); updateDirty(); showIssueBadge();
+}
+async function save(force) {
+  if (!app.doc) return;
+  if (app.preview) return toast("Accept or discard Claude's change first");
+  try {
+    const r = await api("PUT", `/api/charts/${encodeURIComponent(app.name)}`, { chart: app.doc, base_mtime: force ? null : app.mtime });
+    app.mtime = r.mtime; app.saved = JSON.stringify(app.doc); app.issues = r.issues || [];
+    updateDirty(); showIssueBadge(); render();
+    const e = app.issues.filter((x) => x.level === "error").length;
+    toast(e ? `Saved, with ${e} error(s): the engine keeps its old chart until they're fixed` : "Saved. The running engine picks it up within a second.", e ? "err" : "");
+  } catch (e) {
+    if (e.status === 409) banner("The file changed on disk since you opened it.", [["Overwrite it with mine", () => save(true)], ["Load the disk version", () => reloadFromDisk()]]);
+    else toast(e.message, "err");
+  }
+}
+async function reloadFromDisk(note) {
+  const r = await api("GET", `/api/charts/${encodeURIComponent(app.name)}`);
+  if (app.doc) pushUndo();
+  const keepView = { ...app.view }, sel = app.sel;
+  app.doc = r.chart; app.mtime = r.mtime; app.issues = r.issues || [];
+  app.idx = buildIndex(app.doc); ensureLayout(app.doc, app.idx);
+  app.saved = JSON.stringify(app.doc);
+  app.sel = sel; app.view = keepView;
+  afterChange(); updateDirty();
+  if (note) toast(note);
+}
+async function pollFile() {
+  if (!app.name) return;
+  try {
+    const r = await api("GET", `/api/charts/${encodeURIComponent(app.name)}/stat`);
+    if (app.mtime != null && Math.abs(r.mtime - app.mtime) > 1e-6 && r.mtime !== app.ignoreMtime) {
+      if (!dirty()) await reloadFromDisk("Reloaded: the file changed on disk.");
+      else { app.ignoreMtime = r.mtime; banner("The file changed on disk, and you have unsaved changes here.", [["Load the disk version", () => reloadFromDisk("Loaded the disk version (Undo brings yours back).")], ["Keep mine", () => {}]]); }
+    }
+  } catch (_) { /* the server may be restarting */ }
+}
+setInterval(pollFile, 1500);
+async function newChart(fromCurrent) {
+  const name = prompt(fromCurrent ? "Save as (letters, digits, - and _):" : "Name of the new chart (letters, digits, - and _):");
+  if (!name) return;
+  if (!NAME_RE.test(name)) return toast("Use letters, digits, - and _", "err");
+  const list = await api("GET", "/api/charts");
+  if (list.some((c) => c.name === name) && !confirm(`${name} exists. Overwrite it?`)) return;
+  const doc = fromCurrent ? { ...clone(app.doc), name } : {
+    format: "frank-statechart/1", name, host: "frank-engine", description: "", context: {},
+    root: { id: "frank", initial: "idle", states: { idle: { profile: "idle" } } },
+  };
+  await api("PUT", `/api/charts/${encodeURIComponent(name)}`, { chart: doc });
+  await refreshCharts(name);
+  await openChart(name, true);   // "Save as" carries the unsaved edits into the new file
+}
+
+// ---------------------------------------------------------------- tabs and buttons
+function setTab(t) {
+  app.tab = t;
+  for (const b of document.querySelectorAll("#tabs button")) b.classList.toggle("on", b.dataset.tab === t);
+  for (const p of document.querySelectorAll(".panel")) p.classList.toggle("on", p.id === `p-${t}`);
+  if (t === "sim") renderSim();
+  if (t === "vibe") renderVibe();
+  if (t === "json") renderJson();
+}
+for (const b of document.querySelectorAll("#tabs button")) b.addEventListener("click", () => setTab(b.dataset.tab));
+$("#b-save").onclick = () => save();
+$("#b-new").onclick = () => newChart(false);
+$("#b-saveas").onclick = () => newChart(true);
+$("#b-undo").onclick = undo; $("#b-redo").onclick = redo; $("#b-fit").onclick = fit;
+$("#b-tidy").onclick = () => { commit(() => { autoLayout(app.doc, app.idx); }); fit(); };
+for (const k of ["atomic", "compound", "parallel", "final", "history"]) $(`#b-add-${k}`).onclick = () => addState(k, containerFor(app.sel));
+$("#issues-badge").onclick = () => { select(null); setTab("inspect"); };
+$("#b-help").onclick = () => $("#help").classList.toggle("on");
+$("#chart-pick").onchange = (e) => openChart(e.target.value);
+window.addEventListener("beforeunload", (e) => { if (dirty()) { e.preventDefault(); e.returnValue = ""; } });
+
+(async function init() {
+  try {
+    const info = await api("GET", "/api/info");
+    app.vocab = info.vocab; app.vibeOn = info.vibe; app.model = info.model;
+    const list = await refreshCharts();
+    if (!list.length) { await newChart(false); return; }
+    let want = decodeURIComponent(location.hash.slice(1));
+    try { want = want || localStorage.getItem("statechart-last"); } catch (_) { /* private mode */ }
+    await openChart(list.some((c) => c.name === want) ? want : list[0].name, true);
+  } catch (e) { toast(`Couldn't start: ${e.message}`, "err"); }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+{
+  "host": "frank-engine",
+  "doc": "What Frank's face engine (frank/engine, docs/FACE_ENGINE.md) offers a chart, as frank/statechart/bridge.py connects them: the events it sends, the context it updates every tick, the actions it carries out and the profiles its animator knows.",
+  "profiles": {
+    "idle": "nobody engaged: look-around fixations, slower with boredom; ~17 blinks/min",
+    "person": "someone in view but not engaged: a glance at them now and then",
+    "greeting": "he has just engaged someone: eyes on their face with eye-eye-nose saccades, brows up, eyes wide",
+    "listening": "the visitor is talking: mostly on them, a sideways look ~1.1 s every ~7 s, blinks after their pauses",
+    "thinking": "their turn ended and the reply is being written: eyes up and away ~3.5 s, back as his audio starts",
+    "speaking": "his audio plays: on them, away ~2 s every ~5 s, ~26 blinks/min at phrase ends",
+    "interrupted": "barge-in: snap to the speaker, reflex blink, brow flinch",
+    "farewell": "someone left: follow them out, hold, one slow blink"
+  },
+  "events": {
+    "arrived": "the vision saw someone arrive (eyes.py)",
+    "left": "someone left the view",
+    "session_end": "nobody engaged for 20 s: the conversation is over",
+    "moved": "he is being picked up or carried (the view swings)",
+    "still": "he has been set down again",
+    "dark": "his vision went black (covered, or the lights are off)",
+    "light": "his vision is back",
+    "hearing": "partial words of the visitor's line are coming in",
+    "visitor": "the visitor's line is complete: his reply is being written",
+    "frank_end": "his reply has finished (data: silent, interrupted)",
+    "interrupted": "the visitor talked over him and his voice was cut",
+    "chuckle": "his reply has a [chuckle] in it",
+    "new": "a new conversation was started from the page or the terminal"
+  },
+  "context": {
+    "speaking": {"type": "bool", "default": false, "doc": "his voice is playing (a voice slice within the last 0.45 s)"},
+    "thinking": {"type": "bool", "default": false, "doc": "the visitor's turn is over and his reply hasn't started playing"},
+    "people": {"type": "number", "default": 0, "doc": "people in view (printed faces and posters not counted)"},
+    "present": {"type": "bool", "default": false, "doc": "a conversation session is open, or someone is engaged (within 2 m and facing him)"},
+    "no_vision": {"type": "bool", "default": true, "doc": "no vision snapshot (no camera, --no-see, or the camera stopped)"}
+  },
+  "actions": {
+    "tag": {
+      "doc": "show an expression: the synthesiser feels it (synth.feel), one tag at a time with a 1.2 s minimum hold",
+      "params": {
+        "tag": {"type": "enum", "required": true, "values": ["neutral", "curious", "excited", "skeptical", "amused", "concentrating", "confused", "irritated", "surprised", "vulnerable"]},
+        "intensity": {"type": "number", "default": 0.8, "min": 0, "max": 1.5},
+        "delay": {"type": "number", "default": 0, "min": 0, "doc": "seconds from now"}
+      }
+    },
+    "nudge": {
+      "doc": "push the mood (synth.nudge) in pleasure, arousal and dominance",
+      "params": {
+        "p": {"type": "number", "default": 0, "min": -1, "max": 1},
+        "a": {"type": "number", "default": 0, "min": -1, "max": 1},
+        "d": {"type": "number", "default": 0, "min": -1, "max": 1}
+      }
+    },
+    "anim": {
+      "doc": "a one-shot animator event this tick",
+      "params": {
+        "event": {"type": "enum", "required": true, "values": ["blink", "long_blink", "flinch", "greet", "beat", "phrase_end"]}
+      }
+    },
+    "raise": {
+      "doc": "send an event to this chart (now, or after delay seconds)",
+      "params": {
+        "event": {"type": "string", "required": true},
+        "delay": {"type": "number", "default": 0, "min": 0}
+      }
+    },
+    "set": {
+      "doc": "set a context variable from a value or an expression",
+      "params": {
+        "var": {"type": "string", "required": true},
+        "value": {"type": "any"},
+        "expr": {"type": "string"}
+      }
+    },
+    "log": {
+      "doc": "write a line to the engine log",
+      "params": {
+        "text": {"type": "string", "required": true}
+      }
+    }
+  }
+}
