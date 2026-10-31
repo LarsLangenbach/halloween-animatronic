@@ -27,7 +27,7 @@ import sys
 import time
 import traceback
 import webbrowser
-from http.server import ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
@@ -36,7 +36,6 @@ ROOT = HERE.parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(ROOT / "perform" / "onboard"))
 
-import server as onboard  # noqa: E402   (perform/onboard's Handler, its workspaces and its pool)
 import runtime as R  # noqa: E402   (Frank's engine and board models; imports frank/online/browser.py)
 import routes  # noqa: E402
 
@@ -46,12 +45,54 @@ KINDS = {".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf
          ".html": "text/html; charset=utf-8", ".json": "application/json", ".svg": "image/svg+xml"}
 FRAME_S = 1 / 30
 
+try:
+    import server as onboard  # perform/onboard's Handler, its workspaces and its pool
+    Base, others = onboard.Handler, onboard.W.list_robots
+except ImportError as e:      # a checkout without perform/onboard: Frank works, upload doesn't
+    print(f"(no onboarding here, so no CAD upload: {e})")
+
+    class Base(BaseHTTPRequestHandler):
+        def log_message(self, *args):
+            pass
+
+        def _local(self):
+            if self.headers.get("Host", "").split(":")[0] not in ("localhost", "127.0.0.1"):
+                self._send(403, b"local only", "text/plain")
+                return False
+            return True
+
+        def _send(self, code, body, kind):
+            self.send_response(code)
+            self.send_header("Content-Type", kind)
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def _json(self, data, code=200):
+            self._send(code, json.dumps(data, default=str).encode(), "application/json")
+
+        def _body(self):
+            n = int(self.headers.get("Content-Length") or 0)
+            return self.rfile.read(n) if n else b""
+
+        def do_GET(self):
+            if self.path.startswith("/twin/"):   # the twin page, which onboarding would serve
+                f = (ROOT / "perform" / "twin" / self.path.split("?")[0][len("/twin/"):]).resolve()
+                if f.is_file():
+                    return self._send(200, f.read_bytes(), KINDS.get(f.suffix, "application/octet-stream"))
+            self._json({"ok": False, "why": "CAD upload needs perform/onboard, which isn't in this checkout"}, 501)
+
+        def do_POST(self):
+            self._json({"ok": False, "why": "CAD upload needs perform/onboard, which isn't in this checkout"}, 501)
+    others = lambda: []  # noqa: E731
+
 rt = R.Runtime()
 studio = routes.Studio(rt, Path(rt.robot.path).parent, ROOT / "frank" / "online" / "performances.json",
-                       others=onboard.W.list_robots)
+                       others=others)
 
 
-class Handler(onboard.Handler):
+class Handler(Base):
     """The studio's routes first; everything else is perform/onboard's (its /api/..., /web/...
     and /twin/...), so its page works here at /onboard/."""
 
