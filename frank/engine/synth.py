@@ -228,6 +228,7 @@ class Synth:
         self.t = None                    # time of the last advance
         self.last_feel = None
         self.weights = {tag: 0.0 for tag in TAGS}
+        self.steered = None              # (p, a, d) while the editor's emotion map steers him
 
     # -- inputs ----------------------------------------------------------------------------
 
@@ -264,6 +265,21 @@ class Synth:
         for i, x in enumerate((p, a, d)):
             self.mood[i] = _clamp1(self.mood[i] + x)
 
+    def steer(self, t, p, a, d=None):
+        """Hold his feeling at a point of the emotion map (pleasure, arousal, dominance in
+        -1..1) until release(): the face is the mix of the tags near it, and the mood sits there.
+        Tags fired meanwhile still run, unseen, and show again after release()."""
+        self._advance(t)
+        d = self.mood[2] if d is None else d
+        self.steered = tuple(_clamp1(float(x)) for x in (p, a, d))
+        self.mood, self.vel = list(self.steered), [0.0, 0.0, 0.0]
+
+    def release(self, t):
+        """Back to the tags and the mood; the mood relaxes home from the steered point."""
+        self._advance(t)
+        self.steered = None
+        self.last_feel, self.boredom = t, 0.0
+
     # -- output ----------------------------------------------------------------------------
 
     def step(self, t):
@@ -273,7 +289,14 @@ class Synth:
         gain, tag_gain = P["gain"], P["tag_gain"]
         entries = []                     # (tag, w, scale, sym, asym)
         trans = []                       # (weight, anchor) of the transients alone, for PAD
+        steered = steer_weights(self.steered) if self.steered else None
         for tag in TAGS:
+            if steered is not None:      # the emotion map: its weights, each tag's settled pose
+                w = self.weights[tag] = min(steered[tag], 1.0)
+                if w > 0.005:
+                    keys = _KEYS[tag]
+                    entries.append((tag, w, w * gain * tag_gain.get(tag, 1.0), keys[-1][2], keys[-1][3]))
+                continue
             tr = self.active.get(tag)
             e = 0.0
             if tr is not None:
@@ -317,8 +340,16 @@ class Synth:
             out[_SYM[j]] = sym[j]
         out["lid_asym"], out["smile_asym"] = asym[2], asym[3]
         out["lid_open"] -= P["boredom_lids"] * self.boredom
+        if self.steered:                 # the map's own axes, so its calm half reads too
+            sp, sa, _ = self.steered
+            out["lid_open"] += STEER_LIDS * sa
+            out["smile"] += STEER_SMILE * sp
+            for k in ("brow_in_L", "brow_in_R", "brow_out_L", "brow_out_R"):
+                out[k] += STEER_BROWS * sa
 
-        # PAD: the mood mixed with the anchors of the active transients.
+        # PAD: the mood mixed with the anchors of the active transients (or the steered point).
+        if self.steered:
+            self.mood = list(self.steered)
         tw = sum(w for w, _ in trans)
         pad = list(self.mood)
         for w, anchor in trans:
@@ -334,7 +365,8 @@ class Synth:
 
     def snapshot(self):
         """{"mood": (p, a, d), "weights": {tag: 0..1}, "boredom": 0..1} for the preview and log."""
-        return {"mood": tuple(self.mood), "weights": dict(self.weights), "boredom": self.boredom}
+        return {"mood": tuple(self.mood), "weights": dict(self.weights), "boredom": self.boredom,
+                "steered": self.steered}
 
     # -- internals -------------------------------------------------------------------------
 
@@ -367,6 +399,26 @@ class Synth:
         if idle > 0:
             self.boredom = min(1.0, self.boredom + self.p["boredom_rate"] * min(dt, idle))
         self.t = t
+
+
+# Steering (the editor's emotion map): a point dragged around pleasure x arousal (and a
+# dominance slider) becomes a face by mixing the tags whose map positions are near it.
+# Positions are the anchors, except concentrating, which shares neutral's origin and moves to
+# calm and focused so the centre of the map stays his plain face.
+STEER_MAP = {tag: RECIPES[tag]["anchor"] for tag in TAGS}
+STEER_MAP["concentrating"] = (-0.15, -0.3, 0.2)
+STEER_SIGMA = 0.28        # PAD distance at which a tag's weight falls to 0.61 (Gaussian)
+STEER_LIDS = 0.35         # upper lids open this much more per unit of arousal (calm: heavier)
+STEER_SMILE = 0.3         # the corners turn up this much per unit of pleasure
+STEER_BROWS = 0.15        # the brows rise this much per unit of arousal
+
+
+def steer_weights(point):
+    """{tag: weight} for a PAD point: a Gaussian of the distance to each tag's map position,
+    scaled down when they add up to more than 1 (neutral takes the remainder)."""
+    w = {tag: math.exp(-math.dist(point, pos) ** 2 / (2 * STEER_SIGMA ** 2)) for tag, pos in STEER_MAP.items()}
+    total = sum(w.values())
+    return {tag: v / max(1.0, total) for tag, v in w.items()}
 
 
 def _clamp1(x):

@@ -18,7 +18,8 @@ mouth.Mouth as its writer, so the page drives the real eyes, lids, brows and mou
 The page (preview.html) asks GET /snapshot for engine.snapshot() and draws it with
 face_draw.js. Its actions are POSTs: /tag {name, intensity?}, /state {name}, /event {name},
 /target {yaw, pitch} or {clear: true} (the visitor, in degrees: yaw + to his left, pitch + up),
-/talk {on}. GET /meta lists the names and ranges from channels.py.
+/talk {on}. GET /meta lists the names and ranges from channels.py. Api holds these routes;
+web.py's page asks for the same ones under /engine/ (chat.start_face makes the Api).
 
 While Talk is on, a fake syllable loudness envelope (about 5 syllables a second, in phrases
 with pauses) goes into the engine as his voice, 50 times a second: engine.talk(level) when
@@ -272,7 +273,82 @@ def clean(x):
     return x
 
 
-def handler(engine, preview, info):
+class Api:
+    """The page's routes for one engine, with its fake voice and visitor (Preview). This
+    server answers them at its root; web.py's page asks for the same ones under /engine/.
+    get() and post() return (code, data), or None for a path they don't know."""
+
+    def __init__(self, engine, head=None, live=False):
+        self.engine, self.preview = engine, Preview(engine)
+        self.info = dict(tags=TAGS, states=STATES, events=EVENTS, engine_events=ENGINE_EVENTS,
+                         joints={k: dict(low=v[0], high=v[1], rest=v[2]) for k, v in JOINTS.items()},
+                         engine="stand-in" if isinstance(engine, StandIn) else type(engine).__name__,
+                         head=head, live=live, map=steer_map())
+
+    def get(self, path):
+        preview = self.preview
+        if path == "/snapshot":
+            try:
+                snap = dict(self.engine.snapshot() or {})
+            except Exception as e:
+                return 500, dict(ok=False, why=f"{type(e).__name__}: {e}")
+            snap["preview"] = dict(talk=preview.level, talking=preview.talking, target=preview.target,
+                                   hook=preview.hook)
+            return 200, snap
+        if path == "/meta":
+            return 200, dict(self.info, talk_hook=preview.hook)
+        return None
+
+    def post(self, path, body):
+        engine, preview = self.engine, self.preview
+        name = str(body.get("name", "")).strip()
+        try:
+            if path == "/tag":
+                if name not in TAGS:
+                    return 400, dict(ok=False, why=f"unknown tag {name!r}")
+                level = body.get("intensity")
+                engine.tag(name, intensity=None if level is None else max(0.0, min(1.0, float(level))))
+            elif path == "/state":
+                if name not in STATES:
+                    return 400, dict(ok=False, why=f"unknown state {name!r}")
+                engine.state(name)
+            elif path == "/event":
+                if not NAME.match(name):
+                    return 400, dict(ok=False, why="an event name, a-z and _")
+                engine.event(name)
+            elif path == "/target":
+                if body.get("clear"):
+                    preview.aim(None)
+                else:
+                    yaw, pitch = float(body["yaw"]), float(body["pitch"])
+                    if not (math.isfinite(yaw) and math.isfinite(pitch)):
+                        raise ValueError("not a number")
+                    preview.aim(max(-90.0, min(90.0, yaw)), max(-60.0, min(60.0, pitch)))
+            elif path == "/talk":
+                preview.talk(body.get("on"))
+            elif path == "/steer":   # the emotion map: a point (pleasure, arousal, dominance?) or {release: true}
+                if body.get("release"):
+                    getattr(self.engine, "release", lambda: None)()
+                else:
+                    p, a, d = float(body["p"]), float(body["a"]), body.get("d")
+                    d = None if d is None else float(d)
+                    if not all(math.isfinite(x) for x in (p, a) + (() if d is None else (d,))):
+                        raise ValueError("not a number")
+                    steer = getattr(self.engine, "steer", None)
+                    if steer is None:
+                        return 400, dict(ok=False, why="this engine can't be steered")
+                    clip = lambda x: max(-1.0, min(1.0, x))  # noqa: E731
+                    steer(clip(p), clip(a), None if d is None else clip(d))
+            else:
+                return None
+        except (KeyError, TypeError, ValueError) as e:
+            return 400, dict(ok=False, why=f"bad request: {e}")
+        except Exception as e:   # the engine's own trouble: say it, keep serving
+            return 500, dict(ok=False, why=f"{type(e).__name__}: {e}")
+        return 200, dict(ok=True)
+
+
+def handler(api):
     class Handler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"   # keep-alive: the page asks 30 times a second
 
@@ -300,79 +376,53 @@ def handler(engine, preview, info):
             path = self.path.split("?")[0]
             if path in FILES:
                 file, kind = FILES[path]
-                self._send(200, file.read_bytes(), kind)
-            elif path == "/snapshot":
-                try:
-                    snap = dict(engine.snapshot() or {})
-                except Exception as e:
-                    return self._json(dict(ok=False, why=f"{type(e).__name__}: {e}"), 500)
-                snap["preview"] = dict(talk=preview.level, talking=preview.talking, target=preview.target,
-                                       hook=preview.hook)
-                self._json(snap)
-            elif path == "/meta":
-                self._json(dict(info, talk_hook=preview.hook))
-            else:
-                self._send(404, b"not found", "text/plain")
+                return self._send(200, file.read_bytes(), kind)
+            answer = api.get(path)
+            if answer is None:
+                return self._send(404, b"not found", "text/plain")
+            self._json(answer[1], answer[0])
 
         def do_POST(self):
+            try:  # read the body first, even for a refusal: an unread body resets the socket on Windows
+                raw = self.rfile.read(min(int(self.headers.get("Content-Length") or 0), 65536))
+            except ValueError:
+                raw = b""
             if not self._local() or self.headers.get("X-Frank") != "1":
                 return self._send(403, b"local page only", "text/plain")
             try:
-                body = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
+                body = json.loads(raw or b"{}")
                 if not isinstance(body, dict):
                     raise ValueError
             except ValueError:
                 return self._json(dict(ok=False, why="bad request"), 400)
-            name = str(body.get("name", "")).strip()
-            try:
-                if self.path == "/tag":
-                    if name not in TAGS:
-                        return self._json(dict(ok=False, why=f"unknown tag {name!r}"), 400)
-                    level = body.get("intensity")
-                    engine.tag(name, intensity=None if level is None else max(0.0, min(1.0, float(level))))
-                elif self.path == "/state":
-                    if name not in STATES:
-                        return self._json(dict(ok=False, why=f"unknown state {name!r}"), 400)
-                    engine.state(name)
-                elif self.path == "/event":
-                    if not NAME.match(name):
-                        return self._json(dict(ok=False, why="an event name, a-z and _"), 400)
-                    engine.event(name)
-                elif self.path == "/target":
-                    if body.get("clear"):
-                        preview.aim(None)
-                    else:
-                        yaw, pitch = float(body["yaw"]), float(body["pitch"])
-                        if not (math.isfinite(yaw) and math.isfinite(pitch)):
-                            raise ValueError("not a number")
-                        preview.aim(max(-90.0, min(90.0, yaw)), max(-60.0, min(60.0, pitch)))
-                elif self.path == "/talk":
-                    preview.talk(body.get("on"))
-                else:
-                    return self._send(404, b"not found", "text/plain")
-            except (KeyError, TypeError, ValueError) as e:
-                return self._json(dict(ok=False, why=f"bad request: {e}"), 400)
-            except Exception as e:   # the engine's own trouble: say it, keep serving
-                return self._json(dict(ok=False, why=f"{type(e).__name__}: {e}"), 500)
-            self._json(dict(ok=True))
+            answer = api.post(self.path, body)
+            if answer is None:
+                return self._send(404, b"not found", "text/plain")
+            self._json(answer[1], answer[0])
 
     return Handler
 
 
-def serve(engine, port=8820, head=None, live=False):
+def serve(engine, port=8820, head=None, live=False, api=None):
     """Start the page for this engine in a thread: (server, preview). server.server_address[1]
     is the port (0 picks a free one). live=True: the engine is Frank's own, inside chat.py or
     web.py (chat.start_face), so the page shows the real session as it goes; its buttons
-    still nudge him."""
-    preview = Preview(engine)
-    info = dict(tags=TAGS, states=STATES, events=EVENTS, engine_events=ENGINE_EVENTS,
-                joints={k: dict(low=v[0], high=v[1], rest=v[2]) for k, v in JOINTS.items()},
-                engine="stand-in" if isinstance(engine, StandIn) else type(engine).__name__,
-                head=head, live=live)
-    server = ThreadingHTTPServer(("127.0.0.1", port), handler(engine, preview, info))
+    still nudge him. api: an Api already made for this engine (web.py's page shares it)."""
+    api = api or Api(engine, head, live)
+    server = ThreadingHTTPServer(("127.0.0.1", port), handler(api))
     server.daemon_threads = True
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    return server, preview
+    return server, api.preview
+
+
+def steer_map():
+    """Where each tag sits on the emotion map (pleasure, arousal, dominance): the synthesiser's
+    STEER_MAP, or the stand-in's anchors."""
+    try:
+        from engine.synth import STEER_MAP
+        return {k: list(v) for k, v in STEER_MAP.items()}
+    except Exception:
+        return {k: list(v) for k, v in ANCHORS.items()}
 
 
 def load_engine(force_stand_in=False):

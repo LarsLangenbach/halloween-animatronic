@@ -255,6 +255,25 @@ class Engine:
         if self.talk_level > 0.05:
             self.last_feed = self.talk_at
 
+    def steer(self, p, a, d=None):
+        """Hold his feeling at a point of the emotion map (the editor): pleasure and arousal in
+        -1..1, dominance too (or his current one). The face is the mix of the tags near the
+        point; Claude's tags wait unseen until release()."""
+        t = time.monotonic()
+        with self.lock:
+            first = self.synth.steered is None
+            self.synth.steer(t, p, a, d)
+        if first:
+            self.log(what="engine_steer", state="on", p=round(p, 2), a=round(a, 2))
+
+    def release(self):
+        """Hand his face back to the conversation."""
+        with self.lock:
+            was = self.synth.steered is not None
+            self.synth.release(time.monotonic())
+        if was:
+            self.log(what="engine_steer", state="off")
+
     def watch(self, look):
         """Where to read the vision from: a callable returning eyes.Eyes.state (or None)."""
         self.look = look
@@ -271,6 +290,7 @@ class Engine:
         people = [dict(name=p.get("name"), yaw=p.get("yaw"), pitch=p.get("pitch"), dist=p.get("dist"),
                        engaged=p.get("engaged"), talking=p.get("talking"))
                   for p in vis.get("people", []) if not p.get("figure")]
+        snap["steered"] = self.synth.steered
         snap["session"] = dict(self.session, people=people, seeing=self.look is not None and self.vision_state is not None,
                                recent=list(self.recent), tags=list(self.session["tags"])[-8:])
         return snap

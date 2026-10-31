@@ -47,6 +47,9 @@
   .stage canvas { width: 100%; height: 100%; display: block; border-radius: 8px; }
   .stage iframe { width: 100%; height: 100%; display: block; border: 0; border-radius: 8px; background: #0d0f0e; }
   .stage iframe[hidden], .stage canvas[hidden] { display: none; }
+  #map { width: min(100%, 440px); aspect-ratio: 1 / 1; display: block; margin: 0 auto 8px;
+         border-radius: 8px; background: var(--panel-2); touch-action: none; cursor: crosshair; }
+  .warnt { color: var(--warn); }
   .live { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 4px 10px; align-items: baseline; }
   .live .sub { margin: 0; }
   .feed { list-style: none; margin: 4px 0 0; padding: 0; max-height: 220px; overflow-y: auto; }
@@ -128,6 +131,18 @@
   </section>
 
   <section class="col">
+    <div class="card">
+      <div class="card-h"><h2>Emotion map</h2>
+        <span><span id="map-state" class="small muted">drag to steer him</span>
+        <button id="map-release" title="Hand his face back to the conversation" disabled>Release</button></span></div>
+      <canvas id="map" aria-label="Emotion map: pleasant to the right, aroused at the top. Drag to steer Frank's feeling."></canvas>
+      <div class="row">
+        <label class="small muted">dominance <input id="map-d" type="range" min="-1" max="1" step="0.05" value="0.3">
+          <span id="map-dv" class="mono">0.30</span></label>
+        <label class="small muted"><input type="checkbox" id="map-spring"> let go when the mouse is released</label>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-h"><h2>Tags</h2>
         <label class="small muted">intensity <input id="intensity" type="range" min="0" max="1" step="0.05" value="1">
@@ -240,6 +255,7 @@ async function start() {
   makeButtons($("states"), meta.states, (n) => post("/state", { name: n }));
   makeButtons($("events"), [...meta.events, ...meta.engine_events], (n) => post("/event", { name: n }));
   $("legend").innerHTML = CHART.map(([k, c]) => `<span><i style="background: var(${c})"></i>${k}</span>`).join("");
+  wireMap();
   poll();
   requestAnimationFrame(frame);
 }
@@ -307,6 +323,7 @@ function frame() {
     drawFace(face, snap.joints || {}, { talk: pv.talk ?? (snap.cue && snap.cue.talk) ?? 0 });
   }
   readouts(pv);
+  drawMap();
   chart();
   pad(pv.target);
 }
@@ -356,6 +373,98 @@ function live(s) {
       Object.entries(rest).map(([k, v]) => `${k}=${typeof v === "object" ? JSON.stringify(v) : v}`).join(" ");
     $("live-feed").append(li);
   }
+}
+
+// The emotion map: pleasure left to right, arousal bottom to top (Russell's circumplex), with
+// the tags at their map positions (synth.STEER_MAP). Drag to steer him: the engine mixes the
+// tags near the point (Engine.steer); Release hands his face back to the conversation.
+let mapDrag = false, lastSteer = 0, steerPt = null;
+const trail = [];
+const clamp1 = (x) => Math.max(-1, Math.min(1, x));
+function mapXY(e) {
+  const r = $("map").getBoundingClientRect();
+  return [clamp1(((e.clientX - r.left) / r.width) * 2 - 1), clamp1(1 - ((e.clientY - r.top) / r.height) * 2)];
+}
+function sendSteer(p, a, force) {
+  steerPt = [p, a];
+  const now = performance.now();
+  if (!force && now - lastSteer < 33) return;   // about 30 a second while dragging
+  lastSteer = now;
+  post("/steer", { p, a, d: +$("map-d").value });
+}
+function releaseSteer() { steerPt = null; post("/steer", { release: true }); }
+function wireMap() {
+  const m = $("map");
+  m.onpointerdown = (e) => { mapDrag = true; m.setPointerCapture(e.pointerId); sendSteer(...mapXY(e), true); };
+  m.onpointermove = (e) => { if (mapDrag) sendSteer(...mapXY(e), false); };
+  m.onpointerup = m.onpointercancel = () => {
+    mapDrag = false;
+    if ($("map-spring").checked) releaseSteer();
+    else if (steerPt) sendSteer(steerPt[0], steerPt[1], true);   // the last point, for sure
+  };
+  $("map-release").onclick = releaseSteer;
+  $("map-d").oninput = () => {
+    $("map-dv").textContent = (+$("map-d").value).toFixed(2);
+    if (snap && snap.steered) sendSteer(snap.steered[0], snap.steered[1], true);
+  };
+}
+function drawMap() {
+  const c = $("map"), dpr = fit(c), ctx = c.getContext("2d"), css = getComputedStyle(document.documentElement);
+  const v = (n) => css.getPropertyValue(n).trim();
+  const w = c.width, h = c.height, X = (p) => (p + 1) / 2 * w, Y = (a) => (1 - a) / 2 * h;
+  ctx.clearRect(0, 0, w, h);
+  // quadrants, faintly: tense / excited / content / low
+  const quads = [[-1, 1, "#ff6b5e"], [0, 1, "#f0b44c"], [0, 0, "#9fe07a"], [-1, 0, "#7fb6ff"]];
+  for (const [px, ay, col] of quads) { ctx.fillStyle = col + "14"; ctx.fillRect(X(px), Y(ay), w / 2, h / 2); }
+  ctx.strokeStyle = v("--line"); ctx.lineWidth = dpr;
+  ctx.beginPath(); ctx.moveTo(X(0), 0); ctx.lineTo(X(0), h); ctx.moveTo(0, Y(0)); ctx.lineTo(w, Y(0)); ctx.stroke();
+  ctx.beginPath(); ctx.arc(X(0), Y(0), w / 2 - dpr, 0, Math.PI * 2); ctx.stroke();
+  ctx.fillStyle = v("--faint"); ctx.font = `${11 * dpr}px system-ui, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillText("aroused", X(0), 14 * dpr); ctx.fillText("calm", X(0), h - 6 * dpr);
+  ctx.textAlign = "left"; ctx.fillText("unpleasant", 6 * dpr, Y(0) - 6 * dpr);
+  ctx.textAlign = "right"; ctx.fillText("pleasant", w - 6 * dpr, Y(0) - 6 * dpr);
+  // the tags, glowing with their current weight
+  const wts = (snap && snap.face && snap.face.weights) || {};
+  // skeptical, irritated and vulnerable share a corner and differ in dominance: fan the labels
+  // out, and fade each tag by how far its dominance is from the slider's
+  const LABEL = { skeptical: [1, 12, "left"], vulnerable: [-1, 12, "right"], irritated: [0, -8, "center"],
+                  concentrating: [0, 16, "center"], neutral: [0, 16, "center"] };
+  const dNow = +$("map-d").value;
+  for (const [tag, pos] of Object.entries(meta.map || {})) {
+    const x = X(pos[0]), y = Y(pos[1]), k = Math.min(1, wts[tag] || 0);
+    ctx.globalAlpha = 0.35 + 0.65 * Math.exp(-((pos[2] - dNow) ** 2) / 0.35);
+    if (k > 0.02) {
+      ctx.fillStyle = v("--accent") + Math.round(40 + 140 * k).toString(16).padStart(2, "0");
+      ctx.beginPath(); ctx.arc(x, y, (6 + 18 * k) * dpr, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = v("--text"); ctx.beginPath(); ctx.arc(x, y, 3.5 * dpr, 0, Math.PI * 2); ctx.fill();
+    const [lx, ly, align] = LABEL[tag] || [0, -8, "center"];
+    ctx.fillStyle = k > 0.15 ? v("--text") : v("--muted"); ctx.textAlign = align;
+    ctx.font = `${(k > 0.15 ? 12 : 11) * dpr}px system-ui, sans-serif`;
+    ctx.fillText(tag, x + lx * 7 * dpr, y + ly * dpr);
+  }
+  ctx.globalAlpha = 1;
+  // his mood (the PAD point), with a short trail
+  const m = snap && Array.isArray(snap.mood) ? snap.mood : null;
+  if (m) {
+    trail.push([m[0], m[1]]); if (trail.length > 45) trail.shift();
+    ctx.strokeStyle = v("--c2") + "88"; ctx.lineWidth = 2 * dpr; ctx.beginPath();
+    trail.forEach(([p, a], i) => (i ? ctx.lineTo(X(p), Y(a)) : ctx.moveTo(X(p), Y(a)))); ctx.stroke();
+    ctx.strokeStyle = v("--c2"); ctx.lineWidth = 2.5 * dpr;
+    ctx.beginPath(); ctx.arc(X(m[0]), Y(m[1]), 7 * dpr, 0, Math.PI * 2); ctx.stroke();
+  }
+  // the steered point
+  const s = snap && snap.steered;
+  if (s) {
+    const x = X(s[0]), y = Y(s[1]);
+    ctx.strokeStyle = v("--warn"); ctx.lineWidth = 2 * dpr;
+    ctx.beginPath(); ctx.moveTo(x - 12 * dpr, y); ctx.lineTo(x + 12 * dpr, y); ctx.moveTo(x, y - 12 * dpr); ctx.lineTo(x, y + 12 * dpr); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, 9 * dpr, 0, Math.PI * 2); ctx.stroke();
+  }
+  $("map-state").textContent = s ? `steering: P ${s[0].toFixed(2)}, A ${s[1].toFixed(2)}, D ${s[2].toFixed(2)}` : "drag to steer him";
+  $("map-state").className = "small " + (s ? "warnt" : "muted");
+  $("map-release").disabled = !s;
 }
 
 function chart() {

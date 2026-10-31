@@ -152,7 +152,7 @@ target → soft-limit clamp → critically damped spring (half-life per channel,
 The engine starts by itself with the chat program; `--no-face` turns it off (the mouth alone, as before).
 
 ```
-# the whole of Frank, in the browser (his face is drawn live in the "His face" card)
+# the whole of Frank, in the browser: the 3D twin, the conversation, and the editor's Face and Engine tabs
 uv run --no-project --with anthropic --with openai --with httpx --with sounddevice --with numpy --with scipy --with websockets --with livekit --with opencv-python --with mediapipe --with pyserial python frank/web.py --talk --mouth auto
 
 # the face alone: a page with buttons for every tag, state and event, no API keys
@@ -167,7 +167,7 @@ python frank/engine/tests/test_preview.py
 python frank/engine/tests/test_engine.py
 ```
 
-**The 3D twin as the hero figure** (perform/body.py, the body-twin session, PLAN D32): the twin is the CAD head moved by the very servo lines the engine sends. Start the body server first, then point Frank (or the preview) at its socket; both pages then show the 3D head in place of the 2D sketch (the sketch comes back by itself when the twin isn't running, and a button switches between them).
+**The 3D twin as the hero figure** (perform/body.py, the body-twin session, PLAN D32): the twin is the CAD head moved by the very servo lines the engine sends. Start the body server first, then point Frank (or the preview) at its socket. `web.py`'s page shows only the 3D head (with how to start the twin while it isn't running); the preview shows it in place of the 2D sketch, which comes back by itself when the twin isn't running (the online demo has no twin, so the preview keeps its sketch).
 
 ```
 # on the head: the body server holds the mouth board's port; everything else goes through it
@@ -180,6 +180,10 @@ uv run ... python frank/web.py --talk --mouth socket://127.0.0.1:8811           
 ```
 
 **The editor, live on the session:** `chat.py` and `web.py` start the editor page with Frank's own engine at http://127.0.0.1:8820 (`--editor-port N` moves it, `0` turns it off), so every bar, the chart and the 3D twin follow the real conversation: the state, the mood, the tag weights, every joint, who is in view, what he hears and says, his tags, and the engine's decisions as they happen (the Live session card). Its buttons still nudge him. Don't run `preview.py` beside it: it wants the same port.
+
+**`web.py`'s page has the editor in it too** (http://127.0.0.1:8800): the 3D twin and his camera on the left, the conversation in the middle, and a side panel with three tabs: *People* (in view, remembered, enrol), *Face* (the emotion map, the tags with keys 1–0, the visitor pad and fake voice, states, events) and *Engine* (state, the last 10 s, mood, tag weights, joints, decisions). The brain, the speaker, the mouth check and the eyes are under *Settings*. The bar at the bottom lists its keys (M mic, V voice, / type, P F E the tabs, 1–0 the tags on the Face tab, C colour, S settings); the twin and the camera show in green until *Colour* is on, and only in colour do the twin's red parts (a servo that can't reach) show. It asks for the editor's routes under `/engine/` (`/engine/meta`, `/engine/snapshot`, `POST /engine/tag` ...), answered by the same `preview.Api` the editor page uses (`chat.face_api`), so the two pages share one visitor pad and fake voice.
+
+**The emotion map** (the editor's first card): pleasure left to right, arousal bottom to top, the ten tags at their map positions (`synth.STEER_MAP`: the anchors, with concentrating moved to calm and focused so the centre stays his plain face) and a dominance slider (skeptical, irritated and vulnerable share a corner and differ in dominance). Drag a point and his face becomes the mix of the tags near it (a Gaussian of the PAD distance, sigma 0.28, through the same region-by-region blending), plus the map's own axes so the calm half reads too (heavier lids when calm, the corners up when pleasant); the mood sits at the point, so arousal also sets how fast he moves. The 3D twin and the real head follow. While steering, Claude's tags wait unseen; *Release* hands the face back. `Engine.steer(p, a, d=None)` and `Engine.release()`; `POST /steer {p, a, d?}` or `{release: true}`.
 
 The twin alone, full screen, is http://127.0.0.1:8810/?hero=1 (`&spin=0` stops its slow sway).
 
