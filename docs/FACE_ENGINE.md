@@ -167,6 +167,22 @@ python frank/engine/tests/test_preview.py
 python frank/engine/tests/test_engine.py
 ```
 
+**The 3D twin as the hero figure** (perform/body.py, the body-twin session, PLAN D32): the twin is the CAD head moved by the very servo lines the engine sends. Start the body server first, then point Frank (or the preview) at its socket; both pages then show the 3D head in place of the 2D sketch (the sketch comes back by itself when the twin isn't running, and a button switches between them).
+
+```
+# on the head: the body server holds the mouth board's port; everything else goes through it
+uv run --no-project --with pyserial python perform/body.py robots/frank/robot.json --port /dev/cu.usbmodem2101
+# no head: the twin is the body
+uv run --no-project --with pyserial python perform/body.py robots/frank/robot.json --sim
+
+uv run --no-project --with pyserial --with numpy python frank/engine/preview.py --head socket://127.0.0.1:8811   # http://127.0.0.1:8820
+uv run ... python frank/web.py --talk --mouth socket://127.0.0.1:8811                                             # http://127.0.0.1:8800
+```
+
+**The editor, live on the session:** `chat.py` and `web.py` start the editor page with Frank's own engine at http://127.0.0.1:8820 (`--editor-port N` moves it, `0` turns it off), so every bar, the chart and the 3D twin follow the real conversation: the state, the mood, the tag weights, every joint, who is in view, what he hears and says, his tags, and the engine's decisions as they happen (the Live session card). Its buttons still nudge him. Don't run `preview.py` beside it: it wants the same port.
+
+The twin alone, full screen, is http://127.0.0.1:8810/?hero=1 (`&spin=0` stops its slow sway).
+
 **Before the first run on the head:** in the preview with `--head`, press *curious*: both brows must rise. Then *skeptical*: Frank's own left brow (the one on your right as you face him) goes up. If a brow end goes down, flip its `dir` in `frank/engine/rig.json`; if the wrong side rises, swap the brow sides there. Do the same for the lids (*surprised* opens both; a blink shuts both) and the eyes (drag the visitor to your right on the pad, which is Frank's left: his eyes must follow). Servos marked faulty go in `disabled` in `rig.json`.
 
 ## v1 tonight, then later

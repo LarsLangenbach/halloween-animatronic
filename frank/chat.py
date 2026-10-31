@@ -139,7 +139,7 @@ def load_voice():
         return None
 
 
-def start_face(chat, port=None, face=True, still_eyes=False):
+def start_face(chat, port=None, face=True, still_eyes=False, editor=8820):
     """The mouth board (mouth.py) on `port`, and the face engine (frank/engine) driving the eyes,
     lids, brows and the emotion part of the mouth: it takes the voice player's mouth hook,
     hears the chat's events and watches the eyes. The engine is then the eyes, so the mouth
@@ -161,6 +161,13 @@ def start_face(chat, port=None, face=True, still_eyes=False):
             chat.engine.gaze.pause()
         print(f"{DIM}Face engine on ({'the head' if writer else 'no head: preview only'}); "
               f"eyes {chat.engine.gaze.state}.{OFF}")
+        if editor:  # the engine's editor page, live on this session (frank/engine/preview.py)
+            try:
+                from engine import preview as engine_page
+                engine_page.serve(chat.engine, editor, head=writer.port if writer else None, live=True)
+                print(f"{DIM}Face editor, live: http://127.0.0.1:{editor}{OFF}")
+            except OSError as e:
+                print(f"{DIM}(no face editor on {editor}: {e}; is preview.py still running?){OFF}")
     if chat.voice:
         chat.voice.mouth = chat.engine or writer
     return chat.engine or writer
@@ -979,13 +986,15 @@ def main():
     ap.add_argument("--mouth", help="the mouth Pico's serial port, or auto: the jaw follows his voice (mouth.py)")
     ap.add_argument("--still-eyes", action="store_true", help="with --mouth: the eyes do not look around and blink (gaze.py)")
     ap.add_argument("--no-face", action="store_true", help="no face engine: the mouth alone (frank/engine)")
+    ap.add_argument("--editor-port", type=int, default=8820, help="the face editor page, live on this session (0: none)")
     args = ap.parse_args()
     brain.load_env()
     if not brain.available(args.model):
         sys.exit(f"No key for {args.model}: add it to frank/.env")
 
     chat = Chat(args.model, args.speaker, args.place, args.mute)
-    start_face(chat, args.mouth, face=not args.no_face, still_eyes=args.still_eyes)
+    start_face(chat, args.mouth, face=not args.no_face, still_eyes=args.still_eyes,
+               editor=args.editor_port)
     print(f"{DIM}Talk or type to Frank. /fb <text> gives feedback on his last reply; /help for more.{OFF}\n")
     if args.see or args.video:
         chat.see(preview=not args.no_preview, source=args.video)

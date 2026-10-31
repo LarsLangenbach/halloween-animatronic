@@ -21,6 +21,7 @@ It plugs into the chat program three ways:
 import random
 import threading
 import time
+from collections import deque
 
 from . import channels
 from .animator import Animator
@@ -75,7 +76,10 @@ class Engine:
     def __init__(self, writer=None, hz=HZ, log=None, personality=None):
         self.writer = writer  # a mouth.Mouth (the real jaw, lips and corners), or None
         self.hz = hz
-        self.log = log or (lambda **k: None)
+        self._log = log or (lambda **k: None)
+        self.recent = deque(maxlen=16)  # the engine's last decisions, for the editor's live feed
+        self.session = dict(heard="", said="", visitor="", tags=[])  # the conversation, for the editor
+        self.vision_at = 0.0           # when vision() was last called by hand (the editor's pad)
         self.synth = Synth(personality)
         self.anim = Animator(personality)
         self.rig = Rig(writer)
@@ -128,6 +132,10 @@ class Engine:
         self.stop()
         if self.writer and hasattr(self.writer, "close"):
             self.writer.close()
+
+    def log(self, **rec):
+        self.recent.append(dict(t=round(time.time(), 2), **rec))
+        self._log(**rec)
 
     def __getattr__(self, name):
         """Anything else asked of the mouth (port, program, ...) goes to the real one."""
@@ -255,9 +263,17 @@ class Engine:
         """Or hand the vision snapshot over directly."""
         with self.lock:
             self.vision_state = state
+            self.vision_at = time.monotonic()
 
     def snapshot(self):
-        return dict(self.snap)
+        snap = dict(self.snap)
+        vis = self.vision_state or {}
+        people = [dict(name=p.get("name"), yaw=p.get("yaw"), pitch=p.get("pitch"), dist=p.get("dist"),
+                       engaged=p.get("engaged"), talking=p.get("talking"))
+                  for p in vis.get("people", []) if not p.get("figure")]
+        snap["session"] = dict(self.session, people=people, seeing=self.look is not None and self.vision_state is not None,
+                               recent=list(self.recent), tags=list(self.session["tags"])[-8:])
+        return snap
 
     # ----- the voice player's mouth hook (voice.mouth = engine) -----
 
@@ -291,6 +307,8 @@ class Engine:
     def on_ui(self, ev):
         kind = ev.get("kind")
         t = time.monotonic()
+        if kind in ("hearing", "visitor", "say", "frank_start", "face"):
+            self._session(kind, ev)
         if kind == "hearing":
             with self.lock:
                 if not self.thinking and not self._speaking(t):
@@ -386,12 +404,27 @@ class Engine:
             self.mode, self.mode_since = name, t
         return name
 
+    def _session(self, kind, ev):
+        s = self.session
+        if kind == "hearing":
+            s["heard"] = ev.get("text", "")
+        elif kind == "visitor":
+            s["visitor"], s["heard"] = ev.get("said", ""), ""
+        elif kind == "frank_start":
+            s["said"] = ""
+        elif kind == "say":
+            s["said"] = (s["said"] + " " + ev.get("text", "")).strip()[-300:]
+        elif kind == "face" and ev.get("tag"):
+            s["tags"] = (s["tags"] + [ev["tag"]])[-8:]
+
     def _watch(self, t):
         if self.look is not None:
             try:
-                self.vision_state = self.look()
+                seen = self.look()
             except Exception:
-                self.vision_state = None
+                seen = None
+            if seen is not None or t - self.vision_at > 1.0:  # the pad stands in while the camera is off
+                self.vision_state = seen
 
     def _gaze_target(self, t, state):
         """Whom to look at, as (yaw, pitch) degrees, and the others in view. The speaker wins;

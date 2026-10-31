@@ -225,6 +225,7 @@ def main():
     ap.add_argument("--mouth", help="the mouth Pico's serial port, or auto: the jaw follows his voice (mouth.py)")
     ap.add_argument("--still-eyes", action="store_true", help="with --mouth: the eyes do not look around and blink (gaze.py)")
     ap.add_argument("--no-face", action="store_true", help="no face engine: the mouth alone (frank/engine)")
+    ap.add_argument("--editor-port", type=int, default=8820, help="the face editor page, live on this session (0: none)")
     args = ap.parse_args()
     brain.load_env()
     if not brain.available(args.model):
@@ -239,7 +240,8 @@ def main():
             chat.voice.use_speaker(int(args.speaker) if args.speaker.isdigit() else args.speaker)
         except Exception as e:  # not plugged in here: the Mac's own output, and the page can change it
             print(f"(speaker {args.speaker!r} not found, so the Mac's default output: {e})")
-    chat_mod.start_face(chat, args.mouth, face=not args.no_face, still_eyes=args.still_eyes)
+    chat_mod.start_face(chat, args.mouth, face=not args.no_face, still_eyes=args.still_eyes,
+                        editor=args.editor_port)
     if not args.no_see:
         chat.see(preview="web", source=args.video)
     if args.talk:

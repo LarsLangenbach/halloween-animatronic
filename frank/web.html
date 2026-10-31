@@ -139,8 +139,13 @@
       <div class="cam"><img id="cam" alt="Frank's camera, with faces marked"><div id="nocam" class="nocam">Camera off</div></div>
     </div>
     <div class="card">
-      <div class="card-h"><h2>His face</h2><span id="face-state" class="muted small">engine off</span></div>
-      <canvas id="face" width="360" height="240" style="width:100%;border-radius:8px;background:#111"></canvas>
+      <div class="card-h"><h2>His face</h2><span><span id="face-state" class="muted small">engine off</span>
+        <button id="face-mode" class="toggle" title="The 3D body twin (perform/body.py) or the 2D sketch">2D sketch</button></span></div>
+      <iframe id="face-twin" title="Frank's 3D body twin, moved by the face engine through perform/body.py" hidden
+              style="width:100%;aspect-ratio:1/1;border:0;border-radius:8px;background:#0d0f0e;display:block"></iframe>
+      <canvas id="face-canvas" width="360" height="240" style="width:100%;border-radius:8px;background:#111"></canvas>
+      <div id="face-twin-note" class="muted small"></div>
+      <a class="small" href="http://127.0.0.1:8820" target="_blank" rel="noopener">Open the face editor (live on this session)</a>
       <div id="face-mix" class="muted small"></div>
     </div>
     <div class="card">
@@ -380,12 +385,37 @@ async function camLoop() {
 }
 
 // The face engine's joints (frank/engine), drawn 15 times a second while the tab is visible.
+// The 3D body twin (perform/body.py on 8810, moved by the servo lines when Frank runs with
+// --mouth socket://127.0.0.1:8811) is the hero view when it is up; otherwise the 2D sketch.
+const TWIN = "http://127.0.0.1:8810/?hero=1";
+let faceMode = "2d", twinUp = false;
+function setFaceMode(m) {
+  faceMode = m;
+  $("#face-twin").hidden = m !== "3d";
+  $("#face-canvas").hidden = m === "3d";
+  $("#face-mode").textContent = m === "3d" ? "2D sketch" : "3D twin";
+  if (m === "3d" && !$("#face-twin").src) $("#face-twin").src = TWIN;
+}
+async function probeTwin() {
+  try {
+    await fetch("http://127.0.0.1:8810/robot", { mode: "no-cors", cache: "no-store" });
+    if (!twinUp) { twinUp = true; if (faceMode !== "3d") setFaceMode("3d"); }
+    $("#face-twin-note").textContent = "";
+  } catch {
+    twinUp = false;
+    $("#face-twin-note").textContent = "3D twin off: run perform/body.py and start Frank with --mouth socket://127.0.0.1:8811";
+    if (faceMode === "3d") { $("#face-twin").removeAttribute("src"); setFaceMode("2d"); }
+  }
+  setTimeout(probeTwin, 3000);
+}
+$("#face-mode").onclick = () => setFaceMode(faceMode === "3d" ? "2d" : "3d");
+
 async function faceLoop() {
   if (!document.hidden && window.drawFace) {
     try {
       const s = await (await fetch("/face", { cache: "no-store" })).json();
       if (s.joints) {
-        drawFace($("#face"), s.joints, { talk: 0 });
+        if (faceMode === "2d") drawFace($("#face-canvas"), s.joints, { talk: 0 });
         const m = s.mood ? s.mood.map((v) => v.toFixed(2)).join(", ") : "";
         $("#face-state").textContent = `${s.state}${s.error ? " · " + s.error : ""}`;
         const w = Object.entries((s.face || {}).weights || {}).filter(([, v]) => v > 0.05)
@@ -433,6 +463,8 @@ connect();
 poll();
 camLoop();
 faceLoop();
+setFaceMode("2d");
+probeTwin();
 setInterval(poll, 1000);
 </script>
 <script src="/face_draw.js"></script>

@@ -359,14 +359,16 @@ def handler(engine, preview, info):
     return Handler
 
 
-def serve(engine, port=8820, head=None):
+def serve(engine, port=8820, head=None, live=False):
     """Start the page for this engine in a thread: (server, preview). server.server_address[1]
-    is the port (0 picks a free one)."""
+    is the port (0 picks a free one). live=True: the engine is Frank's own, inside chat.py or
+    web.py (chat.start_face), so the page shows the real session as it goes; its buttons
+    still nudge him."""
     preview = Preview(engine)
     info = dict(tags=TAGS, states=STATES, events=EVENTS, engine_events=ENGINE_EVENTS,
                 joints={k: dict(low=v[0], high=v[1], rest=v[2]) for k, v in JOINTS.items()},
                 engine="stand-in" if isinstance(engine, StandIn) else type(engine).__name__,
-                head=head)
+                head=head, live=live)
     server = ThreadingHTTPServer(("127.0.0.1", port), handler(engine, preview, info))
     server.daemon_threads = True
     threading.Thread(target=server.serve_forever, daemon=True).start()

@@ -45,6 +45,12 @@
 
   .stage { position: relative; aspect-ratio: 4 / 5; max-height: calc(100vh - 300px); min-height: 320px; margin: 0 auto; width: 100%; }
   .stage canvas { width: 100%; height: 100%; display: block; border-radius: 8px; }
+  .stage iframe { width: 100%; height: 100%; display: block; border: 0; border-radius: 8px; background: #0d0f0e; }
+  .stage iframe[hidden], .stage canvas[hidden] { display: none; }
+  .live { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 4px 10px; align-items: baseline; }
+  .live .sub { margin: 0; }
+  .feed { list-style: none; margin: 4px 0 0; padding: 0; max-height: 220px; overflow-y: auto; }
+  .feed li { padding: 2px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
   #chart { width: 100%; height: 120px; display: block; }
   .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); }
   .legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
@@ -94,12 +100,30 @@
 <main class="grid">
   <section class="col">
     <div class="card">
-      <div class="stage"><canvas id="face" aria-label="Frank's face, drawn from the engine's channels"></canvas></div>
+      <div class="card-h"><h2 id="stage-title">Frank</h2>
+        <span><span id="twin-note" class="hint"></span>
+        <button id="stage-mode" title="The 3D body twin (perform/body.py) or the 2D sketch">2D sketch</button></span></div>
+      <div class="stage">
+        <iframe id="twin" title="Frank's 3D body twin, moved by the engine through perform/body.py" hidden></iframe>
+        <canvas id="face" aria-label="Frank's face, drawn from the engine's channels"></canvas>
+      </div>
     </div>
     <div class="card">
       <div class="card-h"><h2>Last 10 seconds</h2>
         <div class="legend" id="legend"></div></div>
       <canvas id="chart"></canvas>
+    </div>
+    <div class="card" id="live-card" hidden>
+      <div class="card-h"><h2>Live session</h2><span id="live-seeing" class="small muted"></span></div>
+      <div class="live">
+        <div class="sub">In view</div><div id="live-people" class="small">nobody</div>
+        <div class="sub">Hears</div><div id="live-heard" class="small muted">–</div>
+        <div class="sub">Visitor said</div><div id="live-visitor" class="small">–</div>
+        <div class="sub">Frank says</div><div id="live-said" class="small">–</div>
+        <div class="sub">His tags</div><div id="live-tags" class="small mono">–</div>
+      </div>
+      <div class="sub" style="margin-top: 10px">What the engine decided</div>
+      <ol id="live-feed" class="feed small mono"></ol>
     </div>
   </section>
 
@@ -206,6 +230,12 @@ async function start() {
   $("engine").className = "pill" + (meta.engine === "stand-in" ? " warn" : " on");
   $("head").textContent = meta.head ? "head on " + meta.head : "no servos";
   $("head").className = "pill" + (meta.head ? " on" : "");
+  if (meta.live) {   // inside chat.py / web.py: Frank's own engine, the real session
+    document.querySelector(".brand .pill").textContent = "LIVE: Frank's session";
+    document.querySelector(".brand .pill").className = "pill on";
+    $("live-card").hidden = false;
+    document.title = "Frank · face editor (live)";
+  }
   makeButtons($("tags"), meta.tags, (n) => post("/tag", { name: n, intensity: +$("intensity").value }), true);
   makeButtons($("states"), meta.states, (n) => post("/state", { name: n }));
   makeButtons($("events"), [...meta.events, ...meta.engine_events], (n) => post("/event", { name: n }));
@@ -236,6 +266,34 @@ function fit(canvas) {
   return dpr;
 }
 
+// The hero figure: the 3D body twin (perform/body.py, port 8810) when it is running, moved by
+// the very servo lines the engine sends (preview.py --head socket://127.0.0.1:8811); otherwise
+// the 2D sketch. ?twin=<url> on this page points it elsewhere.
+const TWIN = new URLSearchParams(location.search).get("twin") || "http://127.0.0.1:8810/?hero=1";
+let mode = "2d", twinUp = false;
+function setMode(m) {
+  mode = m;
+  $("twin").hidden = m !== "3d";
+  $("face").hidden = m === "3d";
+  $("stage-mode").textContent = m === "3d" ? "2D sketch" : "3D twin";
+  $("stage-title").textContent = m === "3d" ? "Frank (3D twin)" : "Frank (sketch)";
+  if (m === "3d" && !$("twin").src) $("twin").src = TWIN;
+}
+async function probeTwin() {
+  const base = new URL(TWIN);
+  try {
+    await fetch(`${base.origin}/robot`, { mode: "no-cors", cache: "no-store" });  // resolves if it is up
+    if (!twinUp) { twinUp = true; if (mode !== "3d") setMode("3d"); }
+    $("twin-note").textContent = "";
+  } catch {
+    twinUp = false;
+    $("twin-note").textContent = "3D twin off: run perform/body.py, then preview.py --head socket://127.0.0.1:8811 ";
+    if (mode === "3d") { $("twin").removeAttribute("src"); setMode("2d"); }
+  }
+  setTimeout(probeTwin, 3000);
+}
+$("stage-mode").onclick = () => setMode(mode === "3d" ? "2d" : "3d");
+
 function frame() {
   requestAnimationFrame(frame);
   const live = Date.now() - lastOk < 1500;
@@ -243,9 +301,11 @@ function frame() {
   $("conn").className = "pill " + (live ? "on" : "danger");
   if (!snap) return;
   const face = $("face");
-  fit(face);
   const pv = snap.preview || {};
-  drawFace(face, snap.joints || {}, { talk: pv.talk ?? (snap.cue && snap.cue.talk) ?? 0 });
+  if (mode === "2d") {
+    fit(face);
+    drawFace(face, snap.joints || {}, { talk: pv.talk ?? (snap.cue && snap.cue.talk) ?? 0 });
+  }
   readouts(pv);
   chart();
   pad(pv.target);
@@ -268,7 +328,34 @@ function readouts(pv) {
   const j = snap.joints || {};
   for (const [k, r] of Object.entries(meta.joints)) bar($("joints"), k, j[k], r.low, r.high, r.rest);
   if (pv.talking !== undefined && pv.talking !== talking) setTalk(pv.talking, false);
+  if (meta.live && snap.session) live(snap.session);
   $("talk-info").textContent = (talking ? "level " + (pv.talk || 0).toFixed(2) + " · " : "a fake voice · ") + "via " + (pv.hook || meta.talk_hook);
+}
+
+// The live session (meta.live): what Frank sees, hears and says, and the engine's decisions.
+let feedKey = "";
+function live(s) {
+  const txt = (id, v, empty = "–") => { const el = $(id); if (el.textContent !== (v || empty)) el.textContent = v || empty; };
+  $("live-seeing").textContent = s.seeing ? "camera on" : "no camera (the pad stands in)";
+  txt("live-people", (s.people || []).map((p) => `${p.name || "stranger"} ${p.talking ? "(talking) " : ""}` +
+    `${Math.round(p.yaw)}° ${p.yaw > 0 ? "his left" : "his right"}, ${(p.dist || 0).toFixed(1)} m`).join(" · "), "nobody");
+  txt("live-heard", s.heard);
+  txt("live-visitor", s.visitor);
+  txt("live-said", s.said);
+  txt("live-tags", (s.tags || []).join(" › "));
+  const rows = (s.recent || []).slice().reverse();
+  const key = rows.length ? rows[0].t + rows[0].what : "";
+  if (key === feedKey) return;
+  feedKey = key;
+  $("live-feed").innerHTML = "";
+  for (const r of rows) {
+    const { t, what, ...rest } = r;
+    const when = new Date(t * 1000).toLocaleTimeString([], { hour12: false });
+    const li = document.createElement("li");
+    li.textContent = `${when}  ${(what || "").replace("engine_", "")}  ` +
+      Object.entries(rest).map(([k, v]) => `${k}=${typeof v === "object" ? JSON.stringify(v) : v}`).join(" ");
+    $("live-feed").append(li);
+  }
 }
 
 function chart() {
@@ -349,6 +436,8 @@ document.addEventListener("keydown", (e) => {
 });
 
 start();
+setMode("2d");
+probeTwin();
 </script>
 </body>
 </html>
