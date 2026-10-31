@@ -19,10 +19,12 @@ On top of it:
 
 import json
 import os
+import socket
 import sys
 import threading
 import time
 from pathlib import Path
+from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "frank" / "online"))
@@ -87,6 +89,90 @@ class Limited(B.BODY.Robot):
         return f
 
 
+class Head:
+    """The real head, through perform/body.py's socket (body.py owns the USB port; never open the
+    board here). Every whole line the studio's mouth writes goes there too, each servo angle first
+    clamped to its soft limits: `set NAME deg` (mouth board) and `e PIN deg` (eye board). `jaw f`
+    stays inside the board program's own jaw limits. Reconnects every 2 s while body.py is away."""
+
+    def __init__(self, url, robot):
+        u = urlparse(url)
+        if u.scheme != "socket" or not u.port:
+            raise ValueError("--head takes perform/body.py's socket, e.g. socket://127.0.0.1:8811")
+        self.addr, self.url, self.robot = (u.hostname or "127.0.0.1", u.port), url, robot
+        self.sock, self.lines, self.error, self.buf = None, 0, None, b""
+        self.lock = threading.Lock()
+        threading.Thread(target=self._keep, name="studio-head", daemon=True).start()
+
+    def _keep(self):
+        while True:
+            if self.sock is None:
+                try:
+                    s = socket.create_connection(self.addr, timeout=2)
+                    s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                    s.settimeout(None)
+                    with self.lock:
+                        self.sock, self.error = s, None
+                    self._send_raw(f"speed {B.M.GLIDE}\nrest\n".encode())   # as mouth.Mouth starts
+                except OSError as e:
+                    self.error = f"body.py not reachable at {self.url}: {e}"
+            if self.sock is not None:
+                try:
+                    if not self.sock.recv(4096):   # the board's replies: not needed, just drained
+                        raise OSError("closed")
+                    continue
+                except OSError as e:
+                    with self.lock:
+                        self.sock, self.error = None, f"lost body.py: {e}"
+            time.sleep(2.0)
+
+    def _send_raw(self, data):
+        with self.lock:
+            if self.sock is None:
+                return
+            try:
+                self.sock.sendall(data)
+            except OSError as e:
+                self.sock, self.error = None, f"lost body.py: {e}"
+
+    def clamp(self, text):
+        w = text.split()
+        try:
+            if len(w) == 3 and w[0] == "set" and w[1] in self.robot.soft:
+                lo, hi = self.robot.soft[w[1]]
+                return f"set {w[1]} {min(max(float(w[2]), lo), hi):g}"
+            if len(w) == 3 and w[0] == "e" and w[2] != "off":
+                sid = self.robot.by_pin.get(("eyes", int(w[1])))
+                if sid:
+                    lo, hi = self.robot.soft[sid]
+                    return f"e {w[1]} {min(max(float(w[2]), lo), hi):g}"
+        except ValueError:
+            pass
+        return text
+
+    def write(self, data):
+        """The mouth's bytes: control characters as they are, lines clamped."""
+        self.buf += data
+        out = b""
+        while b"\n" in self.buf:
+            line, self.buf = self.buf.split(b"\n", 1)
+            text = line.decode("utf-8", "replace").strip()
+            if text:
+                out += (self.clamp(text) + "\n").encode()
+                self.lines += 1
+        if out:
+            self._send_raw(out)
+
+    def servo(self, sid, deg):
+        """A try slider on the real head: one servo straight to an angle."""
+        s = self.robot.servos[sid]
+        line = f"e {s['pin']} {deg:g}" if s["board"] == "eyes" else f"set {sid} {deg:g}"
+        self.write((line + "\n").encode())
+
+    def status(self):
+        return {"url": self.url, "connected": self.sock is not None, "lines": self.lines, "error": self.error}
+
+
 class Runtime:
     def __init__(self):
         self.B = B
@@ -98,6 +184,7 @@ class Runtime:
         self.channel_hold = {}               # animation channel -> value, from the try sliders
         self.on_tick = []                    # f(now), stepped under the lock (the state machine)
         self.running = False
+        self.head = None                     # Head, when --head drives the real one
         rig = self.engine.rig
         apply = rig.apply
 
@@ -108,6 +195,19 @@ class Runtime:
     @property
     def player(self):
         return self.api.player
+
+    def connect_head(self, url):
+        """Also drive the real head through perform/body.py: every line the mouth writes to the
+        board models goes to body.py's socket too (clamped), so the head and the twin move together."""
+        self.head = Head(url, self.robot)
+        wire, head = self.B.jaw.ser, self.head
+        feed = wire.write
+
+        def write(data):
+            feed(data)
+            head.write(data)
+        wire.write = write
+        return self.head
 
     def start(self):
         if not self.running:

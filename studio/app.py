@@ -166,7 +166,12 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--port", type=int, default=8840)
     ap.add_argument("--open", action="store_true", help="open the page in the browser")
+    ap.add_argument("--head", metavar="URL", help="also drive the real head through perform/body.py's socket, "
+                                                  "e.g. socket://127.0.0.1:8811 (body.py owns the USB port)")
     a = ap.parse_args()
+    if a.head:
+        rt.connect_head(a.head)
+        print(f"driving the real head through {a.head} (start perform/body.py first)")
     rt.start()
     srv = ThreadingHTTPServer(("127.0.0.1", a.port), Handler)
     srv.daemon_threads = True

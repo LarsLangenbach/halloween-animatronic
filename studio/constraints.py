@@ -284,6 +284,8 @@ def write_soft(robot, changes):
     """{servo: [min, max] or None} into robot.json's servos, keeping everything else as it is."""
     p = Path(robot.path)
     spec = json.loads(p.read_text(encoding="utf-8"))
+    if all(spec["servos"][sid].get("soft") == v for sid, v in changes.items()):
+        return                                   # nothing new: leave the file as it is
     for sid, v in changes.items():
         if v is None:
             spec["servos"][sid].pop("soft", None)

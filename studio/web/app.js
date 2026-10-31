@@ -97,6 +97,13 @@ function showStatus(st) {
   const pf = snap.performance;
   $("si-play").textContent = pf && pf.playing ? `${pf.title} (${pf.elapsed.toFixed(1)} / ${pf.duration.toFixed(1)} s)`
     : snap.steered ? "steered by hand" : "nothing";
+  const hd = st.head;
+  $("head-pill").hidden = !hd;
+  if (hd) {
+    $("head-pill").textContent = hd.connected ? "real head: on" : "real head: not connected";
+    $("head-pill").className = "pill " + (hd.connected ? "on" : "warn");
+    $("head-pill").title = hd.error || `${hd.url}, ${hd.lines} lines sent`;
+  }
   const bad = Object.entries(st.servos || {}).filter(([, s]) => s.clamped).map(([k]) => k);
   $("si-clamped").textContent = bad.length ? `held at a soft limit: ${bad.join(", ")}` : "";
 }

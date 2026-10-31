@@ -36,6 +36,7 @@ class Studio:
             frame = rt.robot.frame()
         return {"snapshot": R.B.P.clean(snap) if code == 200 else None,
                 "runner": self.runner.status(),
+                "head": rt.head.status() if rt.head else None,
                 "servos": {sid: {"deg": s["deg"], "clamped": s.get("clamped"), "held": s.get("held")}
                            for sid, s in frame["servos"].items()}}
 
@@ -125,6 +126,8 @@ class Studio:
                     else:
                         lo, hi = rt.robot.firmware_range(sid)
                         rt.robot.hold[sid] = max(lo, min(hi, float(body["deg"])))
+                        if rt.head:
+                            rt.head.servo(sid, rt.robot.hold[sid])
                 elif "channel" in body:
                     ch = body["channel"]
                     if ch not in C.CH.JOINTS:
