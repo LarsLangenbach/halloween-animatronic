@@ -121,6 +121,14 @@ EYEMECH_EYE_SRC = (37.5, 0.0, 0.0)   # MEASURED: lid sphere centres (+-37.5, 0, 
 EYEMECH_EYE_R = (16.5, 18.1)   # MEASURED: the lids' inner and outer sphere radii
 EYE_SPACING = 2 * EYEMECH_EYE_SRC[0]  # 75.0: centre to centre (adult ~63)
 EYE_R = 16.0                   # MEASURED: eyeball part 32.0 across
+# Keyed lids (D27, lid_keyed.py): his lids perforated so the brushed silicone (D21) locks on.
+# PLA gives platinum silicone no bond; each hole fills from the outside and cures into a rivet
+# whose head sits in a counterbore flush with the inner face (the eyeball is 0.5 behind it).
+LID_KEY_NECK_D = 2.2           # ASSUMPTION: through-hole from the outer face (prints ~2.0; 1 mm holes don't fill with brushed silicone)
+LID_KEY_HEAD_D = 3.4           # ASSUMPTION: counterbore on the inner face (the rivet head; the shoulder is the undercut)
+LID_KEY_HEAD_H = 0.7           # ASSUMPTION: counterbore depth; the neck is the rest of the 1.6 wall
+LID_KEY_PITCH = 5.0            # ASSUMPTION: hole spacing over the shell (4.8 left 0.82 between counterbores, two 0.42 lines need 0.84)
+LID_KEY_MARGIN = 1.1           # ASSUMPTION: plain wall kept round every counterbore, to the lash edge, bosses and lever bore
 EYE_SOCKET_FRONT = 8.0         # MEASURED: the eyeball's socket (the pivot's cavity) reaches this far in front of its centre
 EYEBALL_FILL_FROM = 8.5        # the smooth eyeball (studies/cogley_eyeball.py): his front, iris dish and pupil hole,
                                # is filled out to EYE_R from this far in front of the centre

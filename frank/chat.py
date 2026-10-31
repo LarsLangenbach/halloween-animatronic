@@ -2,6 +2,7 @@
 Talk to Frank in the terminal, and leave feedback as you go.
 
     uv run --no-project --with anthropic --with openai --with httpx --with sounddevice --with numpy --with scipy --with websockets --with livekit python frank/chat.py --talk
+    uv run ... --with pyserial python frank/chat.py --mouth auto     (the jaw follows his voice: mouth.py)
     uv run ... frank/chat.py --model gpt-5.4-mini --as Anushhka --mute
     uv run ... --with opencv-python --with mediapipe python frank/chat.py --talk --see
 
@@ -779,12 +780,17 @@ def main():
     ap.add_argument("--see", action="store_true", help="watch through the camera (eyes.py)")
     ap.add_argument("--video", help="with --see: a video file instead of the camera")
     ap.add_argument("--no-preview", action="store_true", help="with --see: no camera window")
+    ap.add_argument("--mouth", help="the mouth Pico's serial port, or auto: the jaw follows his voice (mouth.py)")
     args = ap.parse_args()
     brain.load_env()
     if not brain.available(args.model):
         sys.exit(f"No key for {args.model}: add it to frank/.env")
 
     chat = Chat(args.model, args.speaker, args.place, args.mute)
+    if args.mouth and chat.voice:
+        import mouth
+        chat.voice.mouth = mouth.Mouth(args.mouth, log=lambda **k: chat.write(event="mouth", **k))
+        print(f"{DIM}Mouth on {chat.voice.mouth.port} ({chat.voice.mouth.program}).{OFF}")
     print(f"{DIM}Talk or type to Frank. /fb <text> gives feedback on his last reply; /help for more.{OFF}\n")
     if args.see or args.video:
         chat.see(preview=not args.no_preview, source=args.video)
@@ -803,6 +809,8 @@ def main():
         pass
     if chat.eyes:
         chat.eyes.stop()
+    if chat.voice and chat.voice.mouth:
+        chat.voice.mouth.close()
     print(f"\n{DIM}Saved to {chat.log}{OFF}")
 
 

@@ -68,7 +68,13 @@ POSE_LIST = [
     ("Corners WIDE", "wide", {"CUL": 65, "CUR": 105, "CLL": 120, "CLR": 65}),
     ("Smile", "smile", {"CUL": 60, "CUR": 105, "CLL": 90, "CLR": 90}),
     ("Frown", "frown", {"CUL": 100, "CUR": 75, "CLL": 90, "CLR": 90}),
+    # Vowel shapes for talking (frank/mouth.py blends between them by the voice's loudness and
+    # brightness). Every servo but the tongue. The defaults are made from his poses below.
+    ("Vowel AH (open)", "vowel_ah", {}),
+    ("Vowel EE (wide)", "vowel_ee", {}),
+    ("Vowel OO (round)", "vowel_oo", {}),
 ]
+VOWELS = ("vowel_ah", "vowel_ee", "vowel_oo")
 REST = ("mouth_closed", "lips_rest", "tongue_down", "narrow")  # his start-up pose, plus the lips
 
 POSES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mouth_poses.json")
@@ -184,6 +190,31 @@ if COGLEY:
     print(f"mouth_controls: jaw direction {jaw_dir}, travel {jaw_deg:g}: open is JL {jl}, JR {jr}")
 
 
+def _mix(base, pose, k):
+    """base moved k of the way to pose, for the servos in pose."""
+    return {s: round(base[s] + k * (pose[s] - base[s])) for s in pose}
+
+
+def default_vowels():
+    """Starting vowel shapes from his poses: AH = jaw 85 % open, lips parted; EE = jaw 40 %, wide
+    corners; OO = jaw 55 %, lips pushed out, narrow corners. Save your own over them."""
+    P = POSES
+    closed, opened = P["mouth_closed"], P["mouth_open"]
+    upper = {k: v for k, v in P["lips_up"].items() if k in ("LUL", "LUR")}      # upper lip up
+    lower = {k: v for k, v in P["lips_down"].items() if k in ("LLL", "LLR")}    # lower lip down
+    rest_lips = P["lips_rest"]
+    narrow, wide = P["narrow"], P["wide"]
+    shapes = {}
+    for key, jaw, part, width in (("vowel_ah", 0.85, 0.6, 0.15), ("vowel_ee", 0.4, 0.3, 0.7),
+                                  ("vowel_oo", 0.55, 0.6, 0.0)):
+        shape = _mix(closed, opened, jaw)
+        shape.update(_mix(rest_lips, upper, part))
+        shape.update(_mix(rest_lips, lower, part))
+        shape.update(_mix(narrow, wide, width))
+        shapes[key] = shape
+    return shapes
+
+
 def send(socket, value):
     """Move one servo (value: degrees) or let it go (value: "off")."""
     if COGLEY:
@@ -191,6 +222,14 @@ def send(socket, value):
     else:
         ser.write(f"{PIN[socket]} {value}\n".encode())
         ser.reset_input_buffer()
+
+
+for _key, _shape in default_vowels().items():
+    if _key not in SAVED:
+        POSES[_key] = _shape
+    else:   # a saved shape may lack a servo: fill it from the default
+        for _s, _a in _shape.items():
+            POSES[_key].setdefault(_s, _a)
 
 
 def loose_all():

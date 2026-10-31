@@ -241,6 +241,7 @@ class Voice:
             aec.output_latency = getattr(self.out, "latency", 0.05)
         self.order = queue.Queue()  # (gen, text, chunk queue) per piece, in speaking order
         self.log = lambda **k: None  # chat.py sets this: every piece and stop goes to the chat log
+        self.mouth = None  # mouth.Mouth: fed every slice played, so the jaw follows the voice
         self.fillers = self._load_fillers()
         self.last_filler = None
         self.error, self.gen = None, 0  # stop() bumps gen; older pieces are dropped
@@ -299,6 +300,8 @@ class Voice:
         self.log(what="stop", reason=reason, playing=(self.current or {}).get("text", "")[:60])
         self.gen += 1
         self.buf = []
+        if self.mouth:
+            self.mouth.flush()
         heard, cur = list(self.heard), self.current
         if cur and cur["played"]:
             if cur["done"] and cur["received"]:
@@ -321,6 +324,8 @@ class Voice:
             sentence = f"{tag} {sentence}".strip() if tag else sentence
         elif self.model_id.startswith("eleven_v4"):
             sentence = delivery_text(sentence, face)
+        if not self.buf:
+            self.buf_face = face  # the piece's expression, for the mouth
         self.buf.append(sentence)
         need = FIRST_CHARS if not self.said else NEXT_CHARS
         if sum(len(s) + 1 for s in self.buf) >= need:
@@ -373,7 +378,7 @@ class Voice:
         self.said.append(text)
         self.log(what="piece", text=text[:80], chars=len(text))
         chunks = queue.Queue()
-        self.order.put((self.gen, text, chunks))
+        self.order.put((self.gen, text, chunks, getattr(self, "buf_face", None)))
         threading.Thread(target=self._fetch, args=(body, chunks, self.gen), daemon=True).start()
 
     def wait(self):
@@ -411,10 +416,12 @@ class Voice:
 
     def _play(self):
         while True:
-            gen, text, chunks = self.order.get()
+            gen, text, chunks, face = self.order.get()
             rec = {"text": text, "played": 0, "received": 0, "done": False}
             if gen == self.gen:
                 self.current = rec
+                if self.mouth:
+                    self.mouth.face(face)
             odd = b""
             while (b := chunks.get()) is not None:
                 rec["received"] += len(b)
@@ -431,6 +438,8 @@ class Voice:
                     out = self.fx.process(s) if self.fx else s
                     with self.lock:
                         self.out.write(self.up(out))
+                    if self.mouth:
+                        self.mouth.feed(out)
                     if self.aec:
                         try:
                             self.aec.render(out, RATE)

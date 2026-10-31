@@ -17,6 +17,7 @@ someone and forgetting people. The terminal shows what chat.py always shows.
     --speaker S   his voice's output device, by name (part of it will do) or number;
                   default: the Mac's own output. The page can change it.
     --port N      default 8800
+    --mouth PORT  the mouth Pico (or auto): the jaw follows his voice (mouth.py; add --with pyserial)
 
 It listens on 127.0.0.1 only, so other computers can't open it. Its actions need the
 X-Frank header and a localhost address, so other websites open in the same browser can't
@@ -216,6 +217,7 @@ def main():
     ap.add_argument("--video", help="a video file instead of the camera")
     ap.add_argument("--speaker", help="the voice's output device, by name or number")
     ap.add_argument("--port", type=int, default=8800)
+    ap.add_argument("--mouth", help="the mouth Pico's serial port, or auto: the jaw follows his voice (mouth.py)")
     args = ap.parse_args()
     brain.load_env()
     if not brain.available(args.model):
@@ -230,6 +232,10 @@ def main():
             chat.voice.use_speaker(int(args.speaker) if args.speaker.isdigit() else args.speaker)
         except Exception as e:  # not plugged in here: the Mac's own output, and the page can change it
             print(f"(speaker {args.speaker!r} not found, so the Mac's default output: {e})")
+    if args.mouth and chat.voice:
+        import mouth
+        chat.voice.mouth = mouth.Mouth(args.mouth, log=lambda **k: chat.write(event="mouth", **k))
+        print(f"Mouth on {chat.voice.mouth.port} ({chat.voice.mouth.program}).")
     if not args.no_see:
         chat.see(preview="web", source=args.video)
     if args.talk:
@@ -245,6 +251,8 @@ def main():
     finally:
         if chat.eyes:
             chat.eyes.stop()
+        if chat.voice and chat.voice.mouth:
+            chat.voice.mouth.close()
         server.shutdown()
         print(f"Saved to {chat.log}")
 

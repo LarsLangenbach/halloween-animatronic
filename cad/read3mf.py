@@ -2,7 +2,7 @@
 Read a Bambu Studio 3MF without lxml: every part of every object, named, with the plate
 it sits on.
 
-  parts(path) -> [{"plate": n, "plate_name": str, "object": str, "part": str, "mesh": trimesh}]
+  parts(path) -> [{"plate": n, "plate_name": str, "object": str, "object_id": str, "part": str, "mesh": trimesh}]
 
 Bambu writes the meshes into 3D/Objects/*.model; 3D/3dmodel.model lists each object's
 components (path, object id, transform), and Metadata/model_settings.config names the
@@ -82,6 +82,6 @@ def parts(path):
             m = trimesh.Trimesh(v, f, process=True)
             m.apply_transform(tf)
             plate, plate_name = plates.get(oid, (0, ""))
-            out.append({"plate": plate, "plate_name": plate_name, "object": names.get(oid, oid),
+            out.append({"plate": plate, "plate_name": plate_name, "object": names.get(oid, oid), "object_id": oid,
                         "part": pn.get(sub, names.get(oid, oid)), "mesh": m})
     return out

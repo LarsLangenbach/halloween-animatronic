@@ -23,7 +23,7 @@ LID_REST = 0.85   # how open the lids sit: 0 = SHUT pose, 1 = OPEN pose
 LID_FOLLOW_TOP = 0.25     # looking up opens the top lids this much; looking down lowers them
 LID_FOLLOW_BOTTOM = 0.15  # looking up raises the bottom lids this much; looking down drops them
 WAKE = 1.0        # s for the lids to open from shut when the animation starts
-MOVE_BOTTOM_LIDS = False  # False: the bottom lids hold their OPEN angle and only the top lids blink (2026-10-29)
+MOVE_BOTTOM_LIDS = True   # False: the bottom lids hold their OPEN angle and only the top lids blink
 
 # Blink shapes: (close, hold, open) in s. Lids shut faster than they open.
 BLINK = (0.08, 0.05, 0.15)

@@ -1,18 +1,28 @@
 {
   "shut": {
-    "CUR": 186,
-    "CLR": 112,
-    "CUL": 182,
-    "CLL": 86
+    "CUR": 183,
+    "CLR": 134,
+    "CUL": 108,
+    "CLL": 117
   },
   "open": {
-    "CUR": 101,
-    "CLR": 186,
-    "CUL": 182,
-    "CLL": 86
+    "CUR": 139,
+    "CLR": 188,
+    "CUL": 143,
+    "CLL": 53
   },
   "centre": {
-    "LLL": 84,
-    "LLR": 67
+    "LLL": 107,
+    "LLR": 62
+  },
+  "level": {
+    "JL": 90,
+    "LUL": 90,
+    "JR": 90,
+    "LUR": 90
+  },
+  "brow_travel": {
+    "raise": 35.0,
+    "lower": 20.0
   }
 }
