@@ -29,6 +29,19 @@ Rules:
 
 ---
 
+## 2026-10-30 — Software — Frank off the laptop: a password-gated gateway, a Cloudflare tunnel and frank-live.vercel.app
+
+**Done:**
+- On the Mac at NightHack, after pulling Lars's handover (3798ff9): the body server opened the head (`cogley_mouth` on `/dev/cu.usbmodem2101`), `engine/preview.py --head socket://...` moved the face and the twin followed. Frank himself was found running code from before the pull with `--mouth auto`, with a slider window (19:01) and the body server all on the same USB port, and his new conversation had heard nothing. Anushhka stopped both and restarted `frank` on the new code through the body server.
+- Anushhka wanted the page off localhost, so Lars and visitors can open it. The page is a window onto the program on this Mac (brain, mic, camera, voice, head), so Vercel can't host it; a tunnel can. New `frank/public.py`: an aiohttp gateway on 8801 that asks for a password once (`?key=` becomes a cookie), forwards everything to web.py with `Host: localhost:8800` (its local-only check stays as it is), serves the body server's twin under `/twin/` with the twin's absolute paths rewritten, rewrites the page's 127.0.0.1 links, and keeps the face editor private. Nothing in web.py or body.py changed, no restart. `cloudflared tunnel --url http://127.0.0.1:8801` (Anushhka ran it; the sandbox refuses to open tunnels) gave a trycloudflare address, and `frank/live/` is a Vercel project **frank-live** under Anushhka's account that redirects to it, with `point.sh` to re-point it when the tunnel address changes. `vercel link` tried to connect the GitHub repository by itself (as the handover warned) and failed for lack of access; checked afterwards: no Git connection. Her account can't see Lars's `frank-face` project, so the public demo and this live link are separate names.
+- Through the public link: the gate (401 without the key), the page (65 kB, twin links rewritten, no 127.0.0.1 left), `/state`, the twin page, its 8.6 MB model, the twin's event stream (135 kB in 5 s) and the camera frame all came back. Frank's own `/events` came back empty for 20 s while it streamed at once through the gateway locally: Cloudflare holds a slow stream until enough bytes arrive. The gateway now writes an 8 kB SSE comment at the start of every event stream and after any chunk that isn't followed by another within 150 ms.
+
+**Check:** not a CAD change; `check.py` not run. `python -m py_compile frank/public.py` OK; the public tests above by curl.
+
+**Problems:** the padding fix needs the gateway restarted (Anushhka's terminal) and `/events` re-tested through the public link. The quick tunnel has no uptime promise and a new address per restart. Anyone with the link can type to Frank, make him speak in the room, switch his mic and voice, and watch his camera: the password is the only guard, so change it per show. The full browser-native Frank on Vercel (mic, camera and the APIs from the visitor's browser, the face engine and twin in the page, keys behind serverless functions, no head) is a day's build and was not started.
+
+**Next:** restart the gateway, confirm the live conversation feed reaches the public page, then run the show from HANDOVER step 4.
+
 ## 2026-10-30 — Software — Prompt to face animation; the statechart editor's routes run without a server
 
 **Done:**
@@ -38,6 +51,7 @@ Rules:
 **Check:** `animate OK` (a stand-in for Claude; the performance played on a real engine: skeptical then amused peaks, the map glide, the eyes held up, the long blink, the face handed back, stop() too); `synth OK`, `animator OK`, `rig OK`, `preview OK`, `engine OK`; statechart `bridge OK`, `chart OK`, `vibe OK`; the api in browser mode (load, save, 409 on a stale save, check, simulate, vibe refused online). Through the demo server here: `/engine/play` moved the twin. Not run with a real key on this PC.
 
 **Next:** on the Mac, try a few prompts in the Face tab and judge the performances on the head.
+
 
 ## 2026-10-30 — Software — Face engine live on the session, the 3D twin as the hero, the emotion map; everything pushed; handover to the Mac
 

@@ -9,3 +9,4 @@ output/frank/
 .DS_Store
 output/online/
 output/online_watch.log
+frank/live/.vercel/

@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    { "source": "/(.*)", "destination": "https://recommendation-diploma-missed-sporting.trycloudflare.com/$1", "permanent": false }
+  ]
+}
