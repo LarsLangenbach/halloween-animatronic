@@ -83,7 +83,7 @@ def neutral_angle(socket):
             return POSES[pose][socket]
     return 90
 
-ser = serial.Serial(PORT, 115200, timeout=0)
+ser = serial.serial_for_url(PORT, 115200, timeout=0)   # also socket:// (perform/body.py)
 ser.write(b"\x03\x03")  # stop whatever runs
 time.sleep(0.3)
 ser.write(b"\x04")      # soft reset: main.py (pico_servo_ctl.py) starts

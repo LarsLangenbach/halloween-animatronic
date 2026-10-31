@@ -1,0 +1,39 @@
+{
+ "format": "perform-robot/1",
+ "name": "Frank",
+ "about": "The Frankenstein head: Cogley's Robot Head a2.0.33 on two mouth boards (firmware/README.md). Read by perform/body.py; the twin page saves each servo's zero and sign here.",
+ "rig": "../../output/twin/frank_rig.json",
+ "camera": "../../frank/camera.json",
+ "boards": {
+  "mouth": {"firmware": "cogley_mouth", "port": "auto", "label": "Board 1, mouth (on the laptop's USB)"},
+  "eyes": {"firmware": "pico_servo_ctl", "via": "mouth", "label": "Board 2, eyes and brows (over the link from Board 1)"}
+ },
+ "servo_types": {
+  "MG90S": {"deg_per_s": 550, "note": "DATASHEET 0.1 s / 60 deg at 4.8 V"},
+  "MG996R": {"deg_per_s": 350, "note": "DATASHEET 0.17 s / 60 deg at 4.8 V"}
+ },
+ "calibration_note": "zero: the angle (in the board program's own degrees) at which the part sits as in the CAD; sign: 1 if the horn turns counter-clockwise, seen from the shaft end, as the angle grows (the datasheet direction), else -1. Mouth zeros: Cogley fitted every horn at 90. Eye and brow zeros: the team's saved poses (firmware/eye_poses.json, 2026-10-30): the gaze CENTRE, the brows LEVEL, and for each lid the angle that shuts it in the CAD at its SHUT pose.",
+ "servos": {
+  "JL":  {"board": "mouth", "pin": 4,  "type": "MG996R", "label": "Jaw, left (JL)", "zero": 90, "sign": 1},
+  "JR":  {"board": "mouth", "pin": 5,  "type": "MG996R", "label": "Jaw, right (JR)", "zero": 90, "sign": 1},
+  "LUL": {"board": "mouth", "pin": 6,  "type": "MG90S", "label": "Upper lip, left (LUL)", "zero": 90, "sign": 1},
+  "LUR": {"board": "mouth", "pin": 7,  "type": "MG90S", "label": "Upper lip, right (LUR)", "zero": 90, "sign": 1},
+  "LLL": {"board": "mouth", "pin": 8,  "type": "MG90S", "label": "Lower lip, left (LLL)", "zero": 90, "sign": 1},
+  "LLR": {"board": "mouth", "pin": 9,  "type": "MG90S", "label": "Lower lip, right (LLR)", "zero": 90, "sign": 1},
+  "CUL": {"board": "mouth", "pin": 10, "type": "MG90S", "label": "Corner upper, left (CUL)", "zero": 90, "sign": 1},
+  "CUR": {"board": "mouth", "pin": 11, "type": "MG90S", "label": "Corner upper, right (CUR)", "zero": 90, "sign": 1},
+  "CLL": {"board": "mouth", "pin": 12, "type": "MG90S", "label": "Corner lower, left (CLL)", "zero": 90, "sign": 1},
+  "CLR": {"board": "mouth", "pin": 13, "type": "MG90S", "label": "Corner lower, right (CLR)", "zero": 90, "sign": 1},
+  "TON": {"board": "mouth", "pin": 14, "type": "MG90S", "label": "Tongue (TON)", "zero": 90, "sign": 1},
+  "LR":  {"board": "eyes", "pin": 8,  "type": "MG90S", "label": "Both eyes: left / right (GP8)", "zero": 107, "sign": 1},
+  "UD":  {"board": "eyes", "pin": 9,  "type": "MG90S", "label": "Both eyes: up / down (GP9)", "zero": 62, "sign": 1},
+  "BR":  {"board": "eyes", "pin": 10, "type": "MG90S", "label": "Eye on your right: bottom lid (GP10)", "zero": 135.3, "sign": 1},
+  "TR":  {"board": "eyes", "pin": 11, "type": "MG90S", "label": "Eye on your right: top lid (GP11)", "zero": 155.8, "sign": 1},
+  "BL":  {"board": "eyes", "pin": 12, "type": "MG90S", "label": "Eye on your left: bottom lid (GP12)", "zero": 89.8, "sign": 1},
+  "TL":  {"board": "eyes", "pin": 13, "type": "MG90S", "label": "Eye on your left: top lid (GP13)", "zero": 161.3, "sign": 1},
+  "LO":  {"board": "eyes", "pin": 4,  "type": "MG90S", "label": "Brow on your left: outer (GP4)", "zero": 90, "sign": 1},
+  "RO":  {"board": "eyes", "pin": 5,  "type": "MG90S", "label": "Brow on your right: outer (GP5)", "zero": 90, "sign": 1},
+  "LI":  {"board": "eyes", "pin": 6,  "type": "MG90S", "label": "Brow on your left: inner (GP6)", "zero": 90, "sign": 1},
+  "RI":  {"board": "eyes", "pin": 7,  "type": "MG90S", "label": "Brow on your right: inner (GP7)", "zero": 90, "sign": 1}
+ }
+}

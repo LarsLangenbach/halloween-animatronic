@@ -157,7 +157,7 @@ else:
     import time
     import serial
 
-    ser = serial.Serial(PORT, 115200, timeout=0)
+    ser = serial.serial_for_url(PORT, 115200, timeout=0)   # also socket:// (perform/body.py)
     where = None if COGLEY else ask_where(ser)
     if where is None and not COGLEY:
         ser.write(b"\x03\x03")  # stop whatever runs (a REPL left by Thonny, for one)

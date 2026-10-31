@@ -1,0 +1,3011 @@
+{
+ "format": "perform-rig/1",
+ "robot": "frank",
+ "source": "Will Cogley, Robot Head a2.0.33 (Patreon): private reference geometry",
+ "units": "mm",
+ "up": [
+  0.0,
+  0.0,
+  1.0
+ ],
+ "front": [
+  0.0,
+  1.0,
+  0.0
+ ],
+ "model": "frank.glb",
+ "servos": {
+  "JL": {
+   "part": "jaw horn",
+   "shaft": [
+    -1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    -49.0,
+    -64.7,
+    171.7
+   ],
+   "kind": "MG996R"
+  },
+  "JR": {
+   "part": "jaw horn",
+   "shaft": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    49.0,
+    -64.7,
+    171.7
+   ],
+   "kind": "MG996R"
+  },
+  "LUL": {
+   "part": "ULLLinkA#0",
+   "shaft": [
+    -1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    -39.3,
+    -14.3,
+    177.9
+   ],
+   "kind": "MG90S"
+  },
+  "LUR": {
+   "part": "Part 35#0",
+   "shaft": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    40.3,
+    -14.3,
+    177.9
+   ],
+   "kind": "MG90S"
+  },
+  "LLL": {
+   "part": "Part 27#0",
+   "shaft": [
+    -1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    -39.2,
+    -23.6,
+    115.6
+   ],
+   "kind": "MG90S"
+  },
+  "LLR": {
+   "part": "Part 38#0",
+   "shaft": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    40.3,
+    -24.1,
+    115.4
+   ],
+   "kind": "MG90S"
+  },
+  "CUL": {
+   "part": "Part 31#0",
+   "shaft": [
+    -1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    -49.4,
+    -46.8,
+    168.0
+   ],
+   "kind": "MG90S"
+  },
+  "CUR": {
+   "part": "Part 42#0",
+   "shaft": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    49.4,
+    -46.8,
+    168.0
+   ],
+   "kind": "MG90S"
+  },
+  "CLL": {
+   "part": "Part 32#0",
+   "shaft": [
+    -1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    -46.8,
+    -43.7,
+    150.8
+   ],
+   "kind": "MG90S"
+  },
+  "CLR": {
+   "part": "Part 43#0",
+   "shaft": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    46.8,
+    -43.7,
+    150.8
+   ],
+   "kind": "MG90S"
+  },
+  "TON": {
+   "part": "Part 20#0",
+   "shaft": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    15.8,
+    -54.3,
+    119.2
+   ],
+   "kind": "MG90S"
+  },
+  "LR": {
+   "part": "CentralServoHorn#0",
+   "shaft": [
+    0.0,
+    0.0,
+    1.0
+   ],
+   "hub": [
+    0.0,
+    1.6,
+    224.5
+   ],
+   "kind": "MG90S"
+  },
+  "UD": {
+   "part": "VerticalHorn#0",
+   "shaft": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    14.2,
+    -43.7,
+    212.4
+   ],
+   "kind": "MG90S"
+  },
+  "TL": {
+   "part": "4xTopLidHorn#3",
+   "shaft": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    56.3,
+    -43.7,
+    216.4
+   ],
+   "kind": "MG90S"
+  },
+  "BL": {
+   "part": "4xTopLidHorn#1",
+   "shaft": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    56.3,
+    -73.6,
+    208.4
+   ],
+   "kind": "MG90S"
+  },
+  "TR": {
+   "part": "4xTopLidHorn#3~mx",
+   "shaft": [
+    -1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    -56.3,
+    -43.7,
+    216.4
+   ],
+   "kind": "MG90S"
+  },
+  "BR": {
+   "part": "4xTopLidHorn#1~mx",
+   "shaft": [
+    -1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    -56.3,
+    -73.6,
+    208.4
+   ],
+   "kind": "MG90S"
+  },
+  "LI": {
+   "part": "Part 3#2",
+   "shaft": [
+    -1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    10.0,
+    -9.8,
+    262.1
+   ],
+   "kind": "MG90S"
+  },
+  "LO": {
+   "part": "Part 3#3",
+   "shaft": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    67.2,
+    -45.0,
+    262.3
+   ],
+   "kind": "MG90S"
+  },
+  "RI": {
+   "part": "Part 3#2~mx",
+   "shaft": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    -10.0,
+    -9.8,
+    262.1
+   ],
+   "kind": "MG90S"
+  },
+  "RO": {
+   "part": "Part 3#3~mx",
+   "shaft": [
+    -1.0,
+    0.0,
+    0.0
+   ],
+   "hub": [
+    -67.2,
+    -45.0,
+    262.3
+   ],
+   "kind": "MG90S"
+  }
+ },
+ "points": {
+  "lipUL_a": {
+   "on": "horn_LUL",
+   "at": [
+    -39.8,
+    -1.0,
+    174.7
+   ]
+  },
+  "lipUL_pivot": {
+   "on": "frame",
+   "at": [
+    -33.6,
+    -14.3,
+    166.0
+   ]
+  },
+  "lipUL_b": {
+   "dyad": [
+    "lipUL_a",
+    "lipUL_pivot"
+   ],
+   "at": [
+    -39.8,
+    -1.0,
+    162.7
+   ],
+   "normal": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "frame": null
+  },
+  "lipUR_a": {
+   "on": "horn_LUR",
+   "at": [
+    40.8,
+    -1.0,
+    174.7
+   ]
+  },
+  "lipUR_pivot": {
+   "on": "frame",
+   "at": [
+    34.6,
+    -14.3,
+    166.0
+   ]
+  },
+  "lipUR_b": {
+   "dyad": [
+    "lipUR_a",
+    "lipUR_pivot"
+   ],
+   "at": [
+    40.8,
+    -1.0,
+    162.7
+   ],
+   "normal": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "frame": null
+  },
+  "lipDL_a": {
+   "on": "horn_LLL",
+   "at": [
+    -37.7,
+    -10.5,
+    118.7
+   ]
+  },
+  "lipDL_pivot": {
+   "on": "jaw",
+   "at": [
+    -34.3,
+    -23.5,
+    127.5
+   ]
+  },
+  "lipDL_b": {
+   "dyad": [
+    "lipDL_a",
+    "lipDL_pivot"
+   ],
+   "at": [
+    -37.8,
+    -10.5,
+    130.7
+   ],
+   "normal": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "frame": "jaw"
+  },
+  "lipDR_a": {
+   "on": "horn_LLR",
+   "at": [
+    38.8,
+    -11.0,
+    118.4
+   ]
+  },
+  "lipDR_pivot": {
+   "on": "jaw",
+   "at": [
+    35.3,
+    -24.0,
+    127.3
+   ]
+  },
+  "lipDR_b": {
+   "dyad": [
+    "lipDR_a",
+    "lipDR_pivot"
+   ],
+   "at": [
+    38.8,
+    -10.9,
+    130.3
+   ],
+   "normal": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "frame": "jaw"
+  },
+  "cornerL_up": {
+   "on": "horn_CUL",
+   "at": [
+    -50.4,
+    -36.1,
+    177.8
+   ]
+  },
+  "cornerL_lo": {
+   "on": "horn_CLL",
+   "at": [
+    -47.8,
+    -29.9,
+    138.3
+   ]
+  },
+  "cornerL_mid": {
+   "dyad": [
+    "cornerL_lo",
+    "cornerL_up"
+   ],
+   "at": [
+    -44.9,
+    -12.4,
+    146.1
+   ],
+   "normal": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "frame": null
+  },
+  "cornerR_up": {
+   "on": "horn_CUR",
+   "at": [
+    50.4,
+    -36.1,
+    177.8
+   ]
+  },
+  "cornerR_lo": {
+   "on": "horn_CLR",
+   "at": [
+    47.8,
+    -29.7,
+    138.5
+   ]
+  },
+  "cornerR_mid": {
+   "dyad": [
+    "cornerR_lo",
+    "cornerR_up"
+   ],
+   "at": [
+    42.7,
+    -12.3,
+    146.3
+   ],
+   "normal": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "frame": null
+  },
+  "tongue_a": {
+   "on": "horn_TON",
+   "at": [
+    15.8,
+    -64.4,
+    132.5
+   ]
+  },
+  "tongue_pivot": {
+   "on": "jaw",
+   "at": [
+    -4.4,
+    -6.3,
+    120.0
+   ]
+  },
+  "tongue_b": {
+   "dyad": [
+    "tongue_a",
+    "tongue_pivot"
+   ],
+   "at": [
+    -1.2,
+    -16.4,
+    133.6
+   ],
+   "normal": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "frame": "jaw"
+  },
+  "tilt_horn": {
+   "on": "horn_UD",
+   "at": [
+    11.7,
+    -43.6,
+    229.5
+   ]
+  },
+  "tilt_frame": {
+   "on": "eye_tilt",
+   "at": [
+    11.7,
+    1.7,
+    229.4
+   ]
+  },
+  "lid_top_R_h": {
+   "on": "horn_TL",
+   "at": [
+    53.9,
+    -43.6,
+    229.5
+   ]
+  },
+  "lid_top_R_pivot": {
+   "on": "frame",
+   "at": [
+    37.7,
+    1.7,
+    212.4
+   ]
+  },
+  "lid_top_R_l": {
+   "dyad": [
+    "lid_top_R_h",
+    "lid_top_R_pivot"
+   ],
+   "at": [
+    53.9,
+    -1.0,
+    229.4
+   ],
+   "normal": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "frame": null
+  },
+  "lid_bottom_R_h": {
+   "on": "horn_BL",
+   "at": [
+    53.9,
+    -73.6,
+    195.35
+   ]
+  },
+  "lid_bottom_R_pivot": {
+   "on": "frame",
+   "at": [
+    37.7,
+    1.7,
+    212.4
+   ]
+  },
+  "lid_bottom_R_l": {
+   "dyad": [
+    "lid_bottom_R_h",
+    "lid_bottom_R_pivot"
+   ],
+   "at": [
+    53.9,
+    -1.0,
+    195.4
+   ],
+   "normal": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "frame": null
+  },
+  "lid_top_L_h": {
+   "on": "horn_TR",
+   "at": [
+    -53.9,
+    -43.6,
+    229.5
+   ]
+  },
+  "lid_top_L_pivot": {
+   "on": "frame",
+   "at": [
+    -37.7,
+    1.7,
+    212.4
+   ]
+  },
+  "lid_top_L_l": {
+   "dyad": [
+    "lid_top_L_h",
+    "lid_top_L_pivot"
+   ],
+   "at": [
+    -53.9,
+    -1.0,
+    229.4
+   ],
+   "normal": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "frame": null
+  },
+  "lid_bottom_L_h": {
+   "on": "horn_BR",
+   "at": [
+    -53.9,
+    -73.6,
+    195.35
+   ]
+  },
+  "lid_bottom_L_pivot": {
+   "on": "frame",
+   "at": [
+    -37.7,
+    1.7,
+    212.4
+   ]
+  },
+  "lid_bottom_L_l": {
+   "dyad": [
+    "lid_bottom_L_h",
+    "lid_bottom_L_pivot"
+   ],
+   "at": [
+    -53.9,
+    -1.0,
+    195.4
+   ],
+   "normal": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "frame": null
+  },
+  "browR_in_h": {
+   "on": "horn_LI",
+   "at": [
+    12.0,
+    2.2,
+    261.8
+   ]
+  },
+  "browR_in_pivot": {
+   "on": "frame",
+   "at": [
+    12.0,
+    -9.8,
+    278.1
+   ]
+  },
+  "browR_in_i": {
+   "dyad": [
+    "browR_in_h",
+    "browR_in_pivot"
+   ],
+   "at": [
+    12.0,
+    2.2,
+    277.8
+   ],
+   "normal": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "frame": null
+  },
+  "browR_out_h": {
+   "on": "horn_LO",
+   "at": [
+    64.1,
+    -33.0,
+    262.8
+   ]
+  },
+  "browR_out_pivot": {
+   "on": "frame",
+   "at": [
+    64.1,
+    -44.8,
+    278.2
+   ]
+  },
+  "browR_out_i": {
+   "dyad": [
+    "browR_out_h",
+    "browR_out_pivot"
+   ],
+   "at": [
+    64.1,
+    -33.3,
+    278.4
+   ],
+   "normal": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "frame": null
+  },
+  "browL_in_h": {
+   "on": "horn_RI",
+   "at": [
+    -12.0,
+    2.2,
+    261.8
+   ]
+  },
+  "browL_in_pivot": {
+   "on": "frame",
+   "at": [
+    -12.0,
+    -9.8,
+    278.1
+   ]
+  },
+  "browL_in_i": {
+   "dyad": [
+    "browL_in_h",
+    "browL_in_pivot"
+   ],
+   "at": [
+    -12.0,
+    2.2,
+    277.8
+   ],
+   "normal": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "frame": null
+  },
+  "browL_out_h": {
+   "on": "horn_RO",
+   "at": [
+    -64.1,
+    -33.0,
+    262.8
+   ]
+  },
+  "browL_out_pivot": {
+   "on": "frame",
+   "at": [
+    -64.1,
+    -44.8,
+    278.2
+   ]
+  },
+  "browL_out_i": {
+   "dyad": [
+    "browL_out_h",
+    "browL_out_pivot"
+   ],
+   "at": [
+    -64.1,
+    -33.3,
+    278.4
+   ],
+   "normal": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "frame": null
+  }
+ },
+ "bodies": [
+  {
+   "name": "jaw",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     0.0,
+     -64.7,
+     171.7
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "servos": [
+     {
+      "id": "JL",
+      "gain": -1.0
+     },
+     {
+      "id": "JR",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "jaw",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_LUL",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     -39.3,
+     -14.3,
+     177.9
+    ],
+    "axis": [
+     -1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "LUL",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "idlerUL",
+   "motion": {
+    "type": "link",
+    "a": "lipUL_pivot",
+    "b": "lipUL_b",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "link",
+   "layer": "mech"
+  },
+  {
+   "name": "lipUL",
+   "motion": {
+    "type": "link",
+    "a": "lipUL_a",
+    "b": "lipUL_b",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "plate",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_LUR",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     40.3,
+     -14.3,
+     177.9
+    ],
+    "axis": [
+     1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "LUR",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "idlerUR",
+   "motion": {
+    "type": "link",
+    "a": "lipUR_pivot",
+    "b": "lipUR_b",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "link",
+   "layer": "mech"
+  },
+  {
+   "name": "lipUR",
+   "motion": {
+    "type": "link",
+    "a": "lipUR_a",
+    "b": "lipUR_b",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "plate",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_LLL",
+   "parent": "jaw",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     -39.2,
+     -23.6,
+     115.6
+    ],
+    "axis": [
+     -1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "LLL",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "idlerDL",
+   "parent": "jaw",
+   "motion": {
+    "type": "link",
+    "a": "lipDL_pivot",
+    "b": "lipDL_b",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "link",
+   "layer": "mech"
+  },
+  {
+   "name": "lipDL",
+   "parent": "jaw",
+   "motion": {
+    "type": "link",
+    "a": "lipDL_a",
+    "b": "lipDL_b",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "plate",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_LLR",
+   "parent": "jaw",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     40.3,
+     -24.1,
+     115.4
+    ],
+    "axis": [
+     1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "LLR",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "idlerDR",
+   "parent": "jaw",
+   "motion": {
+    "type": "link",
+    "a": "lipDR_pivot",
+    "b": "lipDR_b",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "link",
+   "layer": "mech"
+  },
+  {
+   "name": "lipDR",
+   "parent": "jaw",
+   "motion": {
+    "type": "link",
+    "a": "lipDR_a",
+    "b": "lipDR_b",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "plate",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_CUL",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     -49.4,
+     -46.8,
+     168.0
+    ],
+    "axis": [
+     -1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "CUL",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_CLL",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     -46.8,
+     -43.7,
+     150.8
+    ],
+    "axis": [
+     -1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "CLL",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "cornerlinkL",
+   "motion": {
+    "type": "link",
+    "a": "cornerL_up",
+    "b": "cornerL_mid",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "link",
+   "layer": "mech"
+  },
+  {
+   "name": "cornerL",
+   "motion": {
+    "type": "link",
+    "a": "cornerL_lo",
+    "b": "cornerL_mid",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "plate",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_CUR",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     49.4,
+     -46.8,
+     168.0
+    ],
+    "axis": [
+     1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "CUR",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_CLR",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     46.8,
+     -43.7,
+     150.8
+    ],
+    "axis": [
+     1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "CLR",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "cornerlinkR",
+   "motion": {
+    "type": "link",
+    "a": "cornerR_up",
+    "b": "cornerR_mid",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "link",
+   "layer": "mech"
+  },
+  {
+   "name": "cornerR",
+   "motion": {
+    "type": "link",
+    "a": "cornerR_lo",
+    "b": "cornerR_mid",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "plate",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_TON",
+   "parent": "jaw",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     15.8,
+     -54.3,
+     119.2
+    ],
+    "axis": [
+     1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "TON",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "tonguelink",
+   "parent": "jaw",
+   "motion": {
+    "type": "link",
+    "a": "tongue_a",
+    "b": "tongue_b",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "link",
+   "layer": "mech"
+  },
+  {
+   "name": "tongue",
+   "parent": "jaw",
+   "motion": {
+    "type": "link",
+    "a": "tongue_pivot",
+    "b": "tongue_b",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "plate",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_UD",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     14.2,
+     -43.7,
+     212.4
+    ],
+    "axis": [
+     1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "UD",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "eye_tilt",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     0.0,
+     1.6,
+     212.4
+    ],
+    "axis": [
+     1.0,
+     0.0,
+     0.0
+    ],
+    "servos": [
+     {
+      "id": "UD",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "frame",
+   "layer": "mech"
+  },
+  {
+   "name": "tiltlever",
+   "motion": {
+    "type": "link",
+    "a": "tilt_horn",
+    "b": "tilt_frame",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "link",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_LR",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     0.0,
+     1.6,
+     224.5
+    ],
+    "axis": [
+     0,
+     0,
+     1
+    ],
+    "servos": [
+     {
+      "id": "LR",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "eye_R",
+   "parent": "eye_tilt",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     37.5,
+     1.6,
+     212.4
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "servos": [
+     {
+      "id": "LR",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "eye",
+   "layer": "mech"
+  },
+  {
+   "name": "eye_L",
+   "parent": "eye_tilt",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     -37.5,
+     1.6,
+     212.4
+    ],
+    "axis": [
+     0.0,
+     0.0,
+     1.0
+    ],
+    "servos": [
+     {
+      "id": "LR",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "eye",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_TL",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     56.3,
+     -43.7,
+     216.4
+    ],
+    "axis": [
+     1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "TL",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "lid_top_R_lever",
+   "motion": {
+    "type": "link",
+    "a": "lid_top_R_h",
+    "b": "lid_top_R_l",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "link",
+   "layer": "mech"
+  },
+  {
+   "name": "lid_top_R",
+   "motion": {
+    "type": "link",
+    "a": "lid_top_R_pivot",
+    "b": "lid_top_R_l",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "lid",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_BL",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     56.3,
+     -73.6,
+     208.4
+    ],
+    "axis": [
+     1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "BL",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "lid_bottom_R_lever",
+   "motion": {
+    "type": "link",
+    "a": "lid_bottom_R_h",
+    "b": "lid_bottom_R_l",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "link",
+   "layer": "mech"
+  },
+  {
+   "name": "lid_bottom_R",
+   "motion": {
+    "type": "link",
+    "a": "lid_bottom_R_pivot",
+    "b": "lid_bottom_R_l",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "lid",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_TR",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     -56.3,
+     -43.7,
+     216.4
+    ],
+    "axis": [
+     -1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "TR",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "lid_top_L_lever",
+   "motion": {
+    "type": "link",
+    "a": "lid_top_L_h",
+    "b": "lid_top_L_l",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "link",
+   "layer": "mech"
+  },
+  {
+   "name": "lid_top_L",
+   "motion": {
+    "type": "link",
+    "a": "lid_top_L_pivot",
+    "b": "lid_top_L_l",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "lid",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_BR",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     -56.3,
+     -73.6,
+     208.4
+    ],
+    "axis": [
+     -1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "BR",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "lid_bottom_L_lever",
+   "motion": {
+    "type": "link",
+    "a": "lid_bottom_L_h",
+    "b": "lid_bottom_L_l",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "link",
+   "layer": "mech"
+  },
+  {
+   "name": "lid_bottom_L",
+   "motion": {
+    "type": "link",
+    "a": "lid_bottom_L_pivot",
+    "b": "lid_bottom_L_l",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "lid",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_LI",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     10.0,
+     -9.8,
+     262.1
+    ],
+    "axis": [
+     -1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "LI",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "browR_in_idler",
+   "motion": {
+    "type": "link",
+    "a": "browR_in_pivot",
+    "b": "browR_in_i",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "link",
+   "layer": "mech"
+  },
+  {
+   "name": "browR_in_arm",
+   "motion": {
+    "type": "link",
+    "a": "browR_in_h",
+    "b": "browR_in_i",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "brow",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_LO",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     67.2,
+     -45.0,
+     262.3
+    ],
+    "axis": [
+     1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "LO",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "browR_out_idler",
+   "motion": {
+    "type": "link",
+    "a": "browR_out_pivot",
+    "b": "browR_out_i",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "link",
+   "layer": "mech"
+  },
+  {
+   "name": "browR_out_arm",
+   "motion": {
+    "type": "link",
+    "a": "browR_out_h",
+    "b": "browR_out_i",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "brow",
+   "layer": "mech"
+  },
+  {
+   "name": "browR_bar",
+   "motion": {
+    "type": "bend",
+    "a": "browR_in_arm",
+    "b": "browR_out_arm",
+    "pa": [
+     23.8,
+     26.0,
+     249.0
+    ],
+    "pb": [
+     70.5,
+     -12.5,
+     236.8
+    ]
+   },
+   "role": "brow",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_RI",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     -10.0,
+     -9.8,
+     262.1
+    ],
+    "axis": [
+     1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "RI",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "browL_in_idler",
+   "motion": {
+    "type": "link",
+    "a": "browL_in_pivot",
+    "b": "browL_in_i",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "link",
+   "layer": "mech"
+  },
+  {
+   "name": "browL_in_arm",
+   "motion": {
+    "type": "link",
+    "a": "browL_in_h",
+    "b": "browL_in_i",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "brow",
+   "layer": "mech"
+  },
+  {
+   "name": "horn_RO",
+   "motion": {
+    "type": "revolute",
+    "origin": [
+     -67.2,
+     -45.0,
+     262.3
+    ],
+    "axis": [
+     -1,
+     0,
+     0
+    ],
+    "servos": [
+     {
+      "id": "RO",
+      "gain": 1.0
+     }
+    ]
+   },
+   "role": "horn",
+   "layer": "mech"
+  },
+  {
+   "name": "browL_out_idler",
+   "motion": {
+    "type": "link",
+    "a": "browL_out_pivot",
+    "b": "browL_out_i",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "link",
+   "layer": "mech"
+  },
+  {
+   "name": "browL_out_arm",
+   "motion": {
+    "type": "link",
+    "a": "browL_out_h",
+    "b": "browL_out_i",
+    "normal": [
+     1.0,
+     0.0,
+     0.0
+    ]
+   },
+   "role": "brow",
+   "layer": "mech"
+  },
+  {
+   "name": "browL_bar",
+   "motion": {
+    "type": "bend",
+    "a": "browL_in_arm",
+    "b": "browL_out_arm",
+    "pa": [
+     -23.8,
+     26.0,
+     249.0
+    ],
+    "pb": [
+     -70.5,
+     -12.5,
+     236.8
+    ]
+   },
+   "role": "brow",
+   "layer": "mech"
+  }
+ ],
+ "static": {
+  "frame": {
+   "layer": "mech"
+  },
+  "shell": {
+   "layer": "shell"
+  }
+ },
+ "layers": {
+  "mech": "Mechanism",
+  "shell": "Cogley's robot shell (our skin replaces it)",
+  "skin": "Face mask (does not move)",
+  "enclosure": "Enclosure and neck"
+ },
+ "layers_on": [
+  "mech"
+ ],
+ "eye_centres": [
+  [
+   37.5,
+   0.0,
+   212.4
+  ],
+  [
+   -37.5,
+   0.0,
+   212.4
+  ]
+ ],
+ "gaze": [
+  {
+   "body": "eye_R",
+   "from": [
+    37.5,
+    0.0,
+    212.4
+   ],
+   "dir": [
+    0.0,
+    1.0,
+    0.0
+   ]
+  },
+  {
+   "body": "eye_L",
+   "from": [
+    -37.5,
+    0.0,
+    212.4
+   ],
+   "dir": [
+    0.0,
+    1.0,
+    0.0
+   ]
+  }
+ ],
+ "parts": [
+  {
+   "part": "Part 11#0~mx",
+   "body": "browL_bar",
+   "role": "brow"
+  },
+  {
+   "part": "Part 8#0~mx",
+   "body": "browL_in_arm",
+   "role": "brow"
+  },
+  {
+   "part": "Part 2#3~mx",
+   "body": "browL_in_idler",
+   "role": "link"
+  },
+  {
+   "part": "Part 9#0~mx",
+   "body": "browL_out_arm",
+   "role": "brow"
+  },
+  {
+   "part": "Part 2#1~mx",
+   "body": "browL_out_idler",
+   "role": "link"
+  },
+  {
+   "part": "Part 11#0",
+   "body": "browR_bar",
+   "role": "brow"
+  },
+  {
+   "part": "Part 8#0",
+   "body": "browR_in_arm",
+   "role": "brow"
+  },
+  {
+   "part": "Part 2#3",
+   "body": "browR_in_idler",
+   "role": "link"
+  },
+  {
+   "part": "Part 9#0",
+   "body": "browR_out_arm",
+   "role": "brow"
+  },
+  {
+   "part": "Part 2#1",
+   "body": "browR_out_idler",
+   "role": "link"
+  },
+  {
+   "part": "M3 Shoulder#6",
+   "body": "cornerL",
+   "role": "hardware"
+  },
+  {
+   "part": "Part 29#0",
+   "body": "cornerL",
+   "role": "plate"
+  },
+  {
+   "part": "M3 Shoulder#11",
+   "body": "cornerR",
+   "role": "hardware"
+  },
+  {
+   "part": "Part 40#0",
+   "body": "cornerR",
+   "role": "plate"
+  },
+  {
+   "part": "M3 Shoulder#3",
+   "body": "cornerlinkL",
+   "role": "hardware"
+  },
+  {
+   "part": "M3 Shoulder#9",
+   "body": "cornerlinkL",
+   "role": "hardware"
+  },
+  {
+   "part": "Part 30#0",
+   "body": "cornerlinkL",
+   "role": "link"
+  },
+  {
+   "part": "M3 Shoulder#10",
+   "body": "cornerlinkR",
+   "role": "hardware"
+  },
+  {
+   "part": "M3 Shoulder#7",
+   "body": "cornerlinkR",
+   "role": "hardware"
+  },
+  {
+   "part": "Part 41#0",
+   "body": "cornerlinkR",
+   "role": "link"
+  },
+  {
+   "part": "Component74#0",
+   "body": "eye_L",
+   "role": "eye"
+  },
+  {
+   "part": "EyeAdaptor#0~mx",
+   "body": "eye_L",
+   "role": "eye"
+  },
+  {
+   "part": "EyeAdaptor#1~mx",
+   "body": "eye_L",
+   "role": "eye"
+  },
+  {
+   "part": "Component74#1",
+   "body": "eye_R",
+   "role": "eye"
+  },
+  {
+   "part": "EyeAdaptor#0",
+   "body": "eye_R",
+   "role": "eye"
+  },
+  {
+   "part": "EyeAdaptor#1",
+   "body": "eye_R",
+   "role": "eye"
+  },
+  {
+   "part": "Base#0",
+   "body": "frame",
+   "role": "frame"
+  },
+  {
+   "part": "Base#1",
+   "body": "frame",
+   "role": "frame"
+  },
+  {
+   "part": "Base#2",
+   "body": "frame",
+   "role": "frame"
+  },
+  {
+   "part": "Base#3",
+   "body": "frame",
+   "role": "frame"
+  },
+  {
+   "part": "CheekBone#0",
+   "body": "frame",
+   "role": "frame"
+  },
+  {
+   "part": "Component2#0",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "Component2#1",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "EyeCorePivotHolder#0",
+   "body": "frame",
+   "role": "frame"
+  },
+  {
+   "part": "FanBracket#0",
+   "body": "frame",
+   "role": "frame"
+  },
+  {
+   "part": "Hex socket head cap screw M2.5x0.45 x 8#0",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2.5x0.45 x 8#1",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2.5x0.45 x 8#2",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2.5x0.45 x 8#5",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2.5x0.45 x 8#6",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2.5x0.45 x 8#7",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#10",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#11",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#18",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#2",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#20",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#4",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#7",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#9",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 8#0",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 8#1",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 10#0",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 10#1",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 10#2",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 10#3",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 10#4",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 10#5",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 6#0",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 6#1",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 6#2",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 6#3",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 6#4",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 6#5",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 6#6",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 6#7",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 8#0",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 8#1",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 8#2",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 8#3",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 8#4",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 8#5",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 8#6",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M3x0.50 x 8#7",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M4x0.70 x 16#0",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M4x0.70 x 16#1",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M4x0.70 x 16#2",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M4x0.70 x 16#3",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M4x0.70 x 16#4",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M4x0.70 x 16#5",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M4x0.70 x 6#0",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M4x0.70 x 6#1",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "M4 Shoulder SSHE-M4-5-5-A2#1",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "M4 Shoulder SSHE-M4-5-5-A2#2",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "M4Insert#0",
+   "body": "frame",
+   "role": "hardware"
+  },
+  {
+   "part": "MG90s_servo_FIX v1(Mirror)#0",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "MG90s_servo_FIX v1(Mirror)#0~mx",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "MG90s_servo_FIX v1(Mirror)#1",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "MG90s_servo_FIX v1(Mirror)#1~mx",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "MG90s_servo_FIX v1(Mirror)#3",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "MG90s_servo_FIX v1(Mirror)#4",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "MG90s_servo_FIX v1(Mirror)#5",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "MG90s_servo_FIX v1(Mirror)#6",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "MG90s_servo_FIX v1(Mirror)#8",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "MG90s_servo_FIX v1(Mirror)#9",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "Part 1#1",
+   "body": "frame",
+   "role": "frame"
+  },
+  {
+   "part": "Part 1#2",
+   "body": "frame",
+   "role": "frame"
+  },
+  {
+   "part": "Part 4#0",
+   "body": "frame",
+   "role": "frame"
+  },
+  {
+   "part": "SG90#0",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "SG90#1",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "SG90#2",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "SG90#3",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "SG90#4",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "SG90#5",
+   "body": "frame",
+   "role": "servo"
+  },
+  {
+   "part": "SkullFrame#0",
+   "body": "frame",
+   "role": "frame"
+  },
+  {
+   "part": "SnapEyemech v20#0",
+   "body": "frame",
+   "role": "frame"
+  },
+  {
+   "part": "SnapEyemech v20#1",
+   "body": "frame",
+   "role": "frame"
+  },
+  {
+   "part": "SnapEyemech v20#2",
+   "body": "frame",
+   "role": "frame"
+  },
+  {
+   "part": "SnapEyemech v20#3",
+   "body": "frame",
+   "role": "frame"
+  },
+  {
+   "part": "TopBase#0",
+   "body": "frame",
+   "role": "frame"
+  },
+  {
+   "part": "4xTopLidHorn#1",
+   "body": "horn_BL",
+   "role": "horn"
+  },
+  {
+   "part": "4xTopLidHorn#1~mx",
+   "body": "horn_BR",
+   "role": "horn"
+  },
+  {
+   "part": "Part 32#0",
+   "body": "horn_CLL",
+   "role": "horn"
+  },
+  {
+   "part": "Part 43#0",
+   "body": "horn_CLR",
+   "role": "horn"
+  },
+  {
+   "part": "Part 31#0",
+   "body": "horn_CUL",
+   "role": "horn"
+  },
+  {
+   "part": "Part 42#0",
+   "body": "horn_CUR",
+   "role": "horn"
+  },
+  {
+   "part": "Part 3#2",
+   "body": "horn_LI",
+   "role": "horn"
+  },
+  {
+   "part": "Part 27#0",
+   "body": "horn_LLL",
+   "role": "horn"
+  },
+  {
+   "part": "Part 38#0",
+   "body": "horn_LLR",
+   "role": "horn"
+  },
+  {
+   "part": "Part 3#3",
+   "body": "horn_LO",
+   "role": "horn"
+  },
+  {
+   "part": "CentralServoHorn#0",
+   "body": "horn_LR",
+   "role": "horn"
+  },
+  {
+   "part": "Chamfered plain washer normal M4#0",
+   "body": "horn_LUL",
+   "role": "hardware"
+  },
+  {
+   "part": "ULLLinkA#0",
+   "body": "horn_LUL",
+   "role": "horn"
+  },
+  {
+   "part": "Part 35#0",
+   "body": "horn_LUR",
+   "role": "horn"
+  },
+  {
+   "part": "Part 3#2~mx",
+   "body": "horn_RI",
+   "role": "horn"
+  },
+  {
+   "part": "Part 3#3~mx",
+   "body": "horn_RO",
+   "role": "horn"
+  },
+  {
+   "part": "4xTopLidHorn#3",
+   "body": "horn_TL",
+   "role": "horn"
+  },
+  {
+   "part": "Part 20#0",
+   "body": "horn_TON",
+   "role": "horn"
+  },
+  {
+   "part": "4xTopLidHorn#3~mx",
+   "body": "horn_TR",
+   "role": "horn"
+  },
+  {
+   "part": "VerticalHorn#0",
+   "body": "horn_UD",
+   "role": "horn"
+  },
+  {
+   "part": "Part 28#0",
+   "body": "idlerDL",
+   "role": "link"
+  },
+  {
+   "part": "Part 39#0",
+   "body": "idlerDR",
+   "role": "link"
+  },
+  {
+   "part": "Chamfered plain washer normal M5#0",
+   "body": "idlerUL",
+   "role": "hardware"
+  },
+  {
+   "part": "ULLLinkB#0",
+   "body": "idlerUL",
+   "role": "link"
+  },
+  {
+   "part": "Part 36#0",
+   "body": "idlerUR",
+   "role": "link"
+  },
+  {
+   "part": "Component1#0",
+   "body": "jaw",
+   "role": "jaw"
+  },
+  {
+   "part": "Hex socket head cap screw M2.5x0.45 x 8#3",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2.5x0.45 x 8#4",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#0",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#1",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#12",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#13",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#14",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#15",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#16",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#17",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#19",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#21",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#3",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#5",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#6",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M2x0.40 x 6#8",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M4x0.70 x 8#0",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M4x0.70 x 8#1",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M4x0.70 x 8#2",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "Hex socket head cap screw M4x0.70 x 8#3",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "JawBase#0",
+   "body": "jaw",
+   "role": "jaw"
+  },
+  {
+   "part": "JawLink#0",
+   "body": "jaw",
+   "role": "jaw"
+  },
+  {
+   "part": "M4 Shoulder SSHE-M4-5-5-A2#0",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "M4 Shoulder SSHE-M4-5-5-A2#3",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "M4Insert#1",
+   "body": "jaw",
+   "role": "hardware"
+  },
+  {
+   "part": "MG90s_servo_FIX v1(Mirror)#10",
+   "body": "jaw",
+   "role": "servo"
+  },
+  {
+   "part": "MG90s_servo_FIX v1(Mirror)#2",
+   "body": "jaw",
+   "role": "servo"
+  },
+  {
+   "part": "MG90s_servo_FIX v1(Mirror)#7",
+   "body": "jaw",
+   "role": "servo"
+  },
+  {
+   "part": "MG996R v6#0",
+   "body": "jaw",
+   "role": "jaw"
+  },
+  {
+   "part": "Part 1#0",
+   "body": "jaw",
+   "role": "jaw"
+  },
+  {
+   "part": "Part 1#3",
+   "body": "jaw",
+   "role": "jaw"
+  },
+  {
+   "part": "Part 33#0",
+   "body": "jaw",
+   "role": "jaw"
+  },
+  {
+   "part": "LidTR#0~mx",
+   "body": "lid_bottom_L",
+   "role": "lid"
+  },
+  {
+   "part": "2xBottomLidLever#0~mx",
+   "body": "lid_bottom_L_lever",
+   "role": "link"
+  },
+  {
+   "part": "LidTR#0",
+   "body": "lid_bottom_R",
+   "role": "lid"
+  },
+  {
+   "part": "2xBottomLidLever#0",
+   "body": "lid_bottom_R_lever",
+   "role": "link"
+  },
+  {
+   "part": "LidBR#1~mx",
+   "body": "lid_top_L",
+   "role": "lid"
+  },
+  {
+   "part": "2xTopLidLever#1~mx",
+   "body": "lid_top_L_lever",
+   "role": "link"
+  },
+  {
+   "part": "LidBR#1",
+   "body": "lid_top_R",
+   "role": "lid"
+  },
+  {
+   "part": "2xTopLidLever#1",
+   "body": "lid_top_R_lever",
+   "role": "link"
+  },
+  {
+   "part": "LowerLeftLip#0",
+   "body": "lipDL",
+   "role": "plate"
+  },
+  {
+   "part": "M3 Shoulder#1",
+   "body": "lipDL",
+   "role": "hardware"
+  },
+  {
+   "part": "M3 Shoulder#13",
+   "body": "lipDL",
+   "role": "hardware"
+  },
+  {
+   "part": "M3 Shoulder#12",
+   "body": "lipDR",
+   "role": "hardware"
+  },
+  {
+   "part": "M3 Shoulder#4",
+   "body": "lipDR",
+   "role": "hardware"
+  },
+  {
+   "part": "Part 37#0",
+   "body": "lipDR",
+   "role": "plate"
+  },
+  {
+   "part": "M3 Shoulder#0",
+   "body": "lipUL",
+   "role": "hardware"
+  },
+  {
+   "part": "M3 Shoulder#2",
+   "body": "lipUL",
+   "role": "hardware"
+  },
+  {
+   "part": "UpperLeftLip#0",
+   "body": "lipUL",
+   "role": "plate"
+  },
+  {
+   "part": "M3 Shoulder#5",
+   "body": "lipUR",
+   "role": "hardware"
+  },
+  {
+   "part": "M3 Shoulder#8",
+   "body": "lipUR",
+   "role": "hardware"
+  },
+  {
+   "part": "Part 34#0",
+   "body": "lipUR",
+   "role": "plate"
+  },
+  {
+   "part": "FrontPlate#0",
+   "body": "shell",
+   "role": "shell"
+  },
+  {
+   "part": "FrontVent#0",
+   "body": "shell",
+   "role": "shell"
+  },
+  {
+   "part": "RearPlate#0",
+   "body": "shell",
+   "role": "shell"
+  },
+  {
+   "part": "RearVent#0",
+   "body": "shell",
+   "role": "shell"
+  },
+  {
+   "part": "VerticalLever#0",
+   "body": "tiltlever",
+   "role": "link"
+  },
+  {
+   "part": "Part 19#0",
+   "body": "tongue",
+   "role": "plate"
+  },
+  {
+   "part": "Part 21#0",
+   "body": "tonguelink",
+   "role": "link"
+  }
+ ],
+ "extra": [
+  {
+   "part": "face_mask",
+   "layer": "skin",
+   "faces": 60000
+  },
+  {
+   "part": "enc_band_B",
+   "layer": "enclosure",
+   "faces": 17050
+  },
+  {
+   "part": "enc_band_F",
+   "layer": "enclosure",
+   "faces": 17080
+  },
+  {
+   "part": "enc_bottom_B",
+   "layer": "enclosure",
+   "faces": 2328
+  },
+  {
+   "part": "enc_bottom_F",
+   "layer": "enclosure",
+   "faces": 2328
+  },
+  {
+   "part": "enc_cap_B",
+   "layer": "enclosure",
+   "faces": 7272
+  },
+  {
+   "part": "enc_cap_F",
+   "layer": "enclosure",
+   "faces": 7336
+  },
+  {
+   "part": "enc_grille",
+   "layer": "enclosure",
+   "faces": 7212
+  },
+  {
+   "part": "enc_hatch",
+   "layer": "enclosure",
+   "faces": 7224
+  },
+  {
+   "part": "enc_pedestal",
+   "layer": "enclosure",
+   "faces": 3430
+  },
+  {
+   "part": "enc_top_B",
+   "layer": "enclosure",
+   "faces": 2148
+  },
+  {
+   "part": "enc_top_F",
+   "layer": "enclosure",
+   "faces": 2128
+  },
+  {
+   "part": "enc_tray",
+   "layer": "enclosure",
+   "faces": 15010
+  },
+  {
+   "part": "neck",
+   "layer": "enclosure",
+   "faces": 3660
+  },
+  {
+   "part": "neck_clamp_L",
+   "layer": "enclosure",
+   "faces": 688
+  },
+  {
+   "part": "neck_clamp_R",
+   "layer": "enclosure",
+   "faces": 688
+  }
+ ]
+}

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Body twin</title>
+<link rel="icon" href="data:,">
+<style>
+:root {
+  --bg: #111316; --panel: #191c20; --line: #2a2f36; --text: #e6e8eb; --muted: #8b939e;
+  --accent: #f0b429; --ok: #3fb950; --warn: #e3742b; --bad: #f85149; --cmd: #58a6ff;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 13px/1.4 var(--sans); }
+#app { display: grid; grid-template-columns: 1fr 360px; height: 100vh; }
+#view { position: relative; min-width: 0; }
+#view canvas { display: block; width: 100%; height: 100%; }
+#hud { position: absolute; left: 12px; top: 10px; display: flex; gap: 8px; flex-wrap: wrap; pointer-events: none; }
+.chip { pointer-events: auto; background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--line);
+  border-radius: 6px; padding: 4px 9px; display: flex; align-items: center; gap: 6px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.dot.ok { background: var(--ok); } .dot.bad { background: var(--bad); } .dot.warn { background: var(--warn); }
+#views { position: absolute; left: 12px; bottom: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+button { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+  padding: 4px 10px; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button.on { border-color: var(--accent); color: var(--accent); }
+#pick { position: absolute; right: 12px; bottom: 12px; max-width: 50%; text-align: right; color: var(--muted); }
+#loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 15px; }
+aside { background: var(--panel); border-left: 1px solid var(--line); overflow-y: auto; padding: 12px 14px 24px; }
+h1 { font-size: 16px; margin: 0 0 2px; }
+h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 18px 0 6px; font-weight: 600; }
+.sub { color: var(--muted); margin-bottom: 6px; }
+.servo { display: grid; grid-template-columns: 10px 1fr 52px; gap: 6px; align-items: center; padding: 3px 4px; border-radius: 5px; cursor: pointer; }
+.servo:hover { background: #20242a; }
+.servo.sel { background: #262b32; outline: 1px solid var(--accent); }
+.servo .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.servo .deg { font-family: var(--mono); text-align: right; color: var(--muted); }
+.servo.live .deg { color: var(--text); }
+.servo.fault .name { color: var(--bad); }
+.bar { grid-column: 2 / 4; height: 4px; background: #23272d; border-radius: 2px; position: relative; margin-top: -2px; }
+.bar i { position: absolute; top: -2px; width: 2px; height: 8px; border-radius: 1px; }
+.bar i.cmd { background: var(--cmd); } .bar i.now { background: var(--accent); }
+#cal { border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-top: 8px; display: none; }
+#cal.show { display: block; }
+#cal .row { display: flex; gap: 6px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
+#cal input[type=number] { width: 80px; font: inherit; font-family: var(--mono); background: var(--bg); color: var(--text);
+  border: 1px solid var(--line); border-radius: 5px; padding: 3px 6px; }
+#cal .hint { color: var(--muted); font-size: 12px; }
+#cal .dirty { color: var(--warn); }
+.layer { display: flex; gap: 8px; align-items: center; margin: 3px 0; }
+#log { font-family: var(--mono); font-size: 11.5px; color: var(--muted); max-height: 220px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+#log .reply { color: #7d8590; } #log .note { color: var(--accent); }
+.legend { display: flex; gap: 12px; color: var(--muted); font-size: 12px; margin-top: 4px; }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 4px; margin-right: 5px; vertical-align: middle; border-radius: 2px; }
+.legend .c::before { background: var(--cmd); } .legend .n::before { background: var(--accent); }
+@media (max-width: 760px) {
+  #app { grid-template-columns: 1fr; grid-template-rows: 55vh auto; height: auto; }
+  aside { border-left: 0; border-top: 1px solid var(--line); padding: 12px 16px; }
+}
+/* ?hero=1: the 3D view alone, full-bleed, for embedding (frank/web.html, the engine's preview) */
+html.hero, html.hero body { background: #0b0c0e; overflow: hidden; }
+html.hero #app { grid-template-columns: 1fr; grid-template-rows: 1fr; height: 100vh; }
+html.hero aside, html.hero #views, html.hero #pick, html.hero #faultChip, html.hero #connText { display: none !important; }
+html.hero #hud { left: 8px; top: 8px; }
+html.hero #hud .chip { background: none; border: 0; padding: 0; }
+html.hero #hud .dot { width: 7px; height: 7px; opacity: .75; }
+html.hero #loading { font-size: 12px; }
+</style>
+<script>if (new URLSearchParams(location.search).get("hero") === "1") document.documentElement.classList.add("hero");</script>
+<script type="importmap">
+{"imports": {"three": "/twin/vendor/three/three.module.min.js", "three/addons/": "/twin/vendor/three/addons/"}}
+</script>
+</head>
+<body>
+<div id="app">
+  <div id="view">
+    <div id="loading">Loading the model…</div>
+    <div id="hud">
+      <div class="chip"><span class="dot" id="conn"></span><span id="connText">connecting</span></div>
+      <div class="chip" id="faultChip" hidden><span class="dot bad"></span><span id="faultText"></span></div>
+    </div>
+    <div id="views"></div>
+    <div id="pick"></div>
+  </div>
+  <aside>
+    <h1 id="title">Body twin</h1>
+    <div class="sub" id="boards"></div>
+    <h2>Servos</h2>
+    <div class="legend"><span class="c">told</span><span class="n">where it is now</span></div>
+    <div id="servos"></div>
+    <div id="cal">
+      <div><b id="calName"></b></div>
+      <div class="hint" id="calSock"></div>
+      <div class="row">zero <input type="number" id="calZero" step="0.5">
+        <button data-step="-5">−5</button><button data-step="-0.5">−½</button>
+        <button data-step="0.5">+½</button><button data-step="5">+5</button></div>
+      <div class="row">direction <button id="calSign"></button></div>
+      <div class="row"><button id="calSave">Save to robot.json</button><button id="calRevert">Revert</button>
+        <span id="calState" class="hint"></span></div>
+      <div class="hint">Move the real servo (slider window or Frank), then change zero until the twin's part sits
+        where the real one does. If it moves the wrong way, flip the direction.</div>
+    </div>
+    <h2>Layers</h2>
+    <div id="layers"></div>
+    <h2>Lines to the boards</h2>
+    <div id="log"></div>
+  </aside>
+</div>
+<script type="module" src="/twin/twin.js"></script>
+</body>
+</html>
