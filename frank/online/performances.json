@@ -1,0 +1,59 @@
+{
+ "about": "Frank online: performances for the example prompts on the face page (preview.html .anim-eg), written by hand in frank/engine/animate.py's timeline format, because writing a new one needs an Anthropic key and the public site has none. browser.py plays the one whose prompt matches; build.py warns about an example with none here.",
+ "performances": {
+  "spots a spider on the camera and freezes": {
+   "title": "spots a spider and freezes (pre-written)",
+   "duration": 6.5,
+   "keys": [
+    {"t": 0.0, "kind": "look", "yaw": 0, "pitch": 16},
+    {"t": 0.25, "kind": "event", "event": "flinch"},
+    {"t": 0.3, "kind": "tag", "tag": "surprised", "intensity": 1.0},
+    {"t": 0.5, "kind": "feel", "p": -0.5, "a": 0.9, "d": -0.5},
+    {"t": 1.6, "kind": "tag", "tag": "vulnerable", "intensity": 0.8},
+    {"t": 2.0, "kind": "look", "yaw": 2, "pitch": 18},
+    {"t": 3.5, "kind": "feel", "p": -0.6, "a": 0.8, "d": -0.6},
+    {"t": 4.6, "kind": "event", "event": "blink"},
+    {"t": 5.2, "kind": "feel", "p": -0.3, "a": 0.5, "d": -0.3},
+    {"t": 5.5, "kind": "tag", "tag": "concentrating", "intensity": 0.6}
+   ]
+  },
+  "slowly realises he's been insulted": {
+   "title": "slowly realises he's been insulted (pre-written)",
+   "duration": 7.5,
+   "keys": [
+    {"t": 0.0, "kind": "tag", "tag": "neutral", "intensity": 0.6},
+    {"t": 0.0, "kind": "feel", "p": 0.15, "a": 0.0, "d": 0.3},
+    {"t": 1.0, "kind": "tag", "tag": "curious", "intensity": 0.5},
+    {"t": 1.0, "kind": "look", "yaw": 10, "pitch": 0},
+    {"t": 2.6, "kind": "tag", "tag": "confused", "intensity": 0.7},
+    {"t": 2.6, "kind": "feel", "p": -0.2, "a": 0.2, "d": 0.1},
+    {"t": 4.0, "kind": "event", "event": "beat"},
+    {"t": 4.1, "kind": "tag", "tag": "skeptical", "intensity": 0.8},
+    {"t": 4.1, "kind": "feel", "p": -0.5, "a": 0.4, "d": 0.5},
+    {"t": 5.5, "kind": "look", "yaw": 0, "pitch": 0},
+    {"t": 5.6, "kind": "tag", "tag": "irritated", "intensity": 0.9},
+    {"t": 5.6, "kind": "feel", "p": -0.7, "a": 0.6, "d": 0.7},
+    {"t": 6.6, "kind": "event", "event": "blink"}
+   ]
+  },
+  "falls asleep mid-thought, then jolts awake": {
+   "title": "falls asleep mid-thought, then jolts awake (pre-written)",
+   "duration": 8.5,
+   "keys": [
+    {"t": 0.0, "kind": "tag", "tag": "concentrating", "intensity": 0.7},
+    {"t": 0.0, "kind": "look", "yaw": -15, "pitch": 10},
+    {"t": 1.5, "kind": "feel", "p": 0.1, "a": -0.4, "d": 0.2},
+    {"t": 3.0, "kind": "event", "event": "long_blink"},
+    {"t": 3.0, "kind": "feel", "p": 0.1, "a": -0.9, "d": 0.0},
+    {"t": 4.0, "kind": "look", "yaw": 0, "pitch": -20},
+    {"t": 4.6, "kind": "event", "event": "long_blink"},
+    {"t": 6.0, "kind": "event", "event": "flinch"},
+    {"t": 6.0, "kind": "tag", "tag": "surprised", "intensity": 1.0},
+    {"t": 6.0, "kind": "feel", "p": -0.1, "a": 0.9, "d": -0.2},
+    {"t": 6.0, "kind": "look", "yaw": 0, "pitch": 5},
+    {"t": 6.8, "kind": "event", "event": "blink"},
+    {"t": 7.5, "kind": "tag", "tag": "confused", "intensity": 0.6}
+   ]
+  }
+ }
+}

@@ -10,8 +10,8 @@ half-written file from a session still editing the engine never reaches the publ
     python frank/online/watch.py --log FILE      also append the lines to FILE
 
 One line per event: HELD (the check failed: the page stays as it was), DEPLOYED, LIVE OK or
-LIVE FAILED (the public page checked after a deploy). The page's routes are preview.Api's
-(browser.py), so new ones need nothing here. At most one deploy every GAP seconds (Vercel's free plan allows
+LIVE FAILED (the public page checked after a deploy), WARN (build.py: something will not work
+online). The page's routes are preview.Api's (browser.py), so new ones need nothing here. At most one deploy every GAP seconds (Vercel's free plan allows
 100 a day). Only one watcher runs at a time: it holds 127.0.0.1:LOCK_PORT. What was deployed
 is recorded in output/online/.vercel/frank_deployed.json, which never uploads.
 """
@@ -87,13 +87,18 @@ def check(url):
     """check.mjs's result for url, and whether it passes."""
     node = shutil.which("node")
     r = subprocess.run([node, str(HERE / "check.mjs"), browser(), url, str(free_port())],
-                       capture_output=True, text=True, encoding="utf-8", timeout=180, creationflags=NO_WINDOW)
+                       capture_output=True, text=True, encoding="utf-8", timeout=240, creationflags=NO_WINDOW)
     try:
         res = json.loads(r.stdout.strip().splitlines()[-1])
     except (ValueError, IndexError):
         return {"errors": [f"check.mjs: {(r.stderr or r.stdout).strip()[-300:]}"]}, False
+    twin = res.get("twin")   # shown: the 3D twin is the face, and must load and move
+    drawn = twin.get("loaded") and twin.get("driven", 0) > 0 if twin else res.get("lit", 0) > 5000
+    ed = res.get("editor")   # the State machine tab, where the page has one
+    editing = not ed or (ed.get("status") == 200 and ed.get("charts", 0) > 0
+                         and (ed.get("page") or {}).get("drawn", 0) > 20 and not (ed.get("page") or {}).get("error"))
     ok = (res.get("live") and (res.get("engine") or "").endswith("Engine") and res.get("tags", 0) > 0
-          and res.get("lit", 0) > 5000 and not res.get("errors"))
+          and drawn and editing and not res.get("errors"))
     return res, bool(ok)
 
 
@@ -121,13 +126,15 @@ def deploy():
 
 def short(res):
     return (f"live={res.get('live')} in {res.get('seconds')} s, {res.get('engine')}, tags={res.get('tags')}, "
-            f"state={res.get('state')}, strongest={res.get('strongest')}, lit={res.get('lit')}"
+            f"state={res.get('state')}, strongest={res.get('strongest')}, lit={res.get('lit')}, twin={res.get('twin')}, "
+            f"editor={res.get('editor')}"
             + (f", errors: {' | '.join(str(e)[:160] for e in res['errors'][:3])}" if res.get("errors") else ""))
 
 
 def cycle():
     """Build; if it differs from what is deployed, check it and deploy it. True if deployed."""
-    B.build()
+    for w in B.build():
+        say(f"WARN {w}")
     now = digests()
     state = json.loads(STATE.read_text(encoding="utf-8")) if STATE.exists() else {}
     old = state.get("files", {})
