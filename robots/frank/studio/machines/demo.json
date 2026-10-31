@@ -1,0 +1,44 @@
+{
+ "format": "studio-states/1",
+ "name": "demo",
+ "start": "dozing",
+ "states": {
+  "dozing": {
+   "name": "Dozing",
+   "x": 60.0,
+   "y": 80.0,
+   "anims": [
+    "falls-asleep-mid-thought-then-jolts-awak"
+   ],
+   "pick": "random",
+   "loop": true
+  },
+  "startled": {
+   "name": "Startled",
+   "x": 360.0,
+   "y": 80.0,
+   "anims": [
+    "spots-a-spider-and-freezes",
+    "slowly-realises-he-s-been-insulted"
+   ],
+   "pick": "random",
+   "loop": true
+  }
+ },
+ "links": [
+  {
+   "id": "a",
+   "from": "dozing",
+   "to": "startled",
+   "on": "event",
+   "event": "poke"
+  },
+  {
+   "id": "b",
+   "from": "startled",
+   "to": "dozing",
+   "on": "after",
+   "seconds": 3.0
+  }
+ ]
+}

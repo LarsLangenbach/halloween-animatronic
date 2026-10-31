@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Animatronic Studio</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/studio/studio.css">
+</head>
+<body data-page="model">
+<header class="top">
+  <div class="brand">
+    <span class="logo">STUDIO</span>
+    <span id="robot-pill" class="pill">no robot yet</span>
+  </div>
+  <nav class="steps" aria-label="Steps">
+    <button data-step="model"><b>1</b> model</button>
+    <button data-step="constraints"><b>2</b> constraints</button>
+    <button data-step="studio"><b>3</b> animation studio</button>
+    <button data-step="states"><b>4</b> state machine</button>
+  </nav>
+  <div class="brand">
+    <span id="key-pill" class="pill">claude: …</span>
+    <span id="conn" class="pill warn">connecting…</span>
+  </div>
+</header>
+
+<main class="app">
+  <aside class="stage-col" id="stage-col">
+    <div class="stage">
+      <iframe id="twin" title="The robot's 3D twin, moved by the animation through its linkages"></iframe>
+    </div>
+    <div class="stage-info small">
+      <div><span class="muted">state</span> <b id="si-state">–</b> <span class="muted">· feeling</span> <b id="si-feel">–</b></div>
+      <div><span class="muted">playing</span> <b id="si-play">nothing</b></div>
+      <div id="si-clamped" class="warnt"></div>
+    </div>
+  </aside>
+  <section id="page" class="page"></section>
+</main>
+
+<script type="module" src="/studio/app.js"></script>
+</body>
+</html>
