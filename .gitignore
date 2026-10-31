@@ -7,3 +7,5 @@ output/ref/
 frank/.env
 output/frank/
 .DS_Store
+output/online/
+output/online_watch.log
