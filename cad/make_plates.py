@@ -29,6 +29,7 @@ MOLD_EDGE = 3.0                # keep this far in from the bed's edge
 PLATES = {
     "eyebrows_plate": ["brow_carrier_L", "brow_carrier_R", "brow_bracket_L", "brow_bracket_R"],
     "enclosure_small_plate": ["enc_pedestal", "enc_grille", "enc_hatch"],   # M8 v1: the only three that share a bed
+    "neck_plate": ["neck", "neck_clamp_L", "neck_clamp_R"],                 # M8 D30: the neck standing, its two clamp plates flat
 }
 
 

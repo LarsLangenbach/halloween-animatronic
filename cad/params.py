@@ -457,11 +457,11 @@ MOLD_TABS_X = (-22.0, -120.0, -285.0, -362.0)   # dovetails along X = 0, at thes
 MOLD_TABS_Y = (55.0, 128.0)    # dovetails along the Y split, at these |X|
 
 # ---------------------------------------------------------------------------
-# Enclosure (M8, D23-D26): a canister round the head, v1 (2026-10-29): thin prints plus two PETG
-# sheets. Eleven prints: cap halves, top ring halves (the deck), bottom ring halves, the tray, the
-# pedestal, the neck, two panels. The window is one clear 1 mm PETG sheet rolled into a full tube
-# (the back is see-through: no column); the base's wall is a second PETG band, painted or black,
-# between the two rings. cad/enclosure.py builds it, enclosure_check.py checks it. Axis: x 0,
+# Enclosure (M8, D23–D26, D30, D31): a canister round the head, v1 (2026-10-29): thin prints plus one PETG
+# sheet. Prints: cap halves, top ring halves (the deck), bottom ring halves, band halves, the tray,
+# the pedestal, the neck, two panels. The window is one clear 1 mm PETG sheet rolled into a full tube
+# (the back is see-through: no column); the base's wall is a printed band in two halves (D31; it was
+# a second PETG sheet), between the two rings. cad/enclosure.py builds it, enclosure_check.py checks it. Axis: x 0,
 # y ENC_AXIS_Y (the neck's axis); every radius is about it; z is the head frame (z 0 = the pedestal's
 # top = the neck's foot). Angles: 0 deg = +x, 90 deg = +y (the front). Halves split on the y = 0
 # line: F covers 0..180 deg, B 180..360.
@@ -472,8 +472,21 @@ ENC_SHEET_R = 138.2                # inside face of the window sheet (D 276.4): 
 ENC_SHEET_T = 1.0                  # 1 mm clear PETG (D24)
 ENC_LIP = (1.8, 8.0)               # the lips that make the window's channels: thickness, height; the channel is 2.4 wide
 ENC_LIP_R = (136.0, 139.8)         # the inner lip's inner radius, the outer lip's inner radius (channel 137.8..139.8)
-ENC_BAND_R = 144.0                 # inside face of the base's PETG band (D 288): it wraps the rings' rims
+ENC_BAND_R = 144.0                 # the rims' outside (D 288): the base's band wraps them
 ENC_RIM = (2.0, 10.0)              # the rims the band wraps: thickness (r 142..144), height
+ENC_BAND_PLAY = 0.3                # the band's inside off the rims (r 144.3)
+ENC_BAND_T = 1.6                   # the printed band (D31): two wall loops; r 144.3..145.9
+ENC_BAND_Z = (-150.0, -30.0)       # the band's bottom and top: down to the tray's underside, so the panels' lower screws
+                                   # (z -146) go through it (the PETG band stopped at -139.9); up to the deck's rim top
+ENC_BAND_SEAM = (136.5, -127.5, -46.0, (-112.0, -60.0))   # the band halves' seam walls (inward at 0 and 180 deg, 2 x M3 +
+                                   # nut through each pair): inner radius, bottom (at the band; 50 deg underside), top, the
+                                   # screws' z. 2.4 over the bottom rims (-129.9), 4.4 under the deck (-41.6)
+ENC_BAND_NUT_BOSS = (10.0, 4.7, -44.0)   # bosses inside the band at the panels' upper screws (z -58), each with a slot from
+                                   # its top that an M3 nut drops into (before the deck goes on), so the panels come off and
+                                   # go back from outside: width, depth in from the band's inside (inner wall 1.8), top z
+                                   # (2.4 under the deck and its rim). The lower nuts are reached from under the band's edge
+ENC_BAND_TIE = 2.0                 # band B: the leads' notch starts this far above the bed, so B's bottom edge is one piece
+                                   # (it would stand as two loose legs up to the opening's top); cut it off if the leads are tight
 ENC_PLATE_T = 1.6                  # the rings' plates (4 lines)
 ENC_CAP_T = 1.2                    # the cap's top (6 layers of 0.2), ribbed
 ENC_RIB = (1.6, 4.0)               # ribs under the plates: thickness, height
@@ -502,7 +515,9 @@ ENC_PEDESTAL_WALL = 1.6
 ENC_PEDESTAL_TOP_T = 4.0           # the top plate under the neck's foot
 ENC_PEDESTAL_FLANGE = (6.0, 3.0)   # the bottom flange, inward: reach, thickness; 4 x M3 self-tapping into the tray's inner rib
 ENC_BORE = 25.0                    # cable + air bore through the neck's foot and the pedestal's top
-ENC_OPENING = (110.0, 64.0, -104.0)   # the openings cut by hand in the band, front (speaker) and back (hatch): chord, height, centre z
+ENC_OPENING = (110.0, -136.0, -60.0, 8.0)   # the openings printed in the band, front (speaker) and back (hatch): chord,
+                                   # bottom z, top z, the flat top's width. The sides rise 50 deg from the shoulders (z -121.2)
+                                   # to the flat, so no bridge is longer than 8 (the PETG's cut opening was 110 x 64, top -72)
 ENC_PANEL = (126.0, 96.0, -102.0, 2.0)   # the grille and hatch panels over them: chord, height, centre z, thickness
 ENC_PANEL_SCREWS = (59.0, -146.0, -58.0)  # 4 x M3 + nut through the panel and the band, at +-x and these z
 ENC_PANEL_LEAD_NOTCH = (24.0, 8.0)
@@ -512,11 +527,13 @@ ENC_BUCK = (85.0, 60.0, 28.0)      # ASSUMPTION (listing): ACEIRMC 20 A buck wit
 ENC_BOARD = (95.0, 65.0, 20.0)     # ASSUMPTION: a Cogley mouth board with its Pico
 ENC_SPEAKER = (74.0, 92.0)         # Sony SRS-XB12 (listing): diameter, length; lies along y at the front
 ENC_LAYOUT = {"speaker": (0.0, 85.0, 90.0), "bank": (0.0, -80.0, 0.0), "buck": (-85.0, 8.0, 90.0),
-              "board_1": (-50.0, -80.0, 0.0), "board_2": (50.0, -80.0, 0.0)}   # (x, y', turn): ASSUMPTION. The speaker
-                                   # lies along x at the front; the bank across the back, the two boards flat on top of it
-                                   # (standoffs or tape); the buck on its side at the left; the power box bits at the right
-ENC_LAYOUT_Z = {"bank": 6.0, "buck": 6.0, "board_1": 56.0, "board_2": 56.0}   # heights above the tray: the bank and the buck
-                                   # ride on the tray's ribs, the boards lie on the bank
+              "board_1": (0.0, -82.0, 0.0), "board_2": (0.0, -82.0, 0.0)}   # (x, y', turn): ASSUMPTION. The speaker
+                                   # lies along x at the front; the bank across the back, the two boards on top of it, one
+                                   # over the other (side by side at x +-50 their back corners reached r 149, through the
+                                   # band: found 2026-10-29 when the band became a part); the buck on its side at the left;
+                                   # the power box bits at the right
+ENC_LAYOUT_Z = {"bank": 6.0, "buck": 6.0, "board_1": 56.0, "board_2": 81.0}   # heights above the tray: the bank and the buck
+                                   # ride on the tray's ribs, board 1 lies on the bank, board 2 on 25 mm standoffs over it
 ENC_SADDLE = (77.0, 3.0, 50.0, (-30.0, 30.0), 6.5)   # speaker saddle ribs: length (along y), thickness, height, x positions,
                                    # the seat's bottom above the tray (the belly clears the 6 mm ribs)
 ENC_BANK_RAIL = (2.0, 10.0, 20.0)  # rails either side of the bank: thickness, height, shorter than the bank by
@@ -530,25 +547,55 @@ M3_INSERT_DEPTH = 6.7
 M3_HEAD = (6.0, 3.2)
 _sheet_c = 2 * 3.141592653589793 * (ENC_SHEET_R + ENC_SHEET_T / 2)   # 871.6: the window's circumference at its middle
 ENC_SHEET_BLANK = (int(round(_sheet_c + 20.0)), int(ENC_SHEET_TOP - ENC_TOP_Z - 1.0))   # 892 x 477: a full tube, 20 overlap
-_band_c = 2 * 3.141592653589793 * (ENC_BAND_R + ENC_SHEET_T / 2)     # 908: the band's circumference
-ENC_BAND_BLANK = (int(round(_band_c + 20.0)), int(round((ENC_TOP_Z + ENC_RIM[1]) - (ENC_TRAY_Z + ENC_TRAY[1] + ENC_TRAY_RIBS[0][2] + ENC_PLATE_T) - 1.0)))
-                                   # 928 x 110: from the bottom ring's plate to the top of the top ring's rim
 # Neck (D25): a tube on the pedestal, then a spine behind the jaw's swing into Cogley's frame's nape
 NECK_TUBE = (100.0, 2.5, 70.0)     # outer dia, wall, top z (the open jaw's lowest point is z 88, 82 at overtravel)
 NECK_FOOT_T = 12.0                 # foot with 4 x M4 inserts on NECK_BOLT_SQUARE, bolted up through the pedestal's top
 NECK_SPINE_Y = (-125.0, -95.0)     # the spine's y range in the head frame (the jaw's overtravel reaches y -92.5)
 NECK_SPINE_X = 40.0                # half width
-NECK_SPINE_TOP = 170.0             # just under the frame's nape members (measured from his mesh 2026-10-28: a cross member at
-                               # y -101..-95, x +-24, underside z 172; two side rails at x +-36..40, y -125..-98, underside
-                               # z 173..176). ASSUMPTION: 4 x M3 up into inserts heat-set into those members, shimmed
 NECK_SPINE_NOTCH = ((29.0, 41.0), (-117.0, -94.0), 148.0)   # two of his ribs come down through the spine's footprint
                                # at x +-30..34, from z 169 (y -112) to 150 (y -95): notches (|x| range, y range, from z)
-NECK_SPINE_SCREWS = ((18.0, -98.0), (-18.0, -98.0), (36.0, -121.5), (-36.0, -121.5))   # (x, y) of the 4 x M3 up into the frame
+NECK_SPINE_NOTCH_BACK = ((29.0, 41.0), (-123.0, -116.0), 171.0)   # the ribs' back ends reach y -121.8 at z 172.9, under
+                               # the ring and over the saddle: shallow pockets
 NECK_SPINE_WALL = 2.0              # hollow (the leads come down inside), with a 45 deg roof under its top plate
 NECK_SPINE_HOLLOW_STEP = (140.0, 26.0)   # above this z the hollow narrows to this half width, clear of the notches
-NECK_SPINE_TOP_T = 6.0
-NECK_SPINE_TOP_OPENING = (40.0, 16.0, -112.0)   # the leads' way in: an opening in the top plate, x width, y depth, centre y
+NECK_SPINE_TOP_T = 8.0             # the top plate over the hollow's ridge, at its thinnest (the collar's inserts go 4 into it)
 NECK_SPINE_JOIN_Z = (20.0, 70.0)   # the opening between the spine's inside and the tube's inside
+# The spine's top clamps the frame's nape ring (D30, 2026-10-29): nothing is drilled in his parts. MEASURED from his
+# mesh (SkullFrame, 2026-10-29): the nape is a flat ring of bars round a regular hexagonal hole, tilted with its back
+# higher; underside z = 158.0 - 0.14 y, top z = 164.4 - 0.14 y. The spine's top is cut to the underside (a saddle), a
+# collar rises from it into the hole (it locates the head every way), and two plates on top of the ring screw down
+# into the collar, so the ring is clamped between the plates and the saddle.
+NAPE_TILT = 7.97                   # MEASURED: deg, atan(0.14): the ring's back is higher
+NAPE_CENTRE = (-119.96, 174.80)    # MEASURED: (y, z) of the hole's centre on the ring's underside
+NAPE_T = 6.34                      # MEASURED: the ring's thickness along its normal (6.4 in z)
+NAPE_HOLE = 50.0                   # MEASURED: the hole, a regular hexagon across flats (flats at x +-25, points front and back);
+                                   # its corners are rounded r 6.4 at the sides, r 8 at the points
+NECK_COLLAR_FIT = 0.4              # the collar in the hole, per side
+NECK_COLLAR_CORNER = 7.0           # the collar's side corners, rounded more than the hole's (r 6.4)
+NECK_COLLAR_CLIP = (25.2, -20.0)   # ring v (along the ring from the hole's centre, + front): the collar's front (its foot
+                                   # on the spine's front face, y -95) and back (it overhangs the spine's back 15, a 45 deg wedge under it)
+NECK_COLLAR_GAP = 0.8              # the collar's top stays this far under the ring's top, so the screws pull the plates onto the ring
+NECK_COLLAR_CHAMFER = 1.0          # lead-in round the collar's top
+NECK_SADDLE_GAP = 0.1              # the saddle (the spine's top) under the ring's underside
+NECK_CLAMP_T = 5.0                 # the two clamp plates on top of the ring (neck_clamp_L / _R), split at x 0
+NECK_CLAMP_REACH = 10.0            # the plates' outline: the hole grown by this (the ring's bars are 10-17 wide)
+NECK_CLAMP_CLIP = (30.0, -34.0)    # ring v: the plates stop here, front (the mouth module) and back (the rear plate)
+NECK_CLAMP_SPLIT = 2.0             # the gap between the two plates at x 0
+NECK_CLAMP_SCREWS = ((18.0, -5.0), (-18.0, -5.0), (13.0, -14.0), (-13.0, -14.0))   # ring (u, v): 4 x M4 x 12 down through
+                                   # the plates into M4 inserts (heat-set) in the collar. All behind the EyeMech's base plate
+                                   # (its back edge y -114, 4 mm over the plates), so a hex key reaches them from behind
+NECK_COLLAR_WEDGE = 6.0            # the wedge's 45 deg underside starts this far under the collar's back edge (solid under the inserts)
+NECK_CORBEL = (28.0, -22.0)        # a corbel under the ring's back half, behind the spine: half width, back end (ring v; the
+                                   # plates reach v -34); larger pokes out of the sculpt's nape (28, -22: 0.2 mm, 100 mm3). Without it the
+                                   # back screws clamp the ring onto air (review 2026-10-29)
+NECK_CABLE_HOLE = (28.0, (-121.0, -101.0), 3.0)   # the leads' and the fan air's way down, vertical through the plates, the
+                                   # collar and the spine's top into its hollow: x width, y range, wall to the collar's slanted
+                                   # front faces (its front corners follow them); about 530 mm2
+assert NECK_CLAMP_T + NECK_COLLAR_GAP + M4_INSERT_DEPTH > 12.0 + 1.0, "an M4 x 12 must not bottom out in the collar's insert holes"
+assert NECK_CLAMP_T + NECK_COLLAR_GAP <= 12.0 - 6.0, "an M4 x 12 must reach 6 into the insert"
 assert NECK_TUBE[2] < 82.0, "the neck tube must stay under the jaw's overtravel sweep (z 82)"
 assert NECK_SPINE_Y[1] < -92.5, "the spine must stay behind the jaw's overtravel sweep (y -92.5)"
 assert ENC_R_OUT * (1 + 0.7071) <= 256.0, "a half turned 45 deg on the bed must fit 256"
+assert ENC_BAND_R + ENC_BAND_PLAY + ENC_BAND_T <= ENC_R_OUT, "a band half turned 45 deg must fit the bed like the rings"
+assert ENC_BAND_Z[0] >= ENC_TRAY_Z and ENC_BAND_Z[0] < ENC_PANEL_SCREWS[1] - M3_HEAD[0] / 2, "the panels' lower screws must go through the band"
+assert ENC_BAND_SEAM[1] > ENC_TRAY_Z + ENC_TRAY[1] + ENC_TRAY_RIBS[0][2] + ENC_PLATE_T + ENC_RIM[1] + 2.0, "the band's seam walls clear the bottom rims"

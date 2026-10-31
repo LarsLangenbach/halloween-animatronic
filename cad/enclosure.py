@@ -2,24 +2,30 @@
 Enclosure (M8, D23-D26), v1: a canister round the head that prints in a day, and the neck that
 stands the head in it. Everything is modelled in the assembled pose in the head frame.
 
-Eleven prints (thin plates with ribs; the big areas are two PETG sheets):
+Fifteen prints (thin plates with ribs; the window is a PETG sheet):
   enc_cap_{F,B}      the cap in two halves (split on the y = 0 line): a 1.2 mm top with ribs and vent
                      slots, a 40 mm skirt, two lips under it that make the window's upper channel, the
                      flat front facet with the webcam's lens hole and its stops, seam walls (2 x M3 + nut)
   enc_top_{F,B}      the deck in two halves: a 1.6 mm plate from the pedestal out to a rim the base's
-                     PETG band wraps (M3 + nut through both), the window's lower lip on top, ribs, seam
+                     band wraps (M3 + nut through both), the window's lower lip on top, ribs, seam
                      walls, the webcam lead's slot (B)
   enc_bottom_{F,B}   the bottom ring halves: a plate on the tray's outer rib (4 x M3 self-tapping) with
                      the band's lower rim
+  enc_band_{F,B}     the base's wall in two halves (D31, was a PETG sheet): a 1.6 mm band round both rims,
+                     the two openings (front speaker, back hatch, with the leads' notch) and every screw
+                     hole printed in, seam walls inward at 0 and 180 deg (2 x M3 + nut each)
   enc_tray           the floor: the pedestal, the speaker's saddles, the bank's rails and the rings stand on it
   enc_pedestal       a hollow cone from the tray up to z 0, 4 x M4 up into the neck's foot; printed upside down
-  enc_grille, enc_hatch  the panels over the two openings cut in the band, 4 x M3 + nut each
+  enc_grille, enc_hatch  the panels over the band's two openings, 4 x M3 + nut each
   neck               the neck: a foot with 4 x M4 inserts, a tube to z 70 under the jaw's swing, a hollow
-                     spine behind the jaw up under Cogley's frame's nape (D25)
-Not printed, written to output/ref/enclosure/: the window sheet (a full tube), the base's band, the
-boxes of what lives in the base, the webcam.
+                     spine behind the jaw up under Cogley's frame's nape (D25); its top clamps the frame's
+                     nape ring (D30): a saddle under the ring, a collar up into its hexagonal hole with
+                     4 x M4 inserts
+  neck_clamp_{L,R}   two plates on top of the ring, 2 x M4 x 12 each down into the collar
+Not printed, written to output/ref/enclosure/: the window sheet (a full tube), the boxes of what
+lives in the base, the webcam.
 
-Run:  python cad/enclosure.py   -> output/stl/enc_*.stl, neck.stl, output/ref/enclosure/*.stl
+Run:  python cad/enclosure.py   -> output/stl/enc_*.stl, neck*.stl, output/ref/enclosure/*.stl
 """
 import os
 import sys
@@ -31,8 +37,8 @@ sys.path.insert(0, HERE)
 import cadkit as K  # noqa: E402
 import geom as G  # noqa: E402
 
-from build123d import (Align, Axis, Box, Cone, Cylinder, Plane, Polygon, Pos, Rot,  # noqa: E402
-                       export_stl, extrude, revolve)
+from build123d import (Align, Axis, Box, Circle, Cone, Cylinder, Plane, Polygon, Pos, Rectangle, Rot,  # noqa: E402
+                       export_stl, extrude, fillet, revolve)
 
 sys.stdout.reconfigure(encoding="utf-8")
 P = K.params()
@@ -59,6 +65,9 @@ CAP_TOP = CAP_Z + P.ENC_CAP_T
 CLR_R = P.M3_CLEAR / 2
 HALVES = {"F": (0.0, 180.0), "B": (180.0, 360.0)}
 LEAD_SLOT_DEG = 270.0
+BAND_RI = P.ENC_BAND_R + P.ENC_BAND_PLAY         # 144.3: the band's inside
+PANEL_R = BAND_RI + P.ENC_BAND_T + FIT           # 146.2: the panels' inside, off the band
+ROOF = 1.2                                       # rise per run of the 50 deg slopes (45 deg is print_check's limit)
 
 
 # ---------------------------------------------------------------------------
@@ -218,6 +227,76 @@ def bottom_halves():
 
 
 # ---------------------------------------------------------------------------
+# the band halves (D31): the base's wall between the rims, printed instead of a PETG sheet
+# ---------------------------------------------------------------------------
+def panel_screws(a):
+    """(angle, z) of the four screws of the panel at angle a, through the panel and the band."""
+    x, zs = P.ENC_PANEL_SCREWS[0], P.ENC_PANEL_SCREWS[1:]
+    return [(a + np.degrees(np.arcsin(sx * x / PANEL_R)), z) for sx in (-1, 1) for z in zs]
+
+
+def opening(a, notch=False):
+    """The cutter for the band's opening at angle a (90 the front, 270 the back): straight sides up to the
+    shoulders, then 50 deg slopes to a short flat top, so the band prints upright without a long bridge; with
+    the leads' notch under it, down through the band's bottom edge (the panel's notch is over it)."""
+    w, zb, zt, flat = P.ENC_OPENING
+    zs = zt - ROOF * (w - flat) / 2                                  # -121.2: the shoulders
+    pts = [(-w / 2, zb), (w / 2, zb), (w / 2, zs), (flat / 2, zt), (-flat / 2, zt), (-w / 2, zs)]
+    cut = Pos(0, 200.0, 0) * extrude(Plane.XZ * Polygon(*pts, align=None), 100.0, dir=(0, -1, 0))   # y 200..100
+    if notch:
+        nw, z0 = P.ENC_PANEL_LEAD_NOTCH[0] + 2 * FIT, P.ENC_BAND_Z[0] + P.ENC_BAND_TIE   # a tie left at the bed
+        cut += Pos(0, 150.0, (z0 + zb + 1.0) / 2) * Box(nw, 100.0, zb + 1.0 - z0)
+    return Rot(0, 0, a - 90.0) * cut
+
+
+def nut_boss(ah, z):
+    """A boss inside the band at angle ah, round a panel screw at height z, with a slot from its top that an M3 nut
+    drops into: the nut sits on the band's inside (the slot cuts 0.2 into the band for a flat seat), its flats
+    against the slot's sides so it cannot turn. Its underside is at 50 deg. Returns (boss, slot)."""
+    w, depth, zt = P.ENC_BAND_NUT_BOSS
+    nf, nt = P.M3_NUT
+    ri, rb = BAND_RI - depth, BAND_RI + P.ENC_BAND_T / 2                # 139.6, and half into the band
+    zs = z - nf / np.cos(np.radians(30.0)) / 2                         # the slot's bottom: the nut's corner, centre on z
+    zb = zs - 1.5 - ROOF * (rb - ri)                                   # the underside at the band; at the inner face 1.5 under the slot
+    boss = extrude(Plane.XZ * Polygon((rb, zb), (rb, zt), (ri, zt), (ri, zb + ROOF * (rb - ri)), align=None), w / 2, dir=(0, -1, 0), both=True)
+    slot = Pos((BAND_RI - nt - FIT + BAND_RI + 0.2) / 2, 0, (zs + zt + 1.0) / 2) * Box(nt + FIT + 0.2, nf + FIT, zt + 1.0 - zs)
+    return Rot(0, 0, ah) * boss, Rot(0, 0, ah) * slot
+
+
+def band_full():
+    t = P.ENC_BAND_T
+    s = ring(BAND_RI, BAND_RI + t, *P.ENC_BAND_Z)
+    for z in (RIB_TOP + PLATE_T, TOP_Z):                             # M3 + nut through each rim (the bottom ones at 90 and
+        for a in P.ENC_BAND_SCREWS_DEG:                              # 270 deg fall in the openings)
+            s -= radial_cyl(CLR_R, a, BAND_RI - 1.0, BAND_RI + t + 1.0, z + P.ENC_BAND_SCREW_Z)
+    for a in (90.0, 270.0):
+        s -= opening(a, notch=a == 270.0)
+        for ah, z in panel_screws(a):
+            if z == max(P.ENC_PANEL_SCREWS[1:]):                     # the upper screws: a nut slot (out of reach once the deck is on)
+                boss, slot = nut_boss(ah, z)
+                s = s + boss - slot
+            s -= radial_cyl(CLR_R, ah, BAND_RI - P.ENC_BAND_NUT_BOSS[1] - 1.0, BAND_RI + t + 1.0, z)
+    return s
+
+
+def band_halves():
+    full = band_full()
+    r_in, zb, zt, screw_zs = P.ENC_BAND_SEAM
+    rb = BAND_RI + P.ENC_BAND_T / 2                                  # the seam walls bite half into the band
+    out = {}
+    for half, (a0, a1) in HALVES.items():
+        s = full & wedge(a0, a1)
+        y0 = SEAM_T if half == "F" else 0.0                          # each half's walls on its own side of the y = 0 seam
+        for sx in (-1, 1):
+            pts = [(sx * rb, zb), (sx * rb, zt), (sx * r_in, zt), (sx * r_in, zb + ROOF * (rb - r_in))]
+            s += Pos(0, y0, 0) * extrude(Plane.XZ * Polygon(*pts, align=None), SEAM_T, dir=(0, -1, 0))
+            for z in screw_zs:
+                s -= ycyl(CLR_R, sx * (r_in + BAND_RI) / 2, -SEAM_T - 1, SEAM_T + 1, z)
+        out[f"enc_band_{half}"] = s
+    return out
+
+
+# ---------------------------------------------------------------------------
 # tray, pedestal, panels
 # ---------------------------------------------------------------------------
 def tray():
@@ -276,7 +355,7 @@ def pedestal():
 def panel(a, lead_notch=False):
     """A slotted curved panel built from bars (a curved face with eleven holes tessellates with dents)."""
     w, h, zc, t = P.ENC_PANEL
-    r0 = P.ENC_BAND_R + 0.3 + P.ENC_SHEET_T + FIT           # off the band (which has 0.3 play on its rims)
+    r0 = PANEL_R                                             # off the band
     z_lo, z_hi = zc - h / 2, zc + h / 2
     rail = 13.0                                              # the side rails' width (the slots are w - 26 long)
 
@@ -294,17 +373,63 @@ def panel(a, lead_notch=False):
     if lead_notch:
         nw, nh = P.ENC_PANEL_LEAD_NOTCH
         s -= chord_box(r0, nw, z_lo - 20.0, z_lo + nh, a, 60.0)
-    for sx in (-1, 1):
-        for z in P.ENC_PANEL_SCREWS[1:]:
-            x = sx * P.ENC_PANEL_SCREWS[0]
-            ah = a + np.degrees(np.arcsin(x / r0)) * (1 if a == 90.0 else -1)
-            s -= radial_cyl(CLR_R, ah, r0 - 2, r0 + t + 1, z)
+    for ah, z in panel_screws(a):
+        s -= radial_cyl(CLR_R, ah, r0 - 2, r0 + t + 1, z)
     return s
 
 
 # ---------------------------------------------------------------------------
 # the neck
 # ---------------------------------------------------------------------------
+def ring_loc(w=0.0):
+    """The frame's nape ring (D30): origin on its underside at the hole's centre, z along its normal; u = x, v runs
+    along the ring (+ toward the front). Axis coordinates."""
+    cy, cz = P.NAPE_CENTRE
+    return Pos(0, cy - AY, cz) * Rot(-P.NAPE_TILT, 0, 0) * Pos(0, 0, w)
+
+
+def ring_slab(outline, w0, w1, taper=0.0):
+    """A prism in the ring's frame: a 2D outline in (u, v) from w0 to w1 along the ring's normal."""
+    pl = Plane(ring_loc(w0))
+    return extrude(pl * outline, w1 - w0, dir=pl.z_dir, taper=taper)
+
+
+def under_ring_z(y):
+    """z of the ring's underside above axis coordinate y."""
+    cy, cz = P.NAPE_CENTRE
+    return cz - np.tan(np.radians(P.NAPE_TILT)) * (y + AY - cy)
+
+
+def hexagon(grow, clip, corner, clip_corner=1.5):
+    """The ring's hole (flats at u = +-NAPE_HOLE/2, points along v) grown by `grow` (< 0 shrinks), clipped to
+    clip = (v_back, v_front), its side corners rounded `corner`, the clipped ones `clip_corner`."""
+    a = P.NAPE_HOLE / 2 + grow
+    h = a / np.cos(np.radians(30.0))
+    sk = Polygon((0, h), (-a, h / 2), (-a, -h / 2), (0, -h), (a, -h / 2), (a, h / 2), align=None)
+    vb, vf = clip
+    sk &= Pos(0, (vb + vf) / 2) * Rectangle(4 * a, vf - vb)
+    side = [v for v in sk.vertices() if abs(abs(v.X) - a) < 0.01 and abs(abs(v.Y) - h / 2) < 0.01]
+    sk = fillet(side, corner)
+    clipped = [v for v in sk.vertices() if abs(v.Y - vb) < 0.01 or abs(v.Y - vf) < 0.01]
+    return fillet(clipped, clip_corner) if clipped else sk
+
+
+def cable_hole(z0, z1):
+    """The leads' and the fan air's way down: vertical, through the clamp plates, the collar and the spine's top. Its
+    front corners run `wall` behind the collar's slanted front faces (taken at the collar's foot, the furthest forward)."""
+    w, (ya, yb), wall = P.NECK_CABLE_HOLE
+    a, t30 = w / 2, np.tan(np.radians(30.0))
+    th = np.radians(P.NAPE_TILT)
+    tip = (P.NAPE_HOLE / 2 - P.NECK_COLLAR_FIT) / np.cos(np.radians(30.0))   # the collar's front point, ring v
+    yp = P.NAPE_CENTRE[0] - AY + tip * np.cos(th) - wall / np.cos(np.radians(30.0))
+    k = t30 * np.cos(th)
+    xf = (yp - (yb - AY)) / k                                        # where the slant meets the front edge
+    ya, yb = ya - AY, yb - AY
+    pts = [(-a, ya), (a, ya), (a, yp - k * a), (xf, yb), (-xf, yb), (-a, yp - k * a)] if xf < a else \
+        [(-a, ya), (a, ya), (a, yb), (-a, yb)]
+    return Pos(0, 0, z0) * extrude(Polygon(*pts, align=None), z1 - z0, dir=(0, 0, 1))
+
+
 def neck():
     od, wall, ztop = P.NECK_TUBE
     ft = P.NECK_FOOT_T
@@ -318,11 +443,14 @@ def neck():
     for sx in (-1, 1):
         for sy in (-1, 1):
             s -= cyl(P.M4_INSERT_HOLE / 2, -1.0, P.M4_INSERT_DEPTH, sx * sq, sy * sq)
-    # spine: a hollow box behind the jaw, its inside roofed at 45 deg under the top plate
-    top, sw, tt = P.NECK_SPINE_TOP, P.NECK_SPINE_WALL, P.NECK_SPINE_TOP_T
-    s += Pos(0, (y0 + y1) / 2, ft - EPS) * Box(2 * hx, y1 - y0, top - ft + EPS, align=(C, C, MN))
-    zr = top - tt                                                    # the roof's ridge
-    half = (y1 - y0) / 2 - sw
+    # spine: a hollow box behind the jaw, its top cut to the nape ring's underside (the saddle), its inside roofed
+    # at 45 deg under the top plate
+    sw, tt = P.NECK_SPINE_WALL, P.NECK_SPINE_TOP_T
+    zs = [under_ring_z(y) - P.NECK_SADDLE_GAP for y in (y0, y1)]
+    s += Pos(-hx, 0, 0) * extrude(Plane.YZ * Polygon((y0, ft - EPS), (y1, ft - EPS), (y1, zs[1]), (y0, zs[0]), align=None),
+                                  2 * hx, dir=(1, 0, 0))
+    zr = under_ring_z((y0 + y1) / 2) - P.NECK_SADDLE_GAP - tt        # the roof's ridge
+    half = 1.2 * ((y1 - y0) / 2 - sw)                                # the roof at 50 deg, clear of the 45 deg limit
     zstep, hx2 = P.NECK_SPINE_HOLLOW_STEP
     hollow = Plane.YZ * Polygon((y0 + sw, ft), (y1 - sw, ft), (y1 - sw, zr - half),
                                 ((y0 + y1) / 2, zr), (y0 + sw, zr - half))
@@ -334,16 +462,48 @@ def neck():
     jz0, jz1 = P.NECK_SPINE_JOIN_Z
     s -= Pos(0, (y0 + sw + y1 - sw) / 2 + 2.0, (jz0 + jz1) / 2) * Box(2 * (hx - sw) - 6.0, y1 - y0 - 2 * sw + 4.0, jz1 - jz0)
     # notches for the frame's two ribs that come down through the spine's footprint
-    (nx0, nx1), (ny0, ny1), nz = P.NECK_SPINE_NOTCH
-    for sx in (-1, 1):
-        s -= Pos(sx * (nx0 + nx1) / 2, (ny0 + ny1) / 2 - AY, nz) * Box(nx1 - nx0, ny1 - ny0, top - nz + 1, align=(C, C, MN))
-    # the leads' way in: an opening in the top plate, through the roof into the hollow
-    ow, od_, oy = P.NECK_SPINE_TOP_OPENING
-    s -= Pos(0, oy - AY, top - 30.0) * Box(ow, od_, 31.0, align=(C, C, MN))
-    # ASSUMPTION: 4 x M3 through the top plate up into inserts in the frame's nape members
-    for x, y in P.NECK_SPINE_SCREWS:
-        s -= cyl(CLR_R, top - tt - 1, top + 1, x, y - AY)
+    for (nx0, nx1), (ny0, ny1), nz in (P.NECK_SPINE_NOTCH, P.NECK_SPINE_NOTCH_BACK):
+        for sx in (-1, 1):
+            s -= Pos(sx * (nx0 + nx1) / 2, (ny0 + ny1) / 2 - AY, nz) * Box(nx1 - nx0, ny1 - ny0, 60.0, align=(C, C, MN))
+    # the collar: up from the saddle into the ring's hole, its top NECK_COLLAR_GAP under the ring's top, a lead-in
+    # round it; where it overhangs the spine's back, a 45 deg wedge under it
+    out = hexagon(-P.NECK_COLLAR_FIT, P.NECK_COLLAR_CLIP, P.NECK_COLLAR_CORNER)
+    wt, ch = P.NAPE_T - P.NECK_COLLAR_GAP, P.NECK_COLLAR_CHAMFER
+    s += ring_slab(out, -1.0, wt - ch + EPS) + ring_slab(out, wt - ch, wt, taper=45.0)
+    pb = ring_loc() * Pos(0, P.NECK_COLLAR_CLIP[1], 0)               # the collar's back edge, on the ring's underside
+    yb, zb = pb.position.Y, pb.position.Z
+    zb -= P.NECK_COLLAR_WEDGE
+    zf = zb - (y0 - yb)                                              # the wedge's 45 deg underside meets the spine's back
+    wedge = Pos(-hx, 0, 0) * extrude(Plane.YZ * Polygon((y0 + 1.0, zf - 1.0), (yb - 1.0, zb + 1.0), (yb - 1.0, zb + 40.0),
+                                                        (y0 + 1.0, zb + 40.0), align=None), 2 * hx, dir=(1, 0, 0))
+    s += wedge & ring_slab(out, -30.0, 0.5)
+    # a corbel under the ring's back half, behind the spine, its top on the saddle's plane, its underside at 50 deg:
+    # the plates clamp the ring over solid all round, so the back screws cannot tip the head back
+    cw, cv = P.NECK_CORBEL
+    pc = ring_loc() * Pos(0, cv, 0)
+    yc, zc = pc.position.Y, pc.position.Z - P.NECK_SADDLE_GAP
+    zcf = zc - 2.0 - 1.2 * (y0 - yc)
+    corbel = Pos(-cw, 0, 0) * extrude(Plane.YZ * Polygon((y0 + 1.0, zcf - 1.2), (yc, zc - 2.0), (yc, zc + 40.0),
+                                                         (y0 + 1.0, zc + 40.0), align=None), 2 * cw, dir=(1, 0, 0))
+    s += corbel & ring_slab(Rectangle(4 * cw, 200.0), -60.0, -P.NECK_SADDLE_GAP)
+    # the clamp screws' inserts (M4, heat-set from the collar's top), and the way down for the leads and the air
+    for u, v in P.NECK_CLAMP_SCREWS:
+        s -= ring_slab(Pos(u, v) * Circle(P.M4_INSERT_HOLE / 2), wt - P.M4_INSERT_DEPTH, wt + 1.0)
+    s -= cable_hole(zr - 20.0, under_ring_z(y0) + 30.0)
     return s
+
+
+def neck_clamps():
+    """The two plates on top of the nape ring, split at x 0 so they go on round the leads; each screws down into the
+    collar with two M4 x 12, clamping the ring onto the saddle (D30). L at +x."""
+    t0 = P.NAPE_T + P.NECK_SADDLE_GAP
+    plate = ring_slab(hexagon(P.NECK_CLAMP_REACH, P.NECK_CLAMP_CLIP, 6.0), t0, t0 + P.NECK_CLAMP_T)
+    for u, v in P.NECK_CLAMP_SCREWS:
+        plate -= ring_slab(Pos(u, v) * Circle(P.M4_CLEAR / 2), t0 - 1.0, t0 + P.NECK_CLAMP_T + 1.0)
+    plate -= cable_hole(140.0, 240.0)
+    g = P.NECK_CLAMP_SPLIT / 2
+    return {"neck_clamp_L": plate & Pos(g, 0, 0) * Box(BIG, BIG, BIG, align=(MN, C, C)),
+            "neck_clamp_R": plate & Pos(-g, 0, 0) * Box(BIG, BIG, BIG, align=(Align.MAX, C, C))}
 
 
 # ---------------------------------------------------------------------------
@@ -352,7 +512,6 @@ def neck():
 def ref_parts():
     out = {}
     out["sheet"] = ring(P.ENC_SHEET_R, P.ENC_SHEET_R + P.ENC_SHEET_T, TOP_Z, P.ENC_SHEET_TOP)
-    out["band"] = ring(P.ENC_BAND_R + 0.3, P.ENC_BAND_R + 0.3 + P.ENC_SHEET_T, RIB_TOP + PLATE_T, TOP_Z + RIM_H)
     for name, (x, y, turn) in P.ENC_LAYOUT.items():
         lift = P.ENC_LAYOUT_Z.get(name, 0.0)
         if name == "speaker":
@@ -374,13 +533,14 @@ def shift(d):
 
 def parts():
     out = {}
-    for fn in (cap_halves, top_halves, bottom_halves):
+    for fn in (cap_halves, top_halves, bottom_halves, band_halves):
         out.update(fn())
     out["enc_tray"] = tray()
     out["enc_pedestal"] = pedestal()
     out["enc_grille"] = panel(90.0)
     out["enc_hatch"] = panel(270.0, lead_notch=True)
     out["neck"] = neck()
+    out.update(neck_clamps())
     return shift(out)
 
 
@@ -390,7 +550,7 @@ def main():
         if not shp.is_valid:
             print(f"FAIL  {name}: not a valid solid")
             ok = False
-        fine = name in ("enc_grille", "enc_hatch", "enc_cap_F", "enc_cap_B", "enc_tray")   # slotted or cut curved faces tessellate badly at 0.05
+        fine = name in ("enc_grille", "enc_hatch", "enc_cap_F", "enc_cap_B", "enc_tray", "enc_band_F", "enc_band_B")   # slotted or cut curved faces tessellate badly at 0.05
         ok &= K.write_stl(shp, name, tolerance=0.01 if fine else 0.05, angular_tolerance=0.05 if fine else 0.2)
     rdir = os.path.join(G.ref_dir(), "enclosure")
     os.makedirs(rdir, exist_ok=True)

@@ -5,8 +5,9 @@ jaw, the clear sheet and what lives in the base.
   1. The head (sculpt wrap + face mask) clears the sheet's inside and the cap's underside.
   2. The clear sheet (output/ref/enclosure/sheet.stl) overlaps no printed part: the slits and the
      column's forks are right.
-  3. The neck against Cogley's head at rest: the only overlap allowed is the spine's top inside
-     the frame's nape (where it bolts; reported), nothing with the mouth, eyes or brows.
+  3. The neck and its two clamp plates against Cogley's head at rest (D30): no overlap with any of
+     his parts, each within 0.5 of the frame's nape ring (so the clamp grips), and room for a hex
+     key over each clamp screw (his rear plate off).
   4. The jaw swept from 0 to JAW_OPEN_DEG + JAW_OVERTRAVEL_DEG against the neck: the gap at every
      step, the clean limit, the first touching pair.
   5. What lives in the base (bank, buck, boards, speaker, the webcam in the cap) fits: inside the
@@ -36,8 +37,8 @@ S = P.HEAD_SCALE
 AY = P.ENC_AXIS_Y
 SEED = 7
 JAW_PARTS = ("JawBase", "JawLink", "Part 33", "Part 22")
-NAMES = ["enc_cap_F", "enc_cap_B", "enc_top_F", "enc_top_B", "enc_bottom_F", "enc_bottom_B", "enc_tray", "enc_pedestal",
-         "enc_grille", "enc_hatch", "neck"]
+NAMES = ["enc_cap_F", "enc_cap_B", "enc_top_F", "enc_top_B", "enc_bottom_F", "enc_bottom_B", "enc_band_F", "enc_band_B",
+         "enc_tray", "enc_pedestal", "enc_grille", "enc_hatch", "neck", "neck_clamp_L", "neck_clamp_R"]
 
 
 def to_mf(mesh):
@@ -121,48 +122,98 @@ def main():
     if P.ENC_CAP_Z - crown < 10.0:
         issues.append(f"crown within {P.ENC_CAP_Z - crown:.1f} of the cap (want >= 10)")
 
-    # 2. the sheet and the band overlap nothing
-    for ref_name, blank in (("sheet", P.ENC_SHEET_BLANK), ("band", P.ENC_BAND_BLANK)):
-        sheet = refs.get(ref_name)
-        if sheet is None:
-            continue
+    # 2. the sheet overlaps nothing (the band is printed now, D31: assembly_check covers it)
+    sheet, blank = refs.get("sheet"), P.ENC_SHEET_BLANK
+    if sheet is not None:
         for n, m in parts.items():
             v = overlap_volume(sheet, m)
             if v > 1.0:
-                issues.append(f"the {ref_name} runs {v:.0f} mm3 into {n}")
+                issues.append(f"the sheet runs {v:.0f} mm3 into {n}")
         b = sheet.bounds
-        md.append(f"- {ref_name.capitalize()}: {b[1][2] - b[0][2]:.0f} tall, z {b[0][2]:.0f}..{b[1][2]:.0f}; "
+        md.append(f"- Sheet: {b[1][2] - b[0][2]:.0f} tall, z {b[0][2]:.0f}..{b[1][2]:.0f}; "
                   f"blank {blank[0]} x {blank[1]} mm (a full tube, 20 overlap, 1 play in height).")
         if abs((b[1][2] - b[0][2]) - 1.0 - blank[1]) > 0.6:
-            issues.append(f"the {ref_name} is {b[1][2] - b[0][2]:.0f} tall but the blank says {blank[1]} (+1)")
+            issues.append(f"the sheet is {b[1][2] - b[0][2]:.0f} tall but the blank says {blank[1]} (+1)")
+    # the printed band: the panels' four screws each go through it, and it is no taller than its rims
+    band = [parts[n] for n in ("enc_band_F", "enc_band_B") if n in parts]
+    if band:
+        bm = trimesh.util.concatenate(band)
+        b = bm.bounds
+        md.append(f"- Band (printed, two halves): z {b[0][2]:.1f}..{b[1][2]:.1f}, r {P.ENC_BAND_R + P.ENC_BAND_PLAY:.1f}.."
+                  f"{P.ENC_BAND_R + P.ENC_BAND_PLAY + P.ENC_BAND_T:.1f}")
+        x, zs = P.ENC_PANEL_SCREWS[0], P.ENC_PANEL_SCREWS[1:]
+        r_panel = P.ENC_BAND_R + P.ENC_BAND_PLAY + P.ENC_BAND_T + P.ENC_FIT
 
-    # 3. the neck against Cogley's head at rest
+        def wall_hit(o, d):
+            """Does a ray from o along d meet the band within 8 mm (its near wall, not the far side)?"""
+            loc, _, _ = bm.ray.intersects_location([o], [d])
+            return bool(len(loc)) and float(np.linalg.norm(loc - o, axis=1).min()) < 8.0
+
+        for a, pn in ((90.0, "enc_grille"), (270.0, "enc_hatch")):
+            for sx in (-1, 1):
+                for z in zs:
+                    # rays in along the screw's axis from just outside the band: through the hole on the axis, into
+                    # the band's wall 3.5 above and below it (a nut and a head have something to clamp)
+                    ah = np.radians(a + np.degrees(np.arcsin(sx * x / r_panel)))
+                    d = np.array([np.cos(ah), np.sin(ah), 0.0])
+                    o = d * (P.ENC_BAND_R + 5.0) + np.array([0.0, AY, z])
+                    if wall_hit(o, -d) or not all(wall_hit(o + np.array([0.0, 0.0, dz]), -d) for dz in (-3.5, 3.5)):
+                        issues.append(f"{pn}'s screw at ({sx * x:+.0f}, z {z:.0f}): no clear hole with band round it")
+        md.append(f"- The panels' 8 screws each pass a hole in the band with band round it"
+                  if not any("no clear hole" in s for s in issues) else "- The panels' screws: see the result")
+
+    # 3. the neck and its clamp plates against Cogley's head at rest (D30: they clamp his frame's nape ring between
+    # the spine's saddle and the plates, the collar in the ring's hole; nothing may overlap any of his parts)
     neck = parts.get("neck")
     his = C.load()
     if neck is not None:
-        md += ["", "## The neck against Cogley's head (at rest)", ""]
-        worst = []
-        for name, inst, group, m in his:
-            v = overlap_volume(neck, m)
-            if v > 1.0:
-                worst.append((v, name, inst, group))
-        worst.sort(reverse=True)
-        for v, name, inst, group in worst[:12]:
-            md.append(f"- {name} #{inst} ({group}): {v:.0f} mm3 into the neck")
-        if worst:
-            issues.append("the neck runs into " + ", ".join(f"{n} ({g}, {v:.0f} mm3)" for v, n, _, g in worst[:4]))
-        else:
-            md.append("- No overlap with any of his parts; the spine's top sits under the frame's nape members")
-        frame_meshes = [m for _, _, g, m in his if g == "frame"]
-        if frame_meshes:
-            fm = trimesh.util.concatenate(frame_meshes)
-            md.append(f"- Gap spine top to the frame: {gap(neck, fm):.1f} mm (0 = touching or inside)")
+        md += ["", "## The neck and its clamp against Cogley's head (at rest)", ""]
+        frame = [m for n, _, _, m in his if n == "SkullFrame"]
+        for pn in ("neck", "neck_clamp_L", "neck_clamp_R"):
+            pm = parts.get(pn)
+            if pm is None:
+                continue
+            worst = []
+            for name, inst, group, m in his:
+                v = overlap_volume(pm, m)
+                if v > 1.0:
+                    worst.append((v, name, inst, group))
+            worst.sort(reverse=True)
+            for v, name, inst, group in worst[:12]:
+                md.append(f"- {name} #{inst} ({group}): {v:.0f} mm3 into {pn}")
+            if worst:
+                issues.append(f"{pn} runs into " + ", ".join(f"{n} ({g}, {v:.0f} mm3)" for v, n, _, g in worst[:4]))
+            g = to_mf(pm).min_gap(to_mf(frame[0]), 5.0) if frame else float("nan")
+            md.append(f"- {pn}: no overlap with his parts; {g:.2f} mm from the frame's nape ring (modelled gap "
+                      f"{P.NECK_SADDLE_GAP:.1f}: it sits on the ring)" if not worst else f"- {pn}: {g:.2f} mm from the frame")
+            if not worst and g > 0.5:
+                issues.append(f"{pn} is {g:.1f} mm off the nape ring: the clamp would not grip")
+        md.append(f"- The clamp: the collar's top stays {P.NECK_COLLAR_GAP + P.NECK_SADDLE_GAP:.1f} under the plates, so four "
+                  f"M4 x 12 pull the plates down onto the ring and the ring onto the saddle")
+        # a hex key from above: clear height over each screw head along the ring's normal, his rear plate off
+        th = np.radians(P.NAPE_TILT)
+        nrm = np.array([0.0, np.sin(th), np.cos(th)])
+        cy, cz = P.NAPE_CENTRE
+        above = trimesh.util.concatenate([m for n, _, _, m in his if n not in ("RearPlate", "RearVent")])
+        w_head = P.NAPE_T + P.NECK_SADDLE_GAP + P.NECK_CLAMP_T + 4.0
+        for u, v in P.NECK_CLAMP_SCREWS:
+            clear = np.inf
+            for du in (-3.5, 0.0, 3.5):
+                for dv in (-3.5, 0.0, 3.5):
+                    o = np.array([u + du, cy + (v + dv) * np.cos(th) + w_head * np.sin(th), cz - (v + dv) * np.sin(th) + w_head * np.cos(th)])
+                    loc, _, _ = above.ray.intersects_location([o], [nrm])
+                    if len(loc):
+                        clear = min(clear, float(np.linalg.norm(loc - o, axis=1).min()))
+            md.append(f"- Screw ({u:+.0f}, {v:+.0f}): {clear:.0f} mm clear over its head for the hex key (rear plate off)")
+            if clear < 25.0:
+                issues.append(f"no room for a hex key over the clamp screw at ({u:+.0f}, {v:+.0f}): {clear:.0f} mm")
 
-    # 4. the jaw sweep against the neck
+    # 4. the jaw sweep against the neck and its clamp plates
     if neck is not None:
         jaw = [m for n, _, _, m in his if any(n.startswith(j) for j in JAW_PARTS)]
         jaw_m = trimesh.util.concatenate(jaw)
-        md += ["", "## The jaw swept against the neck", "", "| angle | gap to the neck |", "|---|---|"]
+        neck = trimesh.util.concatenate([parts[n] for n in ("neck", "neck_clamp_L", "neck_clamp_R") if n in parts])
+        md += ["", "## The jaw swept against the neck and its clamp plates", "", "| angle | gap to the neck |", "|---|---|"]
         limit = None
         full = P.JAW_OPEN_DEG + P.JAW_OVERTRAVEL_DEG
         for a in np.arange(0.0, full + 1e-6, P.SWEEP_STEP_DEG):
@@ -181,7 +232,7 @@ def main():
 
     # 5. what lives in the base and the cap
     md += ["", "## What lives in the base and the cap", ""]
-    items = {n: m for n, m in refs.items() if n not in ("sheet", "band")}
+    items = {n: m for n, m in refs.items() if n != "sheet"}
     deck_under = P.ENC_TOP_Z - P.ENC_PLATE_T     # the deck's underside
     for n, m in items.items():
         b = m.bounds
@@ -235,9 +286,10 @@ def main():
     return 0
 
 
-COLOURS = {"cap": (0.55, 0.60, 0.66), "top": (0.62, 0.66, 0.72), "bottom": (0.45, 0.50, 0.56), "tray": (0.45, 0.50, 0.56),
-           "pedestal": (0.60, 0.66, 0.72), "grille": (0.25, 0.28, 0.32), "hatch": (0.25, 0.28, 0.32), "neck": (0.80, 0.64, 0.30)}
-REF_COLOURS = {"sheet": (0.55, 0.80, 0.95), "band": (0.30, 0.33, 0.38), "speaker": (0.85, 0.85, 0.85), "bank": (0.96, 0.76, 0.48),
+COLOURS = {"cap": (0.55, 0.60, 0.66), "top": (0.62, 0.66, 0.72), "bottom": (0.45, 0.50, 0.56), "band": (0.30, 0.33, 0.38), "tray": (0.45, 0.50, 0.56),
+           "pedestal": (0.60, 0.66, 0.72), "grille": (0.25, 0.28, 0.32), "hatch": (0.25, 0.28, 0.32), "neck": (0.80, 0.64, 0.30),
+           "neck_clamp_L": (0.70, 0.52, 0.22), "neck_clamp_R": (0.70, 0.52, 0.22)}
+REF_COLOURS = {"sheet": (0.55, 0.80, 0.95), "speaker": (0.85, 0.85, 0.85), "bank": (0.96, 0.76, 0.48),
                "buck": (0.97, 0.86, 0.63), "board_1": (0.62, 0.83, 0.62), "board_2": (0.62, 0.83, 0.62),
                "webcam": (0.15, 0.15, 0.15)}
 
@@ -269,28 +321,34 @@ def render(parts, refs, heads, his, out_dir):
     c = (b[0] + b[1]) / 2
     sc = 0.55 * float(max(b[1] - b[0]))
     everything = list(parts)
+    bandless = [n for n in everything if not n.startswith("enc_band")]
     tiles = []
-    tiles.append(("front, with the sheet and the band", RV.render(actors(everything, ("sheet", "band")), c, (0, 1, 0), (0, 0, 1), sc)))
-    tiles.append(("3/4 from the front right", RV.render(actors(everything, ("sheet", "band")), c, (-0.8, 1.0, 0.3), (0, 0, 1), sc)))
-    tiles.append(("from the back (see-through)", RV.render(actors(everything, ("sheet", "band")), c, (0, -1, 0.1), (0, 0, 1), sc)))
-    tiles.append(("left side, sheet and band off", RV.render(actors(everything), c, (1, 0, 0), (0, 0, 1), sc)))
+    tiles.append(("front, with the sheet", RV.render(actors(everything, ("sheet",)), c, (0, 1, 0), (0, 0, 1), sc)))
+    tiles.append(("3/4 from the front right", RV.render(actors(everything, ("sheet",)), c, (-0.8, 1.0, 0.3), (0, 0, 1), sc)))
+    tiles.append(("from the back (see-through)", RV.render(actors(everything, ("sheet",)), c, (0, -1, 0.1), (0, 0, 1), sc)))
+    tiles.append(("left side, sheet and band off", RV.render(actors(bandless), c, (1, 0, 0), (0, 0, 1), sc)))
     base_names = [n for n in everything if n.startswith(("enc_bottom", "enc_tray", "enc_grille", "enc_hatch", "enc_pedestal"))]
     bc = np.array([0.0, AY, -95.0])
     tiles.append(("base from above, deck off: the bay", RV.render(actors(base_names, ("speaker", "bank", "buck", "board_1", "board_2"), head=False),
                                                                  bc, (0.2, 0.3, 1.0), (0, 1, 0), 200.0)))
-    tiles.append(("base with the deck and the band, 3/4", RV.render(actors(base_names + ["enc_top_F", "enc_top_B"], ("band",), head=False),
+    tiles.append(("base with the deck and the band, 3/4", RV.render(actors(base_names + ["enc_top_F", "enc_top_B", "enc_band_F", "enc_band_B"], head=False),
                                                                    bc, (0.8, 1.0, 0.5), (0, 0, 1), 200.0)))
+    tiles.append(("the band from the back, panels off: hatch opening, leads' notch", RV.render(
+        actors(["enc_bottom_F", "enc_bottom_B", "enc_tray", "enc_top_F", "enc_top_B", "enc_band_F", "enc_band_B"], head=False),
+        bc, (0.3, -1.0, 0.25), (0, 0, 1), 200.0)))
+    tiles.append(("band halves from inside: seam walls", RV.render(actors(["enc_band_F", "enc_band_B", "enc_bottom_F", "enc_bottom_B"], head=False),
+                                                                   bc, (0.15, 0.6, 1.0), (0, 0, 1), 200.0)))
     cap_names = [n for n in everything if n.startswith("enc_cap")]
     cc = np.array([0.0, AY, 420.0])
     tiles.append(("cap from below: lips, ribs, webcam", RV.render(actors(cap_names, ("webcam",), head=False), cc, (0.2, 0.4, -1.0), (0, 1, 0), 200.0)))
     tiles.append(("cap from the front", RV.render(actors(cap_names, ("webcam",), head=False), cc, (0.3, 1.0, 0.5), (0, 0, 1), 200.0)))
     nc = np.array([0.0, AY - 30.0, 110.0])
-    tiles.append(("neck and pedestal with Cogley's mouth and frame", RV.render(actors(["neck", "enc_pedestal", "enc_top_F", "enc_top_B"], (), head=False, his_groups={"mouth", "frame"}),
+    tiles.append(("neck and pedestal with Cogley's mouth and frame", RV.render(actors(["neck", "neck_clamp_L", "neck_clamp_R", "enc_pedestal", "enc_top_F", "enc_top_B"], (), head=False, his_groups={"mouth", "frame"}),
                                                                              nc, (1.0, 0.3, 0.2), (0, 0, 1), 160.0)))
     if "neck" in parts:
         jaw = [m for n, _, _, m in his if any(n.startswith(j) for j in JAW_PARTS)]
         jm = trimesh.util.concatenate(jaw).apply_transform(jaw_tf(P.JAW_OPEN_DEG))
-        acts = actors(["neck", "enc_pedestal"], (), head=False, his_groups={"frame"})
+        acts = actors(["neck", "neck_clamp_L", "neck_clamp_R", "enc_pedestal"], (), head=False, his_groups={"frame"})
         acts.append(RV.surface_actor(L.poly(jm), (0.85, 0.35, 0.30)))
         tiles.append((f"jaw open {P.JAW_OPEN_DEG:.0f} deg against the neck, from the left", RV.render(acts, nc, (1.0, 0.0, 0.0), (0, 0, 1), 140.0)))
     tiles.append(("deck halves from above: lip, rim, ribs, lead slot", RV.render(actors(["enc_top_F", "enc_top_B"], (), head=False),
@@ -298,7 +356,7 @@ def render(parts, refs, heads, his, out_dir):
     return L.sheet(tiles, out_dir, "enclosure", cols=4, header_lines=[
         f"Enclosure M8 v1: D {2 * P.ENC_R_OUT:.0f} canister, window D {2 * P.ENC_SHEET_R:.0f}, z {P.ENC_TRAY_Z:.0f}..{P.ENC_CAP_Z + P.ENC_CAP_T:.0f}; "
         f"the neck spine (D25) behind the jaw",
-        "11 thin prints; the window sheet (blue) and the base's band (dark) are PETG, not prints"])
+        "15 thin prints (the base's band, dark, printed in two halves: D31); the window sheet (blue) is PETG, not a print"])
 
 
 if __name__ == "__main__":

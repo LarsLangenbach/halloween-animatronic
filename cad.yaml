@@ -55,7 +55,7 @@ pipeline:
 # Scripts in the source folder that check.py knows about but doesn't run
 # (the toolkit's own scripts are known already). Any other script gets a
 # warning, so a new builder or check can't be silently left out.
-not_in_pipeline: [params, geom, snapshot, browgeom, export_print, make_plates, read3mf, wrap]
+not_in_pipeline: [params, geom, snapshot, browgeom, export_print, make_plates, read3mf, wrap, twin_export]   # twin_export: the twin's model, run by hand (perform/README.md)
 
 # Every print file, by STL name: the one place to update when a part is added,
 # renamed or printed differently. check.py warns about a built STL that isn't
@@ -107,21 +107,25 @@ parts:
   mold_wall_top_L: {colour: [0.66, 0.64, 0.58], supports: false, assembly: false}
   mold_wall_top_R: {colour: [0.60, 0.58, 0.52], supports: false, assembly: false}
   mold_pry_wedge: {colour: [0.95, 0.55, 0.15], supports: false, assembly: false}   # print 8: loose, against the walls
-  # M8 enclosure v1 (D23-D26): eleven thin prints plus two PETG sheets. The halves turn 45 deg on the
-  # bed (a half of D 292 spans 249). The cap halves and the pedestal print upside down (their lips,
-  # skirt, stops and flange then stand up); the rings and the tray print as modelled (lips and rims
-  # up); the panels stand on a short edge so their slots print vertical. Nothing needs support.
+  # M8 enclosure v1 (D23–D26, D30, D31): thin prints plus one PETG sheet (the window). The halves turn 45 deg on
+  # the bed (a half of D 292 spans 249). The cap halves and the pedestal print upside down (their lips,
+  # skirt, stops and flange then stand up); the rings, the band halves (standing on their bottom edge,
+  # D31) and the tray print as modelled (lips and rims up); the panels lie inside face down on supports.
   enc_cap_F: {colour: [0.55, 0.60, 0.66], supports: false, print_rotate: [180, 0, 45]}
   enc_cap_B: {colour: [0.55, 0.60, 0.66], supports: false, print_rotate: [180, 0, 45]}
   enc_top_F: {colour: [0.62, 0.66, 0.72], supports: false, print_rotate: [0, 0, 45]}
   enc_top_B: {colour: [0.62, 0.66, 0.72], supports: false, print_rotate: [0, 0, 45]}
   enc_bottom_F: {colour: [0.45, 0.50, 0.56], supports: false, print_rotate: [0, 0, 45]}
   enc_bottom_B: {colour: [0.45, 0.50, 0.56], supports: false, print_rotate: [0, 0, 45]}
+  enc_band_F: {colour: [0.30, 0.33, 0.38], supports: false, print_rotate: [0, 0, 45]}   # on its bottom edge; brim 3 mm at most (249 + 2 x 3 = 255)
+  enc_band_B: {colour: [0.30, 0.33, 0.38], supports: false, print_rotate: [0, 0, 45]}
   enc_tray: {colour: [0.45, 0.50, 0.56], supports: false}
   enc_pedestal: {colour: [0.60, 0.66, 0.72], supports: false, print_rotate: [180, 0, 0]}
   enc_grille: {colour: [0.25, 0.28, 0.32], supports: true, print_rotate: [90, 0, 0]}    # lying, inside face down: supports under the arch, the outside stays clean
   enc_hatch: {colour: [0.25, 0.28, 0.32], supports: true, print_rotate: [-90, 0, 0]}
   neck: {colour: [0.80, 0.64, 0.30], supports: false}
+  neck_clamp_L: {colour: [0.70, 0.52, 0.22], supports: false, print_rotate: [7.97, 0, 0]}   # flat, underside down (D30)
+  neck_clamp_R: {colour: [0.70, 0.52, 0.22], supports: false, print_rotate: [7.97, 0, 0]}
 
 every_part: {watertight: hard, single_body: hard, fits_bed: soft}
 

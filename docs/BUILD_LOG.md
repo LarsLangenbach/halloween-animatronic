@@ -51,6 +51,30 @@ Rules:
 **Problems:** nobody has listened to the stretched voice yet (this session has no ears); if x1.5 sounds choppy on his gravel, try 1.35–1.4, or a longer frame (`frame_ms` 40) for a rougher voice. The character bible still has him slow and glacial (CHARACTER.md §5); the pace is now a dial, not a trait.
 **Next:** Anushhka listens to the page and sets `voice.py tempo` to taste; then commit.
 
+## 2026-10-30 — Performance engine — Frank's body twin: the CAD head moves with the real one (D32)
+
+**Done:** the human asked for a 3D twin of the whole head that moves in parallel with the real one, as part of the performance engine for all the character robots. Built as the engine's body layer, robot-agnostic, in `perform/` ([perform/README.md](../perform/README.md)):
+- `perform/body.py`, the body server: the one program that opens the mouth board's port. Frank, the face engine, the slider windows and `perform/play.py` all connect to it at `socket://127.0.0.1:8811` (or a virtual port, `--pty`), at the same time, each one's lines kept whole. Every line also runs through a model of the board program (`perform/boards.py`: `cogley_mouth_main.py`'s clamps, glide, jaw, talk, poses and `where`; `pico_servo_ctl.py`; the `e` link to Board 2), then each servo's own speed. `--sim` answers as the boards do, so everything runs with no head. `--record` keeps a performance; `play.py` replays it.
+- The twin page (http://localhost:8810, three.js 0.170.0 bundled): the head moving at 30 frames a second, a row per servo (told and actual), click a part to see its servo, a calibration panel that saves into `robots/frank/robot.json`, gaze rays and the webcam's view at true size, layers (mechanism, Cogley's shell, face mask, enclosure), the lines going to the boards.
+- `cad/twin_export.py`: Cogley's head (191 parts, 2.08 M triangles → 338 k, 8.6 MB GLB) with a node per moving body, and the rig: 21 servo shafts, 47 pins and 56 bodies, every pivot found on his parts (shoulder-screw axes, holes in sections through the levers and horns). Jaw 1:1 on the MG996R horns; lips parallelograms (the lower ones on the jaw); corners five-bars; tongue a four-bar; eyes 1:1 parallelograms; lids four-bars (horn 13.1, lever 42.6, lid arm 17.2 mm, about y 1.7, z 212.4); brows parallelogram arms with the TPU bar bent between them. His export has the -x EyeMech levers and horns and the -x brow horns out of place (one lever twice), so those halves are mirrored from +x.
+- Three one-line changes so programs can open the socket: `serial.Serial` → `serial.serial_for_url` in `frank/mouth.py`, `firmware/servo_controls.py`, `firmware/mouth_controls.py` (a plain port opens as before).
+
+**Numbers:** calibration in `robots/frank/robot.json`: every sign +1 (the datasheet direction). Zeros: mouth 90; LR 107, UD 62 (CENTRE); brows 90 (LEVEL); lids from each SHUT pose shutting the lid in the CAD (CAD lids rest at ±20°, horn 27.25° to shut): TR 155.8, BR 135.3, TL 161.3, BL 89.8. At their OPEN poses the lids then open 13° and 21° (top) and 6° and 29° (bottom) past the CAD's. Servo speeds MG90S 550, MG996R 350 deg/s (DATASHEET at 4.8 V).
+
+**Check:** `node perform/twin/test_kinematics.mjs`: KINEMATICS OK (rest pose exact; every servo ±60° without a lock); `python perform/test_boards.py`: BOARDS OK. End to end: `frank/mouth.py socket://127.0.0.1:8811 --test` against `body.py --sim` found the board program by its `where` reply and sent 900 lines; the page showed them. No part geometry changed, so no check.py run.
+
+**Renders:** [process_images/2026-10-30_59_body-twin](../process_images/2026-10-30_59_body-twin/studies_twin_surprised.png): a surprised face, at rest, from the side (headless Chrome, simulated body).
+
+**Decisions:** D32 (the body twin follows the commands through the CAD's linkages; robot-agnostic files).
+
+**Problems:**
+- Sides: in this right-handed frame (face toward +y) Frank's left is −x. Cogley's `UpperLeftLip` and his brow servos' raise directions (`brow_anim.DIR`), and all four of the team's lid SHUT/OPEN poses, fit only that way, which is how the face engine's `rig.json` already maps the sockets. PLAN §4 (D2) says +x is his left: the names in it are mirrored, the motion isn't (everything is addressed by socket).
+- By the CAD, Cogley's `lips_up` parts the lips (upper up, lower down) and `lips_down` presses them. `frank/mouth.py` parts the lips by moving the upper lip towards `lips_up` and the lower towards `lips_down`, which moves both the same way. Check on the head.
+- Not yet compared with the real head: the eyes' directions, the mouth zeros, and the team's ε3.2 lid levers (thicker than the ones in his head export; the pins may differ).
+- Talk mode (`talk`) chatters at random on the board, so the twin's jaw can't match it beat for beat; Frank's own jaw (`jaw <f>` 50 times a second) is followed exactly.
+
+**Next:** at the head: run the body server, move each servo with the slider windows, set any zero that differs on the page and save. Then the brain's side on the same page: the face engine's channels and mood beside the body, and the people from the vision at their place in the room.
+
 ## 2026-10-30 — Software — Face performance engine v1 (frank/engine) for NightHack
 
 **Done:**
@@ -131,6 +155,26 @@ Rules:
 
 **Next:** watch both lids blink on the head; if a lid buzzes at either end, back that pose off with the sliders and save it again.
 
+## 2026-10-30 — M8 — Enclosure build manual; two pedestal faults found walking the assembly
+
+**Done:**
+- The human asked for a build guide for the enclosure like the head's assembly manual. It is the claude.ai doc [Enclosure Build Manual](https://claude.ai/artifact/RCCkXzUb8Ans9ELzX8U4rN): stages 0 to 7, steps 1.1 to 6.6 with a tick box each, 18 pictures from the new `cad/studies/enclosure_manual.py` (it reuses `assembly_manual.py`'s renderer; grey built, colour new, screws and nuts dark, M4 inserts red). Sides in it are as you stand facing the front: the buck (−x) is on your right.
+- Walking every step against the model found two faults in the v1 pedestal that `enclosure_check.py` does not test:
+  - its inside is closed all round: the tube stands on the tray's inner rib (r 40–43, full circle) with its flange on top, so the head's leads and the fan's air, coming down the D 25 bore, had no way into the bay. Rays out from the axis hit plastic in all 72 directions at every height from the tray to the top plate;
+  - its four flange screws (r 41.5 at 45°) sit under its solid 4 mm top plate. A vertical ray up from each hits the plate; no driver reaches them, before or after the neck is bolted on.
+- Fixes by hand (the pedestal may already be printed): a 40 × 50 mm lead door melted through the tube with the soldering iron, on the right as you face the neck's front, 50 to 100 mm below its top (above the buck, under the deck); the pedestal centred by measuring (80 mm from the tray's edge) and glued where the tray's four radial ribs pass 0.5 mm under its edge. The deck's hole holds its top to 1 mm.
+- Also found: the deck's webcam-lead slot is 12 × 30 mm, likely narrower than the webcam's USB plug. The manual has the plug tried on the bench and the slot widened with the iron.
+- Order changed: the head goes on before the deck (its leads are plugged in with the bay open, the deck halves then slide in under the head), and the hatch goes on last, after the outside cables and the webcam lead.
+- Docs: ASSEMBLY.md's enclosure section rewritten in the manual's order (14 steps); BOM (M3 × 8 32 → 28, glue, the long 3 mm hex driver); PRINT_GUIDE (the pedestal row); the window blank 891 → 892 × 477, as `ENC_SHEET_BLANK` computes it; PLAN R14 and the M8 row.
+
+**Check:** no model change (no new check run). The two pedestal faults were confirmed on `output/stl/enc_pedestal.stl` and `enc_tray.stl` with ray casts (scratch script).
+
+**Renders:** [process_images/2026-10-30_55_enclosure-manual](../process_images/2026-10-30_55_enclosure-manual/s6_03_complete.png): one picture per step, `s1_01_lead_door.png` the door, `s2_02_pedestal_on_tray.png` the glue spots.
+
+**Problems:** the pedestal still has no door or reachable fixing in the model; a reprint should get both (a side door at 180°, and its flange fixed from outside or from below). `enclosure_check.py` could trace the leads' path and each screw's tool access. The bay's parts are still assumed sizes.
+
+**Next:** build along the manual. If the pedestal is reprinted, put the door and reachable fixings in `enclosure.py` first.
+
 ## 2026-10-29 — Firmware — One program on both Picos; the eye board reached through the mouth board (D28)
 
 **Done:** the human is wiring the head as the Head Power Wiring Build Guide (2026-10-26) says: two mouth boards off one battery, five jumpers between the Picos, the laptop on the mouth board only, and the laptop stays in the loop. The guide's Board 2 "eyes-and-brows program" was never written, and Cogley's 2-bit link cannot carry what the laptop sends (every servo by name, 25–50 times a second: the slider windows, `frank/mouth.py`, and Friday's performance engine). So the forwarding went into both board programs. The mouth board turned out to be a Pico 2 running TalkingHead's `cogley_mouth_main.py` (Lars's gliding MouthMaster with `jaw`, `set`, `where`; `frank/mouth.py` and `mouth_controls.py` already speak it), now kept in `firmware/` with the link added; `firmware/pico_servo_ctl.py` is for Board 2 (and works on Board 1 too). On either, a line `e <pin> <angle>` from USB is passed on over UART0 (GP16 TX, 115200 baud) to the other board, which reads UART0 RX (GP17) beside its own USB and runs the line as usual. GP16 is driven only after a board's first `e` line over USB, so the board nobody talks to never drives the wire. The GP16/GP17 pair must cross (on Board 2 swap the yellow and green jumper ends, pins 21 and 22); the link is one way for now. `servo_controls.py --link` drives the eyes through the mouth board; `Mouth.link("<pin> <deg>")` in `frank/mouth.py` does the same from Frank. firmware/README.md rewritten for two boards (intro, link wires, flashing with mpremote), and the Mac command for the slider windows added (the Homebrew and venv Pythons here have no tkinter; a uv-managed 3.13 does).
@@ -198,6 +242,73 @@ Rules:
 **Problems:** the brow directions and the two travel numbers need the human's eye on the real brows; the JL servo was faulty on 2026-10-26 and may still be the weak one.
 
 **Next:** press "curious" and see that both brows rise (flip signs in `DIR` if not); find the largest Raise and Lower that the bars allow, then "Save brows LEVEL".
+
+## 2026-10-29 — M8 — The base's band printed instead of cut from PETG (D31)
+
+**Done:**
+- The team can't make the PETG band, so it is now two prints, `enc_band_F` and `enc_band_B` in `cad/enclosure.py`, split on the y = 0 line like the rings. Each is a 1.6 mm band (two wall loops, no infill), r 144.3..145.9 round the rims, printed standing on its bottom edge and turned 45° on the bed (249 × 249 × 120).
+- Printed in: the two openings, the leads' notch under the back one (it lines up with the hatch's notch), the 10 rim screw holes and the panels' 8. The openings' tops are pointed (50° sides up to an 8 mm flat at z −60; the shoulders are at −121.2), so the 110 mm span needs no support. The PETG's cut opening was a 110 × 64 rectangle with a 110 mm bridge on top.
+- Seam walls inward at 0° and 180° (r 136.5 to the band, z −127.5..−46, 50° underside), 2 × M3 + nut through each pair.
+- Four bosses inside the band at the panels' upper screws (z −58), 10 wide, 4.7 deep. Each has a slot from its top that an M3 nut drops into before the deck goes on, so the panels come off and go back from outside. The nut sits flat on the band, 0.2 into it, and its flats keep it from turning. B's leads' notch keeps a 2 mm tie at the bed so B's bottom edge prints in one piece. Without it, B stands as two loose legs up to the opening's top.
+- The band now reaches down to the tray's underside (z −150; the PETG band stopped at −139.9). The panels' lower screws are at z −146 and went through nothing before.
+- The panels sit on the thicker band: inside r 145.6 → 146.2. Their curve changes by under 0.1 mm over their 126 mm chord, so panels already printed still fit.
+- Found when the band became a part: the bay's assumed boards (95 × 65, side by side on the bank at x ±50) reached r 149 at their back corners, through the band. The PETG band had the same clash, but the old check never tested the bay against it. Board 2 now sits over board 1 on 25 mm standoffs (`ENC_LAYOUT`, ASSUMPTION until the boards are measured).
+- `enclosure_check.py`: the band is in the part list (assembly_check and the bay test cover it); a new test fires a ray along each panel screw, which must pass a clear hole with band 3.5 above and below it (tested: a band raised 10 mm fails all 8); new tiles show the band from the back and the seam walls. `cad.yaml`: the two halves. Docs: PLAN D31, PRINT_GUIDE (15 prints, one PETG sheet, about 31 printer-hours), BOM (one sheet; M3 38 + 30; standoffs), ASSEMBLY (steps 4, 5, 7).
+
+**Numbers:** new ENC_BAND_PLAY 0.3, ENC_BAND_T 1.6, ENC_BAND_Z (−150, −30), ENC_BAND_SEAM (136.5, −127.5, −46, (−112, −60)), ENC_BAND_NUT_BOSS (10, 4.7, −44), ENC_BAND_TIE 2; ENC_OPENING (110, 64, −104) → (110, −136, −60, 8); ENC_LAYOUT board_1 (−50, −80) → (0, −82), board_2 (50, −80) → (0, −82); ENC_LAYOUT_Z board_2 56 → 81; ENC_BAND_BLANK removed.
+
+**Print time (estimate, no slicer here):** each half slices to 600 layers and about 1 km of wall path. At the P2S standard profile's speeds (outer wall 200, inner about 230 mm/s) that is about 1.5 h, plus warm-up: **1.5–2 h each, about 100 g each**. The two halves on the two printers at once take about 2 h.
+
+**Check:** after the review fixes, `check: PASS  (0 hard failure(s), 13 warning(s), 801 s)` with `--jobs 1` (before them: 807 s, the same warnings). The warnings are the eight fits_bed items (the halves, now the band's two as well, measured before their 45° turn: in the print pose they span 249) and print_check, which again ran out of memory on the big sculpt meshes. print_check on the band halves and the panels alone: `PRINT CHECK OK`, with no overhang on the band. `ENCLOSURE OK`: the panels' 8 screws each pass a hole with band round it, and the bay clears the band (boards out to r 124). `NO OVERLAPS`.
+
+**Renders:** [process_images/2026-10-29_54_band-nut-slots](../process_images/2026-10-29_54_band-nut-slots/enclosure.png): `enclosure.png` (the band from the back with the hatch opening and the leads' notch, the halves from inside with the seam walls), `band_print_check.png` (the two halves in their print pose: no overhang, bed contact all along), `band_nut_boss.png` (a nut boss from inside: the slot from its top, the screw hole, the 50° underside). Before the review: [53, band-printed](../process_images/2026-10-29_53_band-printed/enclosure.png).
+
+**Review:** the cad-reviewer found no hard problem. It found these, and we fixed them:
+- a 5 mm brim makes a half 259 wide, over the 256 bed: the docs now say 3 mm at most (255), or none;
+- the panels' upper nuts (z −58) could not be reached once the deck was on: the nut slots;
+- B stood as two loose legs from the bed up to the opening's top: the tie;
+- the deck rims' M3 × 8 reached through the window sheet's place (true since D26): M3 × 6 there;
+- the seam screws need an L hex key, and the band now goes on before the bay (ASSEMBLY steps 4 and 5 swapped);
+- PRINT_GUIDE's panel row still said they stand on an edge: it now says they lie on supports.
+
+The first slot cut through the boss's sloped underside (print_check: 0.01 mm walls), so the boss now reaches 1.5 under the slot at its inner face. The openings are about 26 % smaller than the PETG's (5240 against 7040 mm²); the front one is 80 wide at the speaker's axis.
+
+**Decisions:** D31 (the band printed).
+
+**Problems:** the boards' real size and fixing are still unknown. The panels' lower nuts are reached from under the band's edge, which needs the base on its 20 mm feet. The power box bits at the right are not modelled, so their clearance to the right-hand seam wall is not checked.
+
+**Next:** print the two band halves (one on each printer, black or dark grey PLA, a 3 mm brim at most). Offer one up to a bottom ring half to check the 0.3 play on the rim, and drop a nut into a slot to check its fit.
+
+## 2026-10-29 — M8 — The neck clamps Cogley's frame: nothing drilled (D30)
+
+**Done:**
+- The human has no drill, so v1's mount (4 × M3 inserts heat-set up into his nape members, holes drilled in his printed frame) could not be built, and burnt holes in 6 mm bars would be weak and crooked. Measured from his mesh: his frame's nape is a flat ring of bars 6.4 thick, tilted 7.97° (back higher), round a regular hexagonal hole 50 across flats. The neck now clamps that ring:
+  - the spine's top is cut to the ring's underside (the saddle, 0.1 under it);
+  - a collar rises from it into the hexagonal hole (0.4 per side, 1 mm lead-in), locating the head in every direction and stopping it turning; its top stays 0.8 under the ring's top and carries four M4 inserts (heat-set with the soldering iron in printed holes);
+  - two 5 mm plates (`neck_clamp_L`, `neck_clamp_R`, split at x 0 so they go on round the leads) lie on the ring and take 4 × M4 × 12 down into the collar, so the ring is clamped between plates and saddle;
+  - a 45° wedge under the collar's back, and a 56 mm wide corbel (50° underside) under the ring's back half, so the plates clamp over solid plastic all round.
+- The four screws sit behind the EyeMech's base plate (its back edge is 4 mm over the plates at y −114; the first layout put two under it), with 30 to 35 mm over each head for a 3 mm hex key from behind, his rear plate off.
+- The cable hole through the plates, collar and spine follows the collar's slanted front faces with a 3 mm wall (a straight edge left a zero-thickness sliver). The spine's inside roof is now 50° (at 45° print_check flagged it). The back ends of his two ribs dip 2 mm under the ring over the saddle, so the spine has two shallow pockets for them.
+- `enclosure_check.py` checks the neck and both plates against every one of his parts, their gaps to the ring (each must be within 0.5, or the clamp would not grip), the hex key's room over each screw, and sweeps the jaw against the plates too. `cad/studies/neck_mount.py` redrawn. `cad.yaml`: the two plates, printed flat (`print_rotate` 7.97° about x). `check.py --jobs N` limits how many checks run at once: with about 4 GB free, the parallel checks ran out of memory.
+- Docs: PLAN D30 (D25's screw assumption struck), BOM (8 M4 inserts + 8 M4 × 12 for the neck, the M3 inserts gone), ASSEMBLY (the head step rewritten, moved before the window so the back of the head can be reached; the band's holes melted with the soldering iron instead of drilled), PRINT_GUIDE (13 prints).
+
+**Numbers:** new NAPE_TILT 7.97, NAPE_CENTRE (−119.96, 174.80), NAPE_T 6.34, NAPE_HOLE 50 (MEASURED from his mesh); NECK_COLLAR_FIT 0.4, NECK_COLLAR_GAP 0.8, NECK_CLAMP_T 5, NECK_CLAMP_SCREWS (±18, −5) and (±13, −14) in the ring's frame, NECK_CORBEL (28, −22), NECK_CABLE_HOLE 28 wide, y −121..−101 (was a 40 × 16 opening); NECK_SPINE_TOP_T 6 → 8; NECK_SPINE_TOP, NECK_SPINE_SCREWS and NECK_SPINE_TOP_OPENING removed.
+
+**Check:** `check: PASS  (0 hard failure(s), 11 warning(s), 1037 s)` with `--jobs 1`. The warnings: the six known fits_bed items (halves measured before their 45° turn), and print_check, which ran out of memory on the big sculpt meshes. print_check on the three changed parts alone: `PRINT CHECK OK`. `ENCLOSURE OK`: the neck 0.08 and the plates 0.12 from his ring, no overlap with any of his parts, the jaw clears the neck and plates through 35° (9.6 mm at 25°). The neck stays inside the sculpt's outline as before, except the spine's back corners (unchanged from v1) and about 100 mm³ of the corbel, 0.2 mm out.
+
+**Renders:** [process_images/2026-10-29_52_neck-clamp](../process_images/2026-10-29_52_neck-clamp/studies_neck_mount.png): `studies_neck_mount.png` (the chain, the clamp cut through a screw, from behind with the EyeMech's plate, exploded, the neck's top), `studies_neck_print_check.png` (the three parts in their print pose), `enclosure.png`.
+
+**Review:** the cad-reviewer found no hard problem. It found and we fixed:
+- the back screws clamped the ring onto air (the corbel added);
+- the plates cannot slide in flat or drop in from above (ASSEMBLY now gives the tipped path);
+- insert bulges could stop the collar seating (test-fit after setting the inserts);
+- the jaw sweep did not include the plates (it does now).
+
+**Decisions:** D30 (the clamp).
+
+**Problems:** the spine's back corners stick out of the sculpt's neck by up to about 10 mm (x ±20..40, y −110..−125, z 40..167), as in v1; the skin's neck will need room there, or the corners rounded. The collar's 0.4 fit is an assumption until the printed neck meets the printed frame.
+
+**Next:** print the neck and the two plates; set the eight M4 inserts; test-fit the head on the neck before the leads go in.
 
 ## 2026-10-29 — M3 — Lid sliders widened to −27..207; new eye poses, only the top lids blink
 

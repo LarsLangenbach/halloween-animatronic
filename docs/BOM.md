@@ -126,19 +126,23 @@ The skin silicone is **Smooth-On Dragon Skin FX-Pro** (PLAN D21, chosen 2026-10-
 |---|---|---|
 | 7 mm sew-on snap, both halves | 4 for the brows (+ the lips, M4) | Which product (Q8)? Caliper both halves before M4 starts. |
 
-## Enclosure (M8, v1 of 2026-10-29; PLAN D23-D26)
+## Enclosure (M8, v1 of 2026-10-29; PLAN D23–D26, D30, D31)
 
 The power box and the boards in the base are in the Head Power Wiring doc (claude.ai, 2026-10-26); this lists what the enclosure adds.
 
 | Item | Qty | Status | Notes |
 |---|---|---|---|
-| Clear PETG sheet, 1 mm (0.040 in), 1000 × 500 mm | 2 | [buy] | the window (891 × 477, a full tube, the back see-through) and the base's band (928 × 109). Not acrylic: it cracks at this bend. |
-| Black spray paint for plastic | 1 can | [buy] | the band, unless black sheet is at hand |
-| M3 × 8 screws + M3 nuts | 36 + 24 | [buy] | band to rims 12, seam walls 4, cap seam 4, panels 8 (all with nuts); tray bosses 8 (self-tapping, no nut) |
-| M4 heat-set insert (M4 × 8) + M4 × 12 bolt | 4 + 4 | [confirm] | neck foot to the pedestal's top plate |
-| M3 heat-set insert (M3 × 4) + M3 × 10 | 4 + 4 | [confirm] | the spine into Cogley's frame (ASSUMPTION) |
+| Clear PETG sheet, 1 mm (0.040 in), 1000 × 500 mm | 1 | [buy] | the window (892 × 477, a full tube, the back see-through). Not acrylic: it cracks at this bend. The base's band is printed now (D31), so the second sheet is gone. |
+| Black spray paint for plastic | 1 can | [optional] | the printed band, only if it is not printed in black or dark grey |
+| M3 × 8 socket head screws + M3 nuts | 28 + 30 | [buy] | band to the bottom rims 4 (the rims' holes at the front and back are behind the openings), band seams 4, ring seam walls 4, cap seam 4, panels 8 (all with nuts; nuts also for the six below); the bottom rings' ears 4 (self-tapping into the tray's bosses, no nut). The pedestal's four flange screws are not used: they sit under its solid top plate, out of reach (2026-10-30); it is glued instead |
+| Hot glue or super glue gel | a little | [confirm] | the pedestal's foot to the tray's four radial ribs (ASSEMBLY step 5); or weld it with the soldering iron and a piece of PLA filament |
+| 3 mm hex driver, 150 mm shaft (or a 3 mm bit on an extension) | 1 | [confirm] | the neck's four M4 × 12 up through the pedestal's top plate, 138 mm in from its open end |
+| M3 × 6 socket head screws | 6 | [buy] | band to the deck's rims, nuts inside. An M3 × 8 there reaches right through the window sheet's place (tip at r 137.9, the sheet at 138.2–139.2) |
+| 2.5 mm L hex key | 1 | [confirm] | the band's seam screws: the band's inside is 33 mm from them, too close for a straight driver |
+| M4 heat-set insert (M4 × 8) + M4 × 12 socket head bolt | 8 + 8 | [confirm] | 4 in the neck's foot (to the pedestal's top plate) and 4 in the top of the neck's collar (the two clamp plates onto Cogley's frame, D30). The same insert and bolt for both, set with the soldering iron in printed holes; nothing is drilled. Not longer than 12: an M4 × 16 bottoms out in the collar's holes |
 | Sony SRS-XB12 | 1 | [have] | in its saddles at the front, aux from the laptop, charged from the bank's USB-A port |
 | Logitech 1080p webcam | 1 | [have] | taped under the cap's top, looking out through the window |
 | Rubber feet, 20 mm | 4 | [buy] | under the tray |
-| Clear tape, foam tape | | [confirm] | the sheets' overlaps; the boards on the bank; the webcam |
-| PLA | about 1 kg | [confirm] | 11 prints, about 850 cm³ of model with thin walls: trust the slicer |
+| Clear tape, foam tape | | [confirm] | the window's overlap; board 1 on the bank; the webcam |
+| Standoffs, 25 mm (M3 or nylon) | 4 | [confirm] | board 2 over board 1 (side by side on the bank, their back corners would poke through the band). ASSUMPTION until the boards are measured |
+| PLA | about 1.2 kg | [confirm] | 15 prints, about 1010 cm³ of model with thin walls (the band halves about 100 g each): trust the slicer |

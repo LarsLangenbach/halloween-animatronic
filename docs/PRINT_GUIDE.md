@@ -79,23 +79,23 @@ Print them solid: PLA, 0.2 mm layers (0.28 is fine for speed), 3 walls, 4 top an
 
 ## M8: enclosure and neck, v1 (2026-10-29, the one-day version)
 
-Eleven prints plus two PETG sheets (PLAN D26). Built by `cad/enclosure.py`; sizes in the print pose; slicer-ready files in `output/print/`. PLA, 3 walls, 15 % infill. Nothing needs support. Rough times are for a P2S on its standard profile: about 27 printer-hours in all, 13 per printer with two.
+Fifteen prints plus one PETG sheet, the window (PLAN D26, D30, D31). Built by `cad/enclosure.py`; sizes in the print pose; slicer-ready files in `output/print/`. PLA, 3 walls, 15 % infill. Only the two panels need support. Rough times are for a P2S on its standard profile: about 31 printer-hours in all, 15.5 per printer with two.
 
 | Part | Qty | Size (print pose) | Orientation | Rough time | Notes |
 |---|---|---|---|---|---|
-| neck | 1 | 100 × 105 × 170 | as modelled, foot on the bed | 5 h | print first: offer it up to the head's frame |
-| enc_pedestal | 1 | 90 × 90 × 142 | upside down (top plate on the bed), as the file lies | 3 h | a D 90 tube, 1.6 wall; print first with the neck |
+| neck | 1 | 100 × 120 × 183 | as modelled, foot on the bed | 5 h | its top is a saddle and a hexagonal collar that clamp Cogley's frame (D30); 4 M4 inserts in the foot, 4 in the collar's top. 4 walls if you can spare the time: it carries the head |
+| neck_clamp_L / _R | 2 | 34 × 64 × 5 | flat (the file lies flat, turned 8° from the assembly) | 0.3 h together | the two plates on top of his frame's ring, 2 × M4 × 12 each; 100 % infill or 5 walls (they are only 5 thick) |
+| enc_pedestal | 1 | 90 × 90 × 142 | upside down (top plate on the bed), as the file lies | 3 h | a D 90 tube, 1.6 wall; print first with the neck. v1 has no way out for the leads and its flange screws can't be reached: cut its lead door by hand and glue it to the tray (ASSEMBLY steps 4 and 5) |
 | enc_tray | 1 | 250 × 250 × 53 | as modelled, flat | 3 h | the floor: ribs, bosses, speaker saddles, bank rails |
 | enc_bottom_F / B | 2 | 249 × 249 × 12 (turned 45°) | as the file lies, lips and rim up | 1 h each | the band's lower rim; 4 ears to the tray |
 | enc_top_F / B | 2 | 249 × 249 × 12 (turned 45°) | as the file lies, lip and rim up | 2.5 h each | the deck: the window's lower lip, the band's upper rim, ribs |
+| enc_band_F / B | 2 | 249 × 249 × 120 (turned 45°) | standing on its bottom edge, as the file lies, centred; a brim of 3 mm at most (a wider one runs off the 256 bed), or none | 1.5–2 h each, ~100 g each | the base's wall (D31, was a PETG sheet): 1.6 mm, two wall loops and no infill. Openings, the leads' notch (B), all 26 screw holes and four nut slots (the panels' upper nuts) printed in; the openings' pointed tops print without support. B's notch keeps a 2 mm tie at the bed so its bottom edge prints in one piece. One per bed |
 | enc_cap_F / B | 2 | 249 × 249 × 41 (turned 45°) | upside down, as the file lies | 3.5 h each | 1.2 mm top with ribs and vents, 40 mm skirt, the window's upper lips, the webcam stops |
-| enc_grille, enc_hatch | 2 | 96 × 16 × 126, standing on a short edge | as the file lies, with a brim | 0.7 h each | the hatch has the lead notch |
+| enc_grille, enc_hatch | 2 | 126 × 96 × 16, lying | as the file lies, inside (concave) face down, with supports under the arch | 0.7 h each | the hatch has the lead notch. Panels printed before D31 (inside r 145.6, now 146.2) still fit: the curve differs by under 0.1 mm |
 
-Order: neck and pedestal on one printer, tray then bottom halves on the other; then the top halves, the cap halves and the panels, split across both.
+Order: neck and pedestal on one printer, tray then bottom halves on the other; then the band halves (one on each printer at the same time), the top halves, the cap halves and the panels, split across both.
 
-The sheets (buy 1 mm clear PETG, two 1000 × 500 mm sheets):
-- the window: a 891 × 477 mm blank rolled into a full tube, 20 mm overlap at the back, taped on the inside; it stands on the deck between the lip and the cap's lips. The back is see-through.
-- the base's band: a 928 × 109 mm blank wrapped round the two rims, 20 mm overlap at the back, M3 + nut through the rims (6 top, 6 bottom); cut the two 110 × 64 openings (front, back) before fitting; paint it or use black sheet.
+The sheet (buy 1 mm clear PETG, one 1000 × 500 mm sheet): the window, a 892 × 477 mm blank rolled into a full tube, 20 mm overlap at the back, taped on the inside; it stands on the deck between the lip and the cap's lips. The back is see-through. The base's band is printed now (D31); print it in black or dark grey, or paint it.
 
 ## Suggested slicer settings
 

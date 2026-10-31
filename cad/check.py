@@ -111,13 +111,13 @@ def run_script(work, spec, step):
                 fails=fails, log=lines)
 
 
-def run_pipeline(work, spec):
-    """Builds in order; consecutive checks in parallel. Stops after a failed build."""
+def run_pipeline(work, spec, jobs=0):
+    """Builds in order; consecutive checks in parallel (at most `jobs` at once, 0 = all). Stops after a failed build."""
     results, batch = [], []
 
     def flush():
         if batch:
-            with concurrent.futures.ThreadPoolExecutor(len(batch)) as pool:
+            with concurrent.futures.ThreadPoolExecutor(min(jobs, len(batch)) if jobs > 0 else len(batch)) as pool:
                 results.extend(pool.map(lambda s: run_script(work, spec, s), batch))
             batch.clear()
 
@@ -371,6 +371,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--no-render", action="store_true")
     ap.add_argument("--accept", action="store_true")
+    ap.add_argument("--jobs", type=int, default=0, help="run at most this many checks at once (0 = all; lower it when memory runs out)")
     args = ap.parse_args()
 
     spec = K.spec()
@@ -383,7 +384,7 @@ def main():
 
     work = make_work(spec)
     work_stl = os.path.join(work, spec.get("stl_dir", "output/stl"))
-    steps, built = run_pipeline(work, spec)
+    steps, built = run_pipeline(work, spec, args.jobs)
 
     metrics, grades, warnings, views = dict(parts={}, assembly={}), [], [], ""
     if built:
